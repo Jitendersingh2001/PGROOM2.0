@@ -80,9 +80,9 @@ WSGI_APPLICATION = 'PGROOM.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
+        'NAME': os.getenv('DATABASE_NAME'),
         'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'PASSWORD': os.getenv('DB_PASS'),
         'HOST': os.getenv('DB_HOST'),
         'PORT': os.getenv('DB_PORT'),    
     }
