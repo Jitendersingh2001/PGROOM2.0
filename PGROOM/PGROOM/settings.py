@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from datetime import timedelta
 # Load environment variables from .env file
 load_dotenv()
 
@@ -43,7 +44,24 @@ INSTALLED_APPS = [
     "myapp",
     'rest_framework',
     'corsheaders',
+    'rest_framework_simplejwt',
 ]
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        #By setting it to "rest_framework_simplejwt.authentication.JWTAuthentication", you're telling Django to authenticate users using JWT tokens.
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": [
+        #"rest_framework.permissions.IsAuthenticated" means that all views will require the user to be authenticated via JWT tokens to access them.
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
