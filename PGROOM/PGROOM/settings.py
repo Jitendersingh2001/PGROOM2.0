@@ -129,3 +129,5 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
