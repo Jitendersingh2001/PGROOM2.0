@@ -9,4 +9,7 @@ docker run --name my_postgres -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=admin1
 
 -> TO cerate an app: - python manage.py startapp <app_name>
 
+->TO Migrate the models: - python manage.py makemigrations
+->TO Migrate the models: - python manage.py migrate
+
 """
