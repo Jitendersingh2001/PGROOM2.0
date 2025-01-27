@@ -11,5 +11,5 @@ class StateSerializer(serializers.ModelSerializer):
         validateState(data)
         return data
 
-    def find(self, validated_data):
-        return State.objects.get(id=validated_data["id"])
+    # def find(self, validated_data):
+    #     return State.objects.get(id=validated_data["id"])
