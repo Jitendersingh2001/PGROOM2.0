@@ -13,7 +13,7 @@ class State(models.Model):
 
 
 class City(models.Model):
-    state = models.ForeignKey(State, on_delete=models.CASCADE, related_name='cities')
+    state = models.ForeignKey(State, on_delete=models.CASCADE, related_name='cities', db_column='stateId')
     cityName = models.CharField(max_length=255)
     createdAt = models.DateTimeField(auto_now_add=True)
     updatedAt = models.DateTimeField(auto_now=True)
@@ -40,8 +40,8 @@ class User(models.Model):
     lastName = models.CharField(max_length=255)
     mobileNo = models.CharField(max_length=255, unique=True)
     address = models.CharField(max_length=255, null=True, blank=True)
-    state = models.ForeignKey(State, on_delete=models.CASCADE)
-    city = models.ForeignKey(City, on_delete=models.CASCADE)
+    state = models.ForeignKey(State, on_delete=models.CASCADE, db_column='stateId')
+    city = models.ForeignKey(City, on_delete=models.CASCADE, db_column='cityId')
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.ACTIVE)
     email = models.EmailField(max_length=255, unique=True)
     password = models.CharField(max_length=255)
@@ -73,8 +73,8 @@ class UserRole(models.Model):
 
 
 class UserRoleLink(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='role_links')
-    role = models.ForeignKey(UserRole, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='role_links', db_column='userId')
+    role = models.ForeignKey(UserRole, on_delete=models.CASCADE, db_column='roleId')
     createdAt = models.DateTimeField(auto_now_add=True)
     updatedAt = models.DateTimeField(auto_now=True)
 
@@ -87,9 +87,9 @@ class UserProperties(models.Model):
         ACTIVE = 'Active'
         INACTIVE = 'Inactive'
     
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='properties')
-    state = models.ForeignKey(State, on_delete=models.CASCADE)
-    city = models.ForeignKey(City, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='properties', db_column='userId')
+    state = models.ForeignKey(State, on_delete=models.CASCADE, db_column='stateId')
+    city = models.ForeignKey(City, on_delete=models.CASCADE, db_column='cityId')
     propertyName = models.CharField(max_length=255)
     propertyImage = models.CharField(max_length=255)
     status = models.CharField(max_length=50, choices=PropertyStatus.choices)
@@ -105,7 +105,7 @@ class Rooms(models.Model):
         AVAILABLE = 'Available'
         OCCUPIED = 'Occupied'
 
-    property = models.ForeignKey(UserProperties, on_delete=models.CASCADE, related_name='rooms')
+    property = models.ForeignKey(UserProperties, on_delete=models.CASCADE, related_name='rooms', db_column='userPropertiesId')
     roomNo = models.IntegerField()
     roomImage = models.CharField(max_length=255)  # S3 bucket link
     status = models.CharField(max_length=50, choices=RoomStatus.choices)
@@ -118,9 +118,9 @@ class Rooms(models.Model):
 
 
 class Tenant(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    property = models.ForeignKey(UserProperties, on_delete=models.CASCADE)
-    room = models.ForeignKey(Rooms, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, db_column='userId')
+    property = models.ForeignKey(UserProperties, on_delete=models.CASCADE, db_column='userPropertiesId')
+    room = models.ForeignKey(Rooms, on_delete=models.CASCADE, db_column='roomId')
     createdAt = models.DateTimeField(auto_now_add=True)
     updatedAt = models.DateTimeField(auto_now=True)
 
@@ -138,7 +138,7 @@ class Rent(models.Model):
         UNPAID = 'Unpaid'
     
     amount = models.IntegerField()
-    room = models.ForeignKey(Rooms, on_delete=models.CASCADE)
+    room = models.ForeignKey(Rooms, on_delete=models.CASCADE, db_column='roomId')
     payment_method = models.CharField(max_length=50, choices=PaymentMethod.choices)
     upiId = models.CharField(max_length=255, null=True, blank=True)
     status = models.CharField(max_length=50, choices=RentStatus.choices)
@@ -154,7 +154,7 @@ class ElectricityBill(models.Model):
         PAID = 'Paid'
         UNPAID = 'Unpaid'
     
-    room = models.ForeignKey(Rooms, on_delete=models.CASCADE)
+    room = models.ForeignKey(Rooms, on_delete=models.CASCADE, db_column='roomId')
     amount = models.IntegerField()
     payment_method = models.CharField(max_length=50, choices=Rent.PaymentMethod.choices)
     upiId = models.CharField(max_length=255, null=True, blank=True)
