@@ -1,28 +1,28 @@
 from django.db import models
 
 class State(models.Model):
-    state_name = models.CharField(max_length=255)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    stateName = models.CharField(max_length=255)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'state'  # Camel case for the table name
+        db_table = 'state' 
 
     def __str__(self):
-        return self.state_name
+        return self.stateName
 
 
 class City(models.Model):
     state = models.ForeignKey(State, on_delete=models.CASCADE, related_name='cities')
-    city_name = models.CharField(max_length=255)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    cityName = models.CharField(max_length=255)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'city'  # Camel case for the table name
+        db_table = 'city' 
 
     def __str__(self):
-        return self.city_name
+        return self.cityName
 
 
 class User(models.Model):
@@ -36,23 +36,23 @@ class User(models.Model):
         ADMIN = 'Admin'
         TENANT = 'Tenant'
     
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
-    mobile_no = models.CharField(max_length=255, unique=True)
+    firstName = models.CharField(max_length=255)
+    lastName = models.CharField(max_length=255)
+    mobileNo = models.CharField(max_length=255, unique=True)
     address = models.CharField(max_length=255, null=True, blank=True)
     state = models.ForeignKey(State, on_delete=models.CASCADE)
     city = models.ForeignKey(City, on_delete=models.CASCADE)
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.ACTIVE)
     email = models.EmailField(max_length=255, unique=True)
     password = models.CharField(max_length=255)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'user'  # Camel case for the table name
+        db_table = 'user'
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.firstName} {self.lastName}"
 
 
 class UserRole(models.Model):
@@ -62,11 +62,11 @@ class UserRole(models.Model):
         TENANT = 'Tenant'
 
     role = models.CharField(max_length=50, choices=Roles.choices)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'userRole'  # Camel case for the table name
+        db_table = 'userRole'
 
     def __str__(self):
         return self.role
@@ -75,11 +75,11 @@ class UserRole(models.Model):
 class UserRoleLink(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='role_links')
     role = models.ForeignKey(UserRole, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'userRoleLink'  # Camel case for the table name
+        db_table = 'userRoleLink'
 
 
 class UserProperties(models.Model):
@@ -90,14 +90,14 @@ class UserProperties(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='properties')
     state = models.ForeignKey(State, on_delete=models.CASCADE)
     city = models.ForeignKey(City, on_delete=models.CASCADE)
-    property_name = models.CharField(max_length=255)
-    property_image = models.CharField(max_length=255)
+    propertyName = models.CharField(max_length=255)
+    propertyImage = models.CharField(max_length=255)
     status = models.CharField(max_length=50, choices=PropertyStatus.choices)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'userProperties'  # Camel case for the table name
+        db_table = 'userProperties'
 
 
 class Rooms(models.Model):
@@ -106,26 +106,26 @@ class Rooms(models.Model):
         OCCUPIED = 'Occupied'
 
     property = models.ForeignKey(UserProperties, on_delete=models.CASCADE, related_name='rooms')
-    room_no = models.IntegerField()
-    room_image = models.CharField(max_length=255)  # S3 bucket link
+    roomNo = models.IntegerField()
+    roomImage = models.CharField(max_length=255)  # S3 bucket link
     status = models.CharField(max_length=50, choices=RoomStatus.choices)
     description = models.CharField(max_length=255)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'rooms'  # Camel case for the table name
+        db_table = 'rooms'
 
 
 class Tenant(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     property = models.ForeignKey(UserProperties, on_delete=models.CASCADE)
     room = models.ForeignKey(Rooms, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'tenant'  # Camel case for the table name
+        db_table = 'tenant'
 
 
 class Rent(models.Model):
@@ -140,13 +140,13 @@ class Rent(models.Model):
     amount = models.IntegerField()
     room = models.ForeignKey(Rooms, on_delete=models.CASCADE)
     payment_method = models.CharField(max_length=50, choices=PaymentMethod.choices)
-    upi_id = models.CharField(max_length=255, null=True, blank=True)
+    upiId = models.CharField(max_length=255, null=True, blank=True)
     status = models.CharField(max_length=50, choices=RentStatus.choices)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'rent'  # Camel case for the table name
+        db_table = 'rent'
 
 
 class ElectricityBill(models.Model):
@@ -157,10 +157,10 @@ class ElectricityBill(models.Model):
     room = models.ForeignKey(Rooms, on_delete=models.CASCADE)
     amount = models.IntegerField()
     payment_method = models.CharField(max_length=50, choices=Rent.PaymentMethod.choices)
-    upi_id = models.CharField(max_length=255, null=True, blank=True)
+    upiId = models.CharField(max_length=255, null=True, blank=True)
     status = models.CharField(max_length=50, choices=BillStatus.choices)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'electricityBill'  # Camel case for the table name
+        db_table = 'electricityBill'
