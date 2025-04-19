@@ -59,7 +59,8 @@ class ProfileService {
         state: user.stateId,
         city: user.cityId,
         address: user.address,
-        token : token
+        token: token,
+        roleId : roleId
       };
     } catch (error) {
       throw new Error(error);
