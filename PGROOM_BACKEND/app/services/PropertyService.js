@@ -137,8 +137,7 @@ class PropertyService {
       // Fetch the property record from the database
       const property = await this.prisma.UserProperties.findUnique({
         where: {
-          id: id,
-          status: constant.ACTIVE,
+          id: id
         },
       });
 
