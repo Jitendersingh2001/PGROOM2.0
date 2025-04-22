@@ -11,8 +11,8 @@ class PropertyRepository {
    */
   async addOrUpdateProperty(
     userId,
-    state,
-    city,
+    stateId,
+    cityId,
     propertyName,
     propertyImage,
     propertyContact,
@@ -23,8 +23,8 @@ class PropertyRepository {
     try {
       const propertyData = {
         userId,
-        state,
-        city,
+        stateId,
+        cityId,
         propertyName,
         propertyImage,
         propertyContact,
