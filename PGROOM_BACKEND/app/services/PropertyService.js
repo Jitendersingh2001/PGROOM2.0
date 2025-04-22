@@ -89,11 +89,11 @@ class PropertyService {
           status: constant.ACTIVE,
         },
         include: {
-          user: {
-            include: {
-              state: true,
-              city: true,
-            },
+          state: {
+            select: { stateName: true },
+          },
+          city: {
+            select: { cityName: true },
           },
         },
       });
@@ -112,8 +112,8 @@ class PropertyService {
       // Construct the final response object
       const responseData = {
         id: property.id,
-        state: property.user.state.stateName,
-        city: property.user.city.cityName,
+        state: property.state.stateName,
+        city: property.city.cityName,
         propertyName: property.propertyName,
         propertyImage: propertyImage,
         propertyAddress: property.propertyAddress,
@@ -253,8 +253,8 @@ class PropertyService {
       const responseData = properties.map((property) => {
         return {
           id: property.id,
-          state: property.user.state.stateName,
-          city: property.user.city.cityName,
+          state: property.state.stateName,
+          city: property.city.cityName,
           propertyName: property.propertyName,
           propertyImage: property.propertyImage
             ? imageSignedUrlMap.get(property.propertyImage)

@@ -48,8 +48,8 @@ model UserRoleLink {
 model UserProperties {
   id              Int            @id @default(autoincrement())
   userId          Int
-  state           Int
-  city            Int
+  stateId         Int
+  cityId          Int
   propertyName    String         @db.VarChar
   propertyImage   String         @db.VarChar
   propertyContact String         @db.VarChar
@@ -60,6 +60,8 @@ model UserProperties {
   rooms           Rooms[]
   tenant          Tenant[]
   user            User           @relation(fields: [userId], references: [id])
+  city            City           @relation(fields: [cityId], references: [id])
+  state           State          @relation(fields: [stateId], references: [id])
 }
 
 model Rooms {
@@ -91,22 +93,24 @@ model Tenant {
 }
 
 model State {
-  id        Int      @id @default(autoincrement())
-  stateName String
-  updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
-  cities    City[]
-  users     User[]
+  id             Int              @id @default(autoincrement())
+  stateName      String
+  updatedAt      DateTime         @updatedAt
+  createdAt      DateTime         @default(now())
+  cities         City[]
+  users          User[]
+  userProperties UserProperties[]
 }
 
 model City {
-  id        Int      @id @default(autoincrement())
-  stateId   Int
-  cityName  String
-  updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
-  state     State    @relation(fields: [stateId], references: [id])
-  users     User[]
+  id             Int              @id @default(autoincrement())
+  stateId        Int
+  cityName       String
+  updatedAt      DateTime         @updatedAt
+  createdAt      DateTime         @default(now())
+  state          State            @relation(fields: [stateId], references: [id])
+  users          User[]
+  userProperties UserProperties[]
 }
 
 enum Status {

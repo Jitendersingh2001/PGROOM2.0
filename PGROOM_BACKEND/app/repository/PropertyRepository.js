@@ -52,11 +52,11 @@ class PropertyRepository {
           status: constant.ACTIVE,
         },
         include: {
-          user: {
-            include: {
-              state: true,
-              city: true,
-            },
+          state: {
+            select: { stateName: true },
+          },
+          city: {
+            select: { cityName: true },
           },
         },
         orderBy: {
