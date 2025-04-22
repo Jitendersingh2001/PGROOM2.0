@@ -223,13 +223,17 @@ class PropertyService {
   async getAllProperties(req) {
     try {
       // Get authenticated user ID
-      const userId = req.authUser.userId;
+      const userId = req?.authUser?.userId;
 
-      const page = parseInt(req.body.page, 10) || 1;
-      const limit = parseInt(req.body.limit, 10) || 10;
+      const page = parseInt(req?.body?.page, 10) || 1;
+      const limit = parseInt(req?.body?.limit, 10) || 10;
+      const cityId = parseInt(req?.body?.city, 10) || null;
+      const stateId = parseInt(req?.body?.state, 10) || null;
+      const searchInput = req?.body?.search || null;
+      const propertyStatus = req?.body?.status;
   
       // Fetch all active properties from the repository with pagination
-      const paginatedResult = await this.propertyRepository.getAllProperties(userId, page, limit);
+      const paginatedResult = await this.propertyRepository.getAllProperties(userId, page, limit, cityId, stateId, searchInput, propertyStatus);
   
       // Extract the paginated properties data
       const properties = paginatedResult.data;

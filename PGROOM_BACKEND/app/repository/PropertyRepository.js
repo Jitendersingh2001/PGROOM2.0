@@ -44,13 +44,23 @@ class PropertyRepository {
   /**
    * Function to get all properties with pagination
    */
-  async getAllProperties(userId, page, limit) {
+  async getAllProperties(userId, page, limit, cityId = null , stateId = null, search = null, status = constant.ACTIVE) {
     try {
+      const whereClause = {
+        userId,
+        status,
+        ...(cityId && { cityId }),
+        ...(stateId && { stateId }),
+        ...(search && {
+          propertyName: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        }),
+      };
+
       const queryOptions = {
-        where: {
-          userId: userId,
-          status: constant.ACTIVE,
-        },
+       where: whereClause,
         include: {
           state: {
             select: { stateName: true },
