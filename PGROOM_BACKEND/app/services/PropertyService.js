@@ -174,6 +174,7 @@ class PropertyService {
       const image = req.files;
       const userId = req.authUser.userId;
       let imageName = null;
+      const useExistingImage = data.useExistingImage === 'true';
 
       // Convert state, city, and id to integers for consistency
       const state = parseInt(data.state, 10);
@@ -190,14 +191,18 @@ class PropertyService {
           propertyImage: true,
         },
       });
-
+      
       // Update or create a new property image
-      if (image[0] !== propertyImage.propertyImage) {
+      if (!useExistingImage) {
+        console.log(req);
         imageName = await this.createOrUpdateImage(
           image[0],
           id,
           propertyImage.propertyImage
         );
+      } else {
+        console.log("use existing image");
+        imageName = propertyImage.propertyImage;
       }
 
       // Add or update the property details in the repository

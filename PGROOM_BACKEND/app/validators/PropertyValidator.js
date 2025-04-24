@@ -26,6 +26,7 @@ const PropertyValidator = Joi.object({
     "any.required": "Property Address is required",
     "string.empty": "Property Address is required",
   }),
+  useExistingImage : Joi.optional(),
 });
 
 module.exports = PropertyValidator;
