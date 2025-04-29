@@ -42,12 +42,12 @@ class roomRepository {
   /**
    * Function to get all rooms
    */
-  async getAllRooms(propertyId, page, limit) {
+  async getAllRooms(propertyId ,page, limit, status = constant.ROOM_AVAILABLE) {
     try {
       const queryOptions = {
         where: {
           propertyId: propertyId,
-          status: constant.ACTIVE,
+          status: status,
         },
         orderBy: {
           id: "asc",

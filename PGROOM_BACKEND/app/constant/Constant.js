@@ -12,7 +12,9 @@ const Constant = {
     S3_EXPIRY: 86400,
     NOT_FOUND: "not found",
     PRODUCTION: "production",
-    ROOM_FOLDER : "RoomImages"
+    ROOM_FOLDER: "RoomImages",
+    ROOM_AVAILABLE: "Available",
+    ROOM_OCCUPIED: "Occupied",
 };
 
 module.exports = Constant;

@@ -106,12 +106,14 @@ class RoomService {
       const propertyId = parseInt(data.propertyId, 10);
       const page = parseInt(data.page, 10) || 1;
       const limit = parseInt(data.limit, 10) || 10;
+      const status = data?.status ?? constant.ROOM_AVAILABLE;
 
       // Fetch paginated rooms from the repository
       const paginatedResult = await this.repository.getAllRooms(
         propertyId,
         page,
-        limit
+        limit,
+        status
       );
 
       // Process each room to replace roomImage with signed URLs
