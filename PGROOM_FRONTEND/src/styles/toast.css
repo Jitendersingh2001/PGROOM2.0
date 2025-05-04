@@ -1,0 +1,25 @@
+/* Toast styling */
+
+/* Error toast styling */
+[data-sonner-toast][data-type="error"] {
+  background-color: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+  border-color: hsl(var(--destructive));
+}
+
+/* Success toast styling */
+[data-sonner-toast][data-type="success"] {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: hsl(var(--primary));
+}
+
+/* Info toast styling */
+[data-sonner-toast][data-type="info"] {
+  border-left: 4px solid hsl(var(--info, 221 83% 53%));
+}
+
+/* Warning toast styling */
+[data-sonner-toast][data-type="warning"] {
+  border-left: 4px solid hsl(var(--warning, 38 92% 50%));
+}

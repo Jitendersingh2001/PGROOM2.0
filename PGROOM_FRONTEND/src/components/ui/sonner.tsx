@@ -1,10 +1,10 @@
-import { useTheme } from "next-themes"
-import { Toaster as Sonner } from "sonner"
+import { useTheme as useNextTheme } from "next-themes"
+import { Toaster as Sonner, toast as sonnerToast, ToastT } from "sonner"
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+  const { theme = "system" } = useNextTheme()
 
   return (
     <Sonner
@@ -19,6 +19,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
             "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
           cancelButton:
             "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+          error: "group-[.toaster]:bg-destructive group-[.toaster]:text-destructive-foreground group-[.toaster]:border-destructive",
+          success: "group-[.toaster]:bg-primary group-[.toaster]:text-primary-foreground group-[.toaster]:border-primary",
         },
       }}
       {...props}
@@ -26,4 +28,21 @@ const Toaster = ({ ...props }: ToasterProps) => {
   )
 }
 
-export { Toaster }
+// Custom toast with enhanced error styling
+const toast = {
+  ...sonnerToast,
+  error: (message: string, data?: Omit<ToastT, "message">) => {
+    return sonnerToast.error(message, {
+      ...data,
+      className: "error",
+    })
+  },
+  success: (message: string, data?: Omit<ToastT, "message">) => {
+    return sonnerToast.success(message, {
+      ...data,
+      className: "success",
+    })
+  }
+}
+
+export { Toaster, toast }
