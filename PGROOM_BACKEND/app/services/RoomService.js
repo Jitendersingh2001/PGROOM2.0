@@ -22,7 +22,8 @@ class RoomService {
       const totalBed = parseInt(data.totalBeds, 10);
       const uploadedImages = await this.createOrUpdateImages(
         images,
-        propertyId
+        propertyId,
+        data.roomNo
       );
       const Room = await this.repository.addOrUpdateRoom(
         propertyId,
@@ -39,13 +40,13 @@ class RoomService {
     }
   }
 
-  async createOrUpdateImages(images, subFolder, id = null) {
+  async createOrUpdateImages(images, subFolder, roomNo, id = null) {
     try {
-      const roomFolder = `${constant.ROOM_FOLDER}/${subFolder}`;
+      const roomFolder = `${constant.ROOM_FOLDER}/${subFolder}/${roomNo}`;
       if (id) {
         // If an ID is provided, delete the existing folder from S3
         const deletionResult = await deleteFolderFromS3(
-          `${constant.ROOM_FOLDER}/${subFolder}/`
+          roomFolder
         );
         if (!deletionResult) {
           throw new Error(`Failed to delete folder: ${roomFolder}`);
@@ -79,6 +80,7 @@ class RoomService {
       const uploadedImages = await this.createOrUpdateImages(
         images,
         propertyId,
+        data.roomNo,
         id
       );
       const Room = await this.repository.addOrUpdateRoom(
@@ -176,7 +178,7 @@ class RoomService {
       const roomId = parseInt(id, 10);
       const room = await this.repository.getRoom(roomId);
       const deletionResult = await deleteFolderFromS3(
-        `${constant.ROOM_FOLDER}/${room.propertyId}/`
+        `${constant.ROOM_FOLDER}/${room.propertyId}/${room.roomNo}`
       );
       if (!deletionResult) {
         throw new Error(`Failed to delete folder: ${room.propertyId}`);
