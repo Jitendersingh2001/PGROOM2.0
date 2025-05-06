@@ -1,0 +1,134 @@
+import React from 'react';
+import { Home, Users, DoorOpen, Wallet } from 'lucide-react';
+import StatsCard from './StatsCard';
+import TenantsList from './TenantsList';
+import OccupancyChart from './OccupancyChart';
+import { cn } from '@/lib/utils';
+
+// Mock data for the occupancy chart
+const mockOccupancyData = [
+  { name: 'Occupied', value: 18, color: '#10b981', total: 25 },
+  { name: 'Vacant', value: 7, color: '#f59e0b', total: 25 },
+];
+
+// Mock data for the tenants list
+const mockTenants = [
+  {
+    id: 1,
+    name: 'Rahul Sharma',
+    email: 'rahul.sharma@example.com',
+    status: 'active' as const,
+    joinDate: '2023-05-15T00:00:00Z',
+  },
+  {
+    id: 2,
+    name: 'Priya Patel',
+    email: 'priya.patel@example.com',
+    status: 'active' as const,
+    joinDate: '2023-06-02T00:00:00Z',
+  },
+  {
+    id: 3,
+    name: 'Amit Kumar',
+    email: 'amit.kumar@example.com',
+    status: 'invited' as const,
+    joinDate: '2023-06-10T00:00:00Z',
+  },
+  {
+    id: 4,
+    name: 'Sneha Gupta',
+    email: 'sneha.gupta@example.com',
+    status: 'active' as const,
+    joinDate: '2023-06-15T00:00:00Z',
+  },
+];
+
+interface StatsDashboardProps {
+  className?: string;
+  // In a real application, these would be fetched from an API
+  propertyCount?: number;
+  roomCount?: number;
+  assignedRoomCount?: number;
+  totalIncome?: number;
+  tenants?: typeof mockTenants;
+  occupancyData?: typeof mockOccupancyData;
+}
+
+/**
+ * StatsDashboard - A dashboard component displaying key statistics, occupancy chart, and tenant list
+ *
+ * This component is designed to be used in the owner dashboard page.
+ * It displays key metrics, a room occupancy chart, and a list of recent tenants.
+ */
+const StatsDashboard: React.FC<StatsDashboardProps> = ({
+  className,
+  propertyCount = 5,
+  roomCount = 25,
+  assignedRoomCount = 18,
+  totalIncome = 320000,
+  tenants = mockTenants,
+  occupancyData = mockOccupancyData,
+}) => {
+  // Calculate occupancy rate
+  const occupancyRate = roomCount > 0 ? Math.round((assignedRoomCount / roomCount) * 100) : 0;
+
+  // Generate occupancy data based on room counts
+  const generatedOccupancyData = [
+    { name: 'Occupied', value: assignedRoomCount, color: '#10b981', total: roomCount },
+    { name: 'Vacant', value: roomCount - assignedRoomCount, color: '#f59e0b', total: roomCount },
+  ];
+
+  return (
+    <div className={cn("space-y-6", className)}>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard
+          title="Total Properties"
+          value={propertyCount}
+          icon={<Home className="w-5 h-5" />}
+          description="Properties managed"
+        />
+
+        <StatsCard
+          title="Total Rooms"
+          value={roomCount}
+          icon={<DoorOpen className="w-5 h-5" />}
+          description="Available rooms"
+        />
+
+        <StatsCard
+          title="Total Assigned Tenants"
+          value={assignedRoomCount}
+          icon={<Users className="w-5 h-5" />}
+          description="Active tenants"
+        />
+
+        <StatsCard
+          title="Total Income"
+          value={new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            maximumFractionDigits: 0
+          }).format(totalIncome)}
+          icon={<Wallet className="w-5 h-5" />}
+          description="Annual revenue"
+        />
+      </div>
+
+      {/* Charts and Lists */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        {/* Occupancy Chart - Takes up 1/2 of the width on large screens */}
+        <div className="lg:col-span-1">
+          <OccupancyChart data={generatedOccupancyData} className="h-full" />
+        </div>
+
+        {/* Tenants List - Takes up 1/2 of the width on large screens */}
+        <div className="lg:col-span-1">
+          <TenantsList tenants={tenants} className="h-full" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default StatsDashboard;
