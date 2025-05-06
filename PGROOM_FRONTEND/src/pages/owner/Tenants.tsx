@@ -629,7 +629,10 @@ const Tenants: React.FC = () => {
                   Array.from({ length: limit }).map((_, index) => (
                     <TableRow key={`skeleton-${index}`} className="animate-pulse bg-card">
                       <TableCell>
-                        <Skeleton className="h-6 w-[140px]" />
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="h-8 w-8 rounded-full" />
+                          <Skeleton className="h-6 w-[140px]" />
+                        </div>
                       </TableCell>
                       <TableCell><Skeleton className="h-6 w-[200px]" /></TableCell>
                       <TableCell><Skeleton className="h-6 w-[120px]" /></TableCell>
@@ -682,8 +685,23 @@ const Tenants: React.FC = () => {
                       className="group hover:bg-muted/50 transition-colors duration-200 bg-card"
                     >
                       <TableCell>
-                        <div className="font-medium text-foreground">
-                          {tenant.user.firstName} {tenant.user.lastName}
+                        <div className="flex items-center gap-3">
+                          {tenant.user.profileImage ? (
+                            <img
+                              src={tenant.user.profileImage}
+                              alt={`${tenant.user.firstName} ${tenant.user.lastName}`}
+                              className="h-8 w-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                              <span className="text-xs font-medium">
+                                {tenant.user.firstName.charAt(0).toUpperCase()}{tenant.user.lastName.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                          <div className="font-medium text-foreground">
+                            {tenant.user.firstName} {tenant.user.lastName}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
