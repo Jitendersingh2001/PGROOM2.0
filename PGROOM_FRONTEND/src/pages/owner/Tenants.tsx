@@ -5,7 +5,6 @@ import {
   MapPin,
   User,
   UserPlus,
-  ChevronDown,
   X,
   RefreshCw
 } from 'lucide-react';
@@ -55,14 +54,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+
 import {
   Tooltip,
   TooltipContent,
@@ -628,7 +620,7 @@ const Tenants: React.FC = () => {
                   <TableHead className="font-medium text-foreground">Phone</TableHead>
                   <TableHead className="font-medium text-foreground">Location</TableHead>
                   <TableHead className="font-medium text-foreground">Status</TableHead>
-                  <TableHead className="text-right font-medium text-foreground">Actions</TableHead>
+                  <TableHead className="text-right font-medium text-foreground">Assign</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -643,7 +635,7 @@ const Tenants: React.FC = () => {
                       <TableCell><Skeleton className="h-6 w-[120px]" /></TableCell>
                       <TableCell><Skeleton className="h-6 w-[150px]" /></TableCell>
                       <TableCell><Skeleton className="h-6 w-[80px]" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-9 w-[100px] ml-auto" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-9 w-[70px] ml-auto" /></TableCell>
                     </TableRow>
                   ))
                 ) : isError ? (
@@ -724,42 +716,13 @@ const Tenants: React.FC = () => {
                         {renderStatusBadge(tenant.user.status)}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 data-[state=open]:bg-muted"
-                              >
-                                <span className="sr-only">Open menu</span>
-                                <ChevronDown className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-[160px]">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => handleAssignTenant(tenant)}>
-                                Assign to Room
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => toast.info("View details functionality would be implemented here")}>
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => toast.info("Edit tenant functionality would be implemented here")}>
-                                Edit Tenant
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-
-                          <Button
-                            variant="default"
-                            size="sm"
-                            className="ml-2"
-                            onClick={() => handleAssignTenant(tenant)}
-                          >
-                            Assign
-                          </Button>
-                        </div>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleAssignTenant(tenant)}
+                        >
+                          Assign
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
