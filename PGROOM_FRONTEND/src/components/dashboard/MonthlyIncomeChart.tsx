@@ -1,34 +1,55 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import {
   BarChart,
   Bar,
   XAxis,
-  YAxis,
   CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from 'recharts';
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart';
 
+/**
+ * Props for the MonthlyIncomeChart component
+ *
+ * @property data - Array of data points with month name and income value
+ * @property className - Optional additional class names
+ * @property title - Optional chart title (defaults to "Monthly Income")
+ * @property description - Optional chart description (defaults to "January - June dynamic year")
+ */
 interface MonthlyIncomeChartProps {
   data: {
     name: string;
     income: number;
   }[];
   className?: string;
+  title?: string;
+  description?: string;
 }
 
 /**
  * MonthlyIncomeChart - A component for displaying monthly income data
  *
- * @param data - Array of data points with month name and income value
- * @param className - Optional additional class names
+ * This component uses the ChartContainer from the UI library to ensure
+ * proper theming and responsive behavior. The chart is optimized to fit
+ * properly in its container and follows modern React best practices.
+ *
+ * @param props - Component props
+ * @returns A React component
  */
-const MonthlyIncomeChart: React.FC<MonthlyIncomeChartProps> = ({ data, className }) => {
+const MonthlyIncomeChart: React.FC<MonthlyIncomeChartProps> = ({
+  data,
+  className,
+  title = "Monthly Income",
+  description = `January - December 2025`
+}) => {
   // Format currency values
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
@@ -37,72 +58,98 @@ const MonthlyIncomeChart: React.FC<MonthlyIncomeChartProps> = ({ data, className
     }).format(value);
   };
 
-  // Custom tooltip component
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg">
-          <p className="font-medium text-gray-600 dark:text-gray-300">{`${label}`}</p>
-          <p className="text-green-600 dark:text-green-400 font-bold">
-            {formatCurrency(payload[0].value)}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
+  // Memoize chart configuration to prevent unnecessary re-renders
+  const chartConfig = useMemo<ChartConfig>(() => ({
+    income: {
+      label: "Monthly Income",
+      theme: {
+        light: "hsl(var(--primary))", // Use the primary green color from theme
+        dark: "hsl(var(--primary))",  // Same for dark mode
+      },
+    },
+  }), []);
+
+  // Memoize the formatter function to prevent unnecessary re-renders
+  const currencyFormatter = useMemo(() => (
+    (value: number): string => formatCurrency(value)
+  ), []);
+
+  // Error handling for empty data
+  if (!data || data.length === 0) {
+    return (
+      <Card className={cn("shadow-md", className)}>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-[300px]">
+          <p className="text-muted-foreground">No data available</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className={cn("shadow-md", className)}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium">Monthly Income</CardTitle>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent className="p-6">
-        <div style={{ width: '100%', height: 300 }}>
-          <ResponsiveContainer width="100%" height="100%">
+      <CardContent>
+        {/* Use a responsive container that adapts to its parent */}
+        <div className="w-full h-[300px]">
+          {/* Override the aspect-video class that's causing the fitting issue */}
+          <ChartContainer
+            config={chartConfig}
+            className="!aspect-auto h-full w-full overflow-visible"
+          >
             <BarChart
               data={data}
-              margin={{ top: 10, right: 30, left: 10, bottom: 50 }}
+              // Adjust margins to ensure chart fits properly
+              margin={{ top: 20, right: 20, left: 10, bottom: 5 }}
+              barSize={90}
+              barGap={1}
               barCategoryGap={1}
-              barGap={0}
             >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <CartesianGrid
+                vertical={false}
+                strokeDasharray="3 3"
+              />
               <XAxis
                 dataKey="name"
-                tick={{ fill: '#888888', fontSize: 9 }}
-                interval={0}
-                angle={-45}
-                textAnchor="end"
-                height={60}
-                tickMargin={8}
+                tickLine={false}
+                tickMargin={10}
+                axisLine={false}
+                // Format month names to show only first 3 characters
+                tickFormatter={(value) => value.slice(0, 3)}
+                // Ensure X-axis fits properly
+                padding={{ left: 10, right: 10 }}
               />
-              <YAxis
-                tickFormatter={(value) => `₹${value / 1000}k`}
-                tick={{ fill: '#888888', fontSize: 12 }}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend
-                wrapperStyle={{
-                  paddingTop: '10px',
-                  fontSize: '12px'
-                }}
-                iconType="square"
-                iconSize={10}
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    formatter={currencyFormatter}
+                    hideLabel={false}
+                  />
+                }
               />
               <Bar
                 dataKey="income"
-                name="Monthly Income"
-                fill="#10b981"
-                radius={[4, 4, 0, 0]}
-                barSize={32}
-                maxBarSize={40}
+                fill="var(--color-income)"
+                radius={[8, 8, 0, 0]}
+                // Add accessibility attributes
+                role="graphics-symbol"
+                aria-label="Monthly income data"
+                // Ensure bars are properly sized
+                maxBarSize={80}
               />
             </BarChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         </div>
       </CardContent>
     </Card>
   );
 };
 
-export default MonthlyIncomeChart;
+export default React.memo(MonthlyIncomeChart);

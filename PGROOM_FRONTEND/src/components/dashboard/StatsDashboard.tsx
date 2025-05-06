@@ -8,8 +8,8 @@ import { cn } from '@/lib/utils';
 
 // Mock data for the occupancy chart
 const mockOccupancyData = [
-  { name: 'Occupied', value: 18, color: '#10b981', total: 25 },
-  { name: 'Vacant', value: 7, color: '#f59e0b', total: 25 },
+  { name: 'Occupied', value: 18, color: 'hsl(var(--primary))', total: 25 },
+  { name: 'Available', value: 7, color: '#f59e0b', total: 25 },
 ];
 
 // Mock data for the tenants list
@@ -94,8 +94,8 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({
 
   // Generate occupancy data based on room counts
   const generatedOccupancyData = [
-    { name: 'Occupied', value: assignedRoomCount, color: '#10b981', total: roomCount },
-    { name: 'Vacant', value: roomCount - assignedRoomCount, color: '#f59e0b', total: roomCount },
+    { name: 'Occupied', value: assignedRoomCount, color: 'hsl(var(--primary))', total: roomCount },
+    { name: 'Available', value: roomCount - assignedRoomCount, color: '#f59e0b', total: roomCount },
   ];
 
   return (
