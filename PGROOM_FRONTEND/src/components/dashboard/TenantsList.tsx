@@ -19,7 +19,7 @@ interface TenantsListProps {
 
 /**
  * TenantsList - A component for displaying a list of recent tenants
- * 
+ *
  * @param tenants - Array of tenant objects
  * @param className - Optional additional class names
  */
@@ -49,16 +49,16 @@ const TenantsList: React.FC<TenantsListProps> = ({ tenants, className }) => {
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-medium">Recent Tenants</CardTitle>
       </CardHeader>
-      <CardContent className="px-2">
+      <CardContent className="px-2 h-full">
         <div className="space-y-4">
           {tenants.map(tenant => (
             <div key={tenant.id} className="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
               {/* Avatar or Initials */}
               {tenant.avatarUrl ? (
                 <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
-                  <img 
-                    src={tenant.avatarUrl} 
-                    alt={tenant.name} 
+                  <img
+                    src={tenant.avatarUrl}
+                    alt={tenant.name}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -67,7 +67,7 @@ const TenantsList: React.FC<TenantsListProps> = ({ tenants, className }) => {
                   <span className="text-sm font-medium">{getInitials(tenant.name)}</span>
                 </div>
               )}
-              
+
               {/* Tenant Info */}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
@@ -77,13 +77,13 @@ const TenantsList: React.FC<TenantsListProps> = ({ tenants, className }) => {
                   {tenant.email}
                 </p>
               </div>
-              
+
               {/* Status Badge */}
               <div className="flex flex-col items-end ml-2">
-                <Badge 
+                <Badge
                   className={cn(
                     "text-xs font-medium",
-                    tenant.status === 'active' 
+                    tenant.status === 'active'
                       ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40"
                       : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900/40"
                   )}
@@ -96,7 +96,7 @@ const TenantsList: React.FC<TenantsListProps> = ({ tenants, className }) => {
               </div>
             </div>
           ))}
-          
+
           {tenants.length === 0 && (
             <div className="text-center py-4 text-gray-500 dark:text-gray-400">
               No tenants found

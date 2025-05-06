@@ -3,6 +3,7 @@ import { Home, Users, DoorOpen, Wallet } from 'lucide-react';
 import StatsCard from './StatsCard';
 import TenantsList from './TenantsList';
 import OccupancyChart from './OccupancyChart';
+import MonthlyIncomeChart from './MonthlyIncomeChart';
 import { cn } from '@/lib/utils';
 
 // Mock data for the occupancy chart
@@ -43,6 +44,22 @@ const mockTenants = [
   },
 ];
 
+// Mock data for monthly income chart
+const mockMonthlyIncomeData = [
+  { name: 'Jan', income: 25000 },
+  { name: 'Feb', income: 28000 },
+  { name: 'Mar', income: 32000 },
+  { name: 'Apr', income: 30000 },
+  { name: 'May', income: 35000 },
+  { name: 'Jun', income: 38000 },
+  { name: 'Jul', income: 42000 },
+  { name: 'Aug', income: 45000 },
+  { name: 'Sep', income: 40000 },
+  { name: 'Oct', income: 38000 },
+  { name: 'Nov', income: 35000 },
+  { name: 'Dec', income: 32000 },
+];
+
 interface StatsDashboardProps {
   className?: string;
   // In a real application, these would be fetched from an API
@@ -52,13 +69,15 @@ interface StatsDashboardProps {
   totalIncome?: number;
   tenants?: typeof mockTenants;
   occupancyData?: typeof mockOccupancyData;
+  monthlyIncomeData?: typeof mockMonthlyIncomeData;
 }
 
 /**
- * StatsDashboard - A dashboard component displaying key statistics, occupancy chart, and tenant list
+ * StatsDashboard - A dashboard component displaying key statistics, charts, and tenant list
  *
  * This component is designed to be used in the owner dashboard page.
- * It displays key metrics, a room occupancy chart, and a list of recent tenants.
+ * It displays key metrics, a monthly income chart, a room occupancy chart,
+ * and a list of recent tenants.
  */
 const StatsDashboard: React.FC<StatsDashboardProps> = ({
   className,
@@ -68,6 +87,7 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({
   totalIncome = 320000,
   tenants = mockTenants,
   occupancyData = mockOccupancyData,
+  monthlyIncomeData = mockMonthlyIncomeData,
 }) => {
   // Calculate occupancy rate
   const occupancyRate = roomCount > 0 ? Math.round((assignedRoomCount / roomCount) * 100) : 0;
@@ -79,7 +99,7 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({
   ];
 
   return (
-    <div className={cn("space-y-6", className)}>
+    <div className={cn("space-y-4", className)}>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
@@ -115,15 +135,20 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({
         />
       </div>
 
+      {/* Monthly Income Chart - Full width */}
+      <div className="mt-8 mb-8">
+        <MonthlyIncomeChart data={monthlyIncomeData} />
+      </div>
+
       {/* Charts and Lists */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Occupancy Chart - Takes up 1/2 of the width on large screens */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 h-full">
           <OccupancyChart data={generatedOccupancyData} className="h-full" />
         </div>
 
         {/* Tenants List - Takes up 1/2 of the width on large screens */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 h-full">
           <TenantsList tenants={tenants} className="h-full" />
         </div>
       </div>

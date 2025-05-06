@@ -21,7 +21,7 @@ interface OccupancyChartProps {
 
 /**
  * OccupancyChart - A component for displaying room occupancy as a donut chart
- * 
+ *
  * @param data - Array of data points with name, value, and color
  * @param className - Optional additional class names
  */
@@ -32,8 +32,8 @@ const OccupancyChart: React.FC<OccupancyChartProps> = ({ data, className }) => {
         <CardTitle className="text-base font-medium">Room Occupancy</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[240px] flex items-center justify-center">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="h-full flex items-center justify-center">
+          <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
                 data={data}
@@ -80,7 +80,7 @@ const OccupancyChart: React.FC<OccupancyChartProps> = ({ data, className }) => {
                   return null;
                 }}
               />
-              <Legend 
+              <Legend
                 formatter={(value, entry, index) => {
                   const { payload } = entry;
                   const percent = ((payload.value / payload.total) * 100).toFixed(0);
