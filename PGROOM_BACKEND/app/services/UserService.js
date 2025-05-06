@@ -16,8 +16,11 @@ class userService {
       const page = Number(data.page) || 1;
       const limit = Number(data.limit) || 10;
       const searchFields = ["firstName", "lastName"];
-      const status = data?.status ??  null;
-
+      const status = data?.status ?? null;
+      const additionalColumns = ["mobileNo"];
+      const stateId = Number(data.stateId) ?? null;
+      const cityId = Number(data.cityId) ?? null;
+      
       // Fetch users and tenant user IDs
       const [users, tenantUserIds] = await Promise.all([
         this.repository.getUsersByRoleId(
@@ -26,7 +29,10 @@ class userService {
           searchFields,
           status,
           page,
-          limit
+          limit,
+          additionalColumns,
+          stateId,
+          cityId
         ),
         this.tenantRepository.getTenantUserIds(),
       ]);

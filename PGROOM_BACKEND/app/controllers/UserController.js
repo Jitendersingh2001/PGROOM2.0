@@ -15,7 +15,7 @@ class UserController extends Controller {
    */
   getTenants = async (req, res) => {
       try {
-      const result = await this.userService.getTenants(req.query);
+      const result = await this.userService.getTenants(req.body);
       this.sendResponse(
         res,
         result,

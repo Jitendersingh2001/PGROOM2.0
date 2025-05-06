@@ -34,7 +34,9 @@ class userRepository {
     status,
     page,
     limit,
-    additionalColumns = []
+    additionalColumns = [],
+    stateId = null,
+    cityId = null
   ) {
     try {
       const defaultColumns = {
@@ -45,17 +47,16 @@ class userRepository {
         status: true,
       };
   
-      const searchConditions = this.#buildSearchConditions(
-        searchInput,
-        searchFields
-      );
-      const selectedColumns = this.#buildSelectedColumns(
-        defaultColumns,
-        additionalColumns
-      );
+      const searchConditions = this.#buildSearchConditions(searchInput, searchFields);
+      const selectedColumns = this.#buildSelectedColumns(defaultColumns, additionalColumns);
+  
+      selectedColumns.state = { select: { stateName: true } };
+      selectedColumns.city = { select: { cityName: true } };
   
       const userWhere = {
-        ...(status ? { status } : { NOT: { status: 'Deleted' } }),
+        ...(status ? { status } : { NOT: { status: "Deleted" } }),
+        ...(stateId && { stateId }),
+        ...(cityId && { cityId }),
         OR: searchConditions,
       };
   

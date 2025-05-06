@@ -6,27 +6,23 @@ import { ApiResponse } from '@/lib/types/api';
  * Tenant user interface
  */
 export interface TenantUser {
-  id: number;
+  id?: number;
   user: {
     id: number;
     firstName: string;
     lastName: string;
     email: string;
-    mobileNo: string;
+    mobileNo?: string;
     address?: string;
     stateId?: number;
     cityId?: number;
     state?: {
-      id: number;
       stateName: string;
     };
     city?: {
-      id: number;
       cityName: string;
     };
     profileImage?: string;
-    occupation?: string;
-    moveInDate?: string;
     status?: 'Active' | 'Inactive' | 'Invited';
   };
 }
@@ -54,6 +50,9 @@ export interface TenantPaginationParams {
     search?: string;
     state?: number;
     city?: number;
+    status?: 'Active' | 'Invited';
+    sortField?: 'name' | 'email' | 'location';
+    sortDirection?: 'asc' | 'desc';
   };
 }
 
@@ -68,24 +67,17 @@ export const tenantService = {
   getTenants: async (params: TenantPaginationParams): Promise<ApiResponse<TenantListResponse>> => {
     const { page, limit, filters } = params;
 
-    // Create query parameters
-    const queryParams = new URLSearchParams();
-    queryParams.append('page', String(page));
-    queryParams.append('limit', String(limit));
+    // Create payload for POST request
+    const payload = {
+      stateId: filters?.state ? String(filters.state) : "",
+      cityId: filters?.city ? String(filters.city) : "",
+      status: filters?.status || "Active",
+      page,
+      limit,
+      search: filters?.search || ""
+    };
 
-    if (filters?.search) {
-      queryParams.append('search', filters.search);
-    }
-
-    if (filters?.state) {
-      queryParams.append('state', String(filters.state));
-    }
-
-    if (filters?.city) {
-      queryParams.append('city', String(filters.city));
-    }
-
-    return apiService.get(`${endpoints.TENANT.LIST}?${queryParams.toString()}`);
+    return apiService.post(endpoints.TENANT.LIST, payload);
   },
 
   /**

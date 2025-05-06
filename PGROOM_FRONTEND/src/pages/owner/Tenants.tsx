@@ -1,19 +1,18 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Search,
   Loader2,
   MapPin,
-  Filter,
   User,
   UserPlus,
-  ArrowUpDown,
   ChevronDown,
   X,
   RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
 import AssignTenantDialog from '@/components/tenant/AssignTenantDialog';
-import { useLocation, State, City } from '@/contexts/LocationContext';
+import { useLocation, City } from '@/contexts/LocationContext';
+import { tenantService, TenantUser, TenantListResponse } from '@/lib/api/services/tenantService';
 
 // Layout components
 import OwnerNavbar from '@/components/owner/OwnerNavbar';
@@ -41,7 +40,6 @@ import {
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -54,7 +52,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -72,10 +69,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
 
-// API and types
-import { TenantUser } from '@/lib/api/services/tenantService';
 
 /**
  * Tenants - Owner's tenant management page
@@ -102,47 +96,12 @@ const Tenants: React.FC = () => {
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<TenantUser | null>(null);
 
-  // State for sorting
-  type SortField = 'name' | 'email' | 'location';
-  type SortDirection = 'asc' | 'desc';
+  // State for status filter
   type StatusFilter = 'Active' | 'Invited';
-
-  const [sortField, setSortField] = useState<SortField>('name');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('Active');
 
-  // Mock location data
-  const mockStates = useMemo(() => [
-    { id: 1, stateName: 'California' },
-    { id: 2, stateName: 'New York' },
-    { id: 3, stateName: 'Texas' }
-  ], []);
-
-  const mockCities = {
-    1: [
-      { id: 1, cityName: 'Los Angeles' },
-      { id: 3, cityName: 'San Francisco' }
-    ],
-    2: [
-      { id: 2, cityName: 'New York City' },
-      { id: 5, cityName: 'Buffalo' }
-    ],
-    3: [
-      { id: 4, cityName: 'Austin' },
-      { id: 6, cityName: 'Houston' }
-    ]
-  };
-
-  // Override the useLocation hook with our mock data
-  const { states, getCitiesByStateId, loadCities } = {
-    states: mockStates,
-    getCitiesByStateId: (stateId: number) => mockCities[stateId] || [],
-    loadCities: async (stateId: number) => {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return mockCities[stateId] || [];
-    }
-  };
+  // Use the real location context
+  const { states, loadCities } = useLocation();
 
   // Debounce search query
   useEffect(() => {
@@ -184,241 +143,61 @@ const Tenants: React.FC = () => {
     setStateCities([]);
     setStatusFilter('Active'); // Reset to default 'Active' status
     setPage(1);
+
+    // Fetch data with reset filters
+    // This will be triggered by the useEffect that depends on the filters
   };
 
-  // Mock tenant data
-  const mockTenants = useMemo<TenantUser[]>(() => [
-    {
-      id: 1,
-      user: {
-        id: 101,
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@example.com',
-        mobileNo: '(123) 456-7890',
-        address: '123 Main St, Apt 4B',
-        stateId: 1,
-        cityId: 1,
-        profileImage: 'https://randomuser.me/api/portraits/men/1.jpg',
-        occupation: 'Software Engineer',
-        moveInDate: '2023-06-15',
-        status: 'Active'
-      }
-    },
-    {
-      id: 2,
-      user: {
-        id: 102,
-        firstName: 'Jane',
-        lastName: 'Smith',
-        email: 'jane.smith@example.com',
-        mobileNo: '(987) 654-3210',
-        address: '456 Oak Ave, Suite 7',
-        stateId: 2,
-        cityId: 2,
-        profileImage: 'https://randomuser.me/api/portraits/women/2.jpg',
-        occupation: 'Marketing Manager',
-        moveInDate: '2023-04-10',
-        status: 'Active'
-      }
-    },
-    {
-      id: 3,
-      user: {
-        id: 103,
-        firstName: 'Michael',
-        lastName: 'Johnson',
-        email: 'michael.johnson@example.com',
-        mobileNo: '(555) 123-4567',
-        address: '789 Pine Rd',
-        stateId: 1,
-        cityId: 3,
-        profileImage: 'https://randomuser.me/api/portraits/men/3.jpg',
-        occupation: 'Doctor',
-        moveInDate: '2023-07-22',
-        status: 'Invited'
-      }
-    },
-    {
-      id: 4,
-      user: {
-        id: 104,
-        firstName: 'Emily',
-        lastName: 'Williams',
-        email: 'emily.williams@example.com',
-        mobileNo: '(777) 888-9999',
-        address: '321 Elm St, Unit 12',
-        stateId: 3,
-        cityId: 4,
-        profileImage: 'https://randomuser.me/api/portraits/women/4.jpg',
-        occupation: 'Graphic Designer',
-        moveInDate: '2023-05-05',
-        status: 'Active'
-      }
-    },
-    {
-      id: 5,
-      user: {
-        id: 105,
-        firstName: 'David',
-        lastName: 'Brown',
-        email: 'david.brown@example.com',
-        mobileNo: '(333) 444-5555',
-        address: '654 Maple Dr',
-        stateId: 2,
-        cityId: 5,
-        profileImage: 'https://randomuser.me/api/portraits/men/5.jpg',
-        occupation: 'Financial Analyst',
-        moveInDate: '2023-08-01',
-        status: 'Invited'
-      }
-    },
-    {
-      id: 6,
-      user: {
-        id: 106,
-        firstName: 'Sarah',
-        lastName: 'Miller',
-        email: 'sarah.miller@example.com',
-        mobileNo: '(222) 333-4444',
-        address: '987 Cedar Ln',
-        stateId: 3,
-        cityId: 4,
-        profileImage: 'https://randomuser.me/api/portraits/women/6.jpg',
-        occupation: 'Teacher',
-        moveInDate: '2023-03-15',
-        status: 'Active'
-      }
-    },
-    {
-      id: 7,
-      user: {
-        id: 107,
-        firstName: 'James',
-        lastName: 'Wilson',
-        email: 'james.wilson@example.com',
-        mobileNo: '(444) 555-6666',
-        address: '753 Birch Ave',
-        stateId: 1,
-        cityId: 1,
-        profileImage: 'https://randomuser.me/api/portraits/men/7.jpg',
-        occupation: 'Architect',
-        moveInDate: '2023-09-10',
-        status: 'Invited'
-      }
-    },
-    {
-      id: 8,
-      user: {
-        id: 108,
-        firstName: 'Jessica',
-        lastName: 'Taylor',
-        email: 'jessica.taylor@example.com',
-        mobileNo: '(666) 777-8888',
-        address: '159 Walnut St',
-        stateId: 2,
-        cityId: 2,
-        profileImage: 'https://randomuser.me/api/portraits/women/8.jpg',
-        occupation: 'Nurse',
-        moveInDate: '2023-02-20',
-        status: 'Active'
-      }
+  // State for tenant data
+  const [tenantsData, setTenantsData] = useState<TenantListResponse>({
+    data: [],
+    meta: {
+      total: 0,
+      page: 1,
+      limit: 10,
+      totalPages: 1
     }
-  ] as TenantUser[], []);
-
-  // Filter, sort, and paginate mock data
-  const filteredAndSortedTenants = useMemo(() => {
-    let result = [...mockTenants];
-
-    // Apply search filter - only search by name as per requirements
-    if (debouncedSearchQuery) {
-      const searchLower = debouncedSearchQuery.toLowerCase();
-      result = result.filter(tenant =>
-        tenant.user.firstName.toLowerCase().includes(searchLower) ||
-        tenant.user.lastName.toLowerCase().includes(searchLower) ||
-        `${tenant.user.firstName} ${tenant.user.lastName}`.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Apply state filter
-    if (selectedStateId) {
-      result = result.filter(tenant => tenant.user.stateId === selectedStateId);
-    }
-
-    // Apply city filter
-    if (selectedCityId) {
-      result = result.filter(tenant => tenant.user.cityId === selectedCityId);
-    }
-
-    // Apply status filter
-    result = result.filter(tenant => tenant.user.status === statusFilter);
-
-    // Apply sorting
-    result.sort((a, b) => {
-      let comparison = 0;
-
-      // Variables for case blocks
-      let nameA, nameB, stateA, stateB;
-
-      switch (sortField) {
-        case 'name':
-          nameA = `${a.user.firstName} ${a.user.lastName}`.toLowerCase();
-          nameB = `${b.user.firstName} ${b.user.lastName}`.toLowerCase();
-          comparison = nameA.localeCompare(nameB);
-          break;
-        case 'email':
-          comparison = a.user.email.toLowerCase().localeCompare(b.user.email.toLowerCase());
-          break;
-        case 'location':
-          stateA = mockStates.find(s => s.id === a.user.stateId)?.stateName || '';
-          stateB = mockStates.find(s => s.id === b.user.stateId)?.stateName || '';
-          comparison = stateA.localeCompare(stateB);
-          break;
-        default:
-          comparison = 0;
-      }
-
-      // Reverse the comparison if sorting in descending order
-      return sortDirection === 'asc' ? comparison : -comparison;
-    });
-
-    return result;
-  }, [mockTenants, debouncedSearchQuery, selectedStateId, selectedCityId, sortField, sortDirection, statusFilter, mockStates]);
-
-  // Calculate total pages
-  React.useEffect(() => {
-    setTotalPages(Math.ceil(filteredAndSortedTenants.length / limit) || 1);
-  }, [filteredAndSortedTenants, limit]);
-
-  // Get current page data
-  const paginatedTenants = React.useMemo(() => {
-    const startIndex = (page - 1) * limit;
-    return filteredAndSortedTenants.slice(startIndex, startIndex + limit);
-  }, [filteredAndSortedTenants, page, limit]);
-
-  // Mock loading state for UI demonstration
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
 
-  // Simulate loading delay
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
+  // Fetch tenants data
+  const fetchTenants = useCallback(async () => {
+    setIsLoading(true);
+    setIsError(false);
+
+    try {
+      const response = await tenantService.getTenants({
+        page,
+        limit,
+        filters: {
+          search: debouncedSearchQuery,
+          state: selectedStateId || undefined,
+          city: selectedCityId || undefined,
+          status: statusFilter
+        }
+      });
+
+      if (response.statusCode === 200 && response.data) {
+        setTenantsData(response.data);
+        setTotalPages(response.data.meta.totalPages);
+      } else {
+        setIsError(true);
+        toast.error(response.message || 'Failed to fetch tenants');
+      }
+    } catch (error) {
+      setIsError(true);
+      toast.error('An error occurred while fetching tenants');
+      console.error('Error fetching tenants:', error);
+    } finally {
       setIsLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Create a mock data structure that matches what the component expects
-  const tenantsData = {
-    data: paginatedTenants,
-    meta: {
-      total: filteredAndSortedTenants.length,
-      page,
-      limit,
-      totalPages
     }
-  };
+  }, [page, limit, debouncedSearchQuery, selectedStateId, selectedCityId, statusFilter]);
+
+  // Fetch tenants when filters change
+  useEffect(() => {
+    fetchTenants();
+  }, [fetchTenants]);
 
   // Generate pagination items
   const renderPaginationItems = useCallback(() => {
@@ -429,7 +208,12 @@ const Tenants: React.FC = () => {
       <PaginationItem key="first">
         <PaginationLink
           isActive={page === 1}
-          onClick={() => setPage(1)}
+          onClick={() => {
+            if (page !== 1) {
+              setPage(1);
+              // fetchTenants will be triggered by the useEffect that depends on page
+            }
+          }}
         >
           1
         </PaginationLink>
@@ -452,7 +236,12 @@ const Tenants: React.FC = () => {
         <PaginationItem key={i}>
           <PaginationLink
             isActive={page === i}
-            onClick={() => setPage(i)}
+            onClick={() => {
+              if (page !== i) {
+                setPage(i);
+                // fetchTenants will be triggered by the useEffect that depends on page
+              }
+            }}
           >
             {i}
           </PaginationLink>
@@ -475,7 +264,12 @@ const Tenants: React.FC = () => {
         <PaginationItem key="last">
           <PaginationLink
             isActive={page === totalPages}
-            onClick={() => setPage(totalPages)}
+            onClick={() => {
+              if (page !== totalPages) {
+                setPage(totalPages);
+                // fetchTenants will be triggered by the useEffect that depends on page
+              }
+            }}
           >
             {totalPages}
           </PaginationLink>
@@ -488,7 +282,7 @@ const Tenants: React.FC = () => {
 
   // Helper function to render location based on available data
   const renderLocation = (user: TenantUser['user']) => {
-    // If we have state and city objects with names
+    // If we have state and city objects with names from the API
     if (user.state?.stateName && user.city?.cityName) {
       return `${user.state.stateName}, ${user.city.cityName}`;
     }
@@ -564,17 +358,7 @@ const Tenants: React.FC = () => {
     }
   };
 
-  // Handle sorting
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      // If already sorting by this field, toggle direction
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      // If sorting by a new field, set it and default to ascending
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
+
 
   // Handle assign tenant
   const handleAssignTenant = (tenant: TenantUser) => {
@@ -839,49 +623,10 @@ const Tenants: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/50 border-b border-border">
-                  <TableHead className="font-medium text-foreground">
-                    <button
-                      className="flex items-center gap-1 hover:text-primary transition-colors"
-                      onClick={() => handleSort('name')}
-                      aria-label={`Sort by name ${sortField === 'name' ? (sortDirection === 'asc' ? 'descending' : 'ascending') : 'ascending'}`}
-                    >
-                      Name
-                      <ArrowUpDown className={cn(
-                        "h-4 w-4 transition-transform duration-200",
-                        sortField === 'name' && "text-primary",
-                        sortField === 'name' && sortDirection === 'desc' && "rotate-180"
-                      )} />
-                    </button>
-                  </TableHead>
-                  <TableHead className="font-medium text-foreground">
-                    <button
-                      className="flex items-center gap-1 hover:text-primary transition-colors"
-                      onClick={() => handleSort('email')}
-                      aria-label={`Sort by email ${sortField === 'email' ? (sortDirection === 'asc' ? 'descending' : 'ascending') : 'ascending'}`}
-                    >
-                      Email
-                      <ArrowUpDown className={cn(
-                        "h-4 w-4 transition-transform duration-200",
-                        sortField === 'email' && "text-primary",
-                        sortField === 'email' && sortDirection === 'desc' && "rotate-180"
-                      )} />
-                    </button>
-                  </TableHead>
+                  <TableHead className="font-medium text-foreground">Name</TableHead>
+                  <TableHead className="font-medium text-foreground">Email</TableHead>
                   <TableHead className="font-medium text-foreground">Phone</TableHead>
-                  <TableHead className="font-medium text-foreground">
-                    <button
-                      className="flex items-center gap-1 hover:text-primary transition-colors"
-                      onClick={() => handleSort('location')}
-                      aria-label={`Sort by location ${sortField === 'location' ? (sortDirection === 'asc' ? 'descending' : 'ascending') : 'ascending'}`}
-                    >
-                      Location
-                      <ArrowUpDown className={cn(
-                        "h-4 w-4 transition-transform duration-200",
-                        sortField === 'location' && "text-primary",
-                        sortField === 'location' && sortDirection === 'desc' && "rotate-180"
-                      )} />
-                    </button>
-                  </TableHead>
+                  <TableHead className="font-medium text-foreground">Location</TableHead>
                   <TableHead className="font-medium text-foreground">Status</TableHead>
                   <TableHead className="text-right font-medium text-foreground">Actions</TableHead>
                 </TableRow>
@@ -892,10 +637,7 @@ const Tenants: React.FC = () => {
                   Array.from({ length: limit }).map((_, index) => (
                     <TableRow key={`skeleton-${index}`} className="animate-pulse bg-card">
                       <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Skeleton className="h-10 w-10 rounded-full" />
-                          <Skeleton className="h-6 w-[140px]" />
-                        </div>
+                        <Skeleton className="h-6 w-[140px]" />
                       </TableCell>
                       <TableCell><Skeleton className="h-6 w-[200px]" /></TableCell>
                       <TableCell><Skeleton className="h-6 w-[120px]" /></TableCell>
@@ -914,7 +656,7 @@ const Tenants: React.FC = () => {
                         </svg>
                         <p className="text-lg font-medium">Failed to load tenants</p>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Please try again or contact support</p>
-                        <Button variant="outline" className="mt-4" onClick={() => setIsLoading(true)}>
+                        <Button variant="outline" className="mt-4" onClick={fetchTenants}>
                           Try Again
                         </Button>
                       </div>
@@ -948,28 +690,8 @@ const Tenants: React.FC = () => {
                       className="group hover:bg-muted/50 transition-colors duration-200 bg-card"
                     >
                       <TableCell>
-                        <div className="flex items-center gap-3">
-                          {tenant.user.profileImage ? (
-                            <img
-                              src={tenant.user.profileImage}
-                              alt={`${tenant.user.firstName} ${tenant.user.lastName}`}
-                              className="h-10 w-10 rounded-full object-cover border border-gray-200 dark:border-gray-800"
-                            />
-                          ) : (
-                            <div className="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                              <User className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                            </div>
-                          )}
-                          <div>
-                            <div className="font-medium text-foreground">
-                              {tenant.user.firstName} {tenant.user.lastName}
-                            </div>
-                            {tenant.user.occupation && (
-                              <div className="text-xs text-muted-foreground">
-                                {tenant.user.occupation}
-                              </div>
-                            )}
-                          </div>
+                        <div className="font-medium text-foreground">
+                          {tenant.user.firstName} {tenant.user.lastName}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -981,12 +703,16 @@ const Tenants: React.FC = () => {
                         </a>
                       </TableCell>
                       <TableCell>
-                        <a
-                          href={`tel:${tenant.user.mobileNo}`}
-                          className="text-foreground/80 hover:text-primary hover:underline transition-colors"
-                        >
-                          {tenant.user.mobileNo}
-                        </a>
+                        {tenant.user.mobileNo ? (
+                          <a
+                            href={`tel:${tenant.user.mobileNo}`}
+                            className="text-foreground/80 hover:text-primary hover:underline transition-colors"
+                          >
+                            {tenant.user.mobileNo}
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">Not available</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center">
@@ -1043,14 +769,19 @@ const Tenants: React.FC = () => {
           </div>
         </Card>
 
-        {/* Pagination */}
-        {!isLoading && !isError && tenantsData?.data.length > 0 && (
+        {/* Pagination - Only show if total count is more than the current limit */}
+        {!isLoading && !isError && tenantsData?.data.length > 0 && tenantsData?.meta?.total > limit && (
           <div className="flex justify-center mt-6 mb-2">
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    onClick={() => {
+                      if (page > 1) {
+                        setPage(p => p - 1);
+                        // fetchTenants will be triggered by the useEffect that depends on page
+                      }
+                    }}
                     aria-disabled={page === 1}
                     className={page === 1 ? "opacity-50 pointer-events-none" : "hover:bg-primary/5"}
                   />
@@ -1060,7 +791,12 @@ const Tenants: React.FC = () => {
 
                 <PaginationItem>
                   <PaginationNext
-                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    onClick={() => {
+                      if (page < totalPages) {
+                        setPage(p => p + 1);
+                        // fetchTenants will be triggered by the useEffect that depends on page
+                      }
+                    }}
                     aria-disabled={page === totalPages}
                     className={page === totalPages ? "opacity-50 pointer-events-none" : "hover:bg-primary/5"}
                   />

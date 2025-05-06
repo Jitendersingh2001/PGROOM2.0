@@ -68,7 +68,7 @@ router
 /**
  * USER ROUTES
  */
-router.get("/getTenants", controller.UserController.getTenants);
+router.post("/getTenants", controller.UserController.getTenants);
 
 /**
  * TENANT ROUTES
