@@ -16,6 +16,7 @@ class userService {
       const page = Number(data.page) || 1;
       const limit = Number(data.limit) || 10;
       const searchFields = ["firstName", "lastName"];
+      const status = data?.status ??  null;
 
       // Fetch users and tenant user IDs
       const [users, tenantUserIds] = await Promise.all([
@@ -23,6 +24,7 @@ class userService {
           constant.TENANT_ROLE_ID,
           data.search,
           searchFields,
+          status,
           page,
           limit
         ),

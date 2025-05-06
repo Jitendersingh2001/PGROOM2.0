@@ -31,6 +31,7 @@ class userRepository {
     roleId,
     searchInput,
     searchFields,
+    status,
     page,
     limit,
     additionalColumns = []
@@ -43,7 +44,7 @@ class userRepository {
         email: true,
         status: true,
       };
-      // Build reusable components
+  
       const searchConditions = this.#buildSearchConditions(
         searchInput,
         searchFields
@@ -52,14 +53,16 @@ class userRepository {
         defaultColumns,
         additionalColumns
       );
-
+  
+      const userWhere = {
+        ...(status ? { status } : { NOT: { status: 'Deleted' } }),
+        OR: searchConditions,
+      };
+  
       const queryOptions = {
         where: {
-          roleId: roleId,
-          user: {
-            status: constant.ACTIVE,
-            OR: searchConditions,
-          },
+          roleId,
+          user: userWhere,
         },
         select: {
           user: {
@@ -67,11 +70,13 @@ class userRepository {
           },
         },
       };
+  
       return this.baseRepository.paginate(queryOptions, page, limit);
     } catch (error) {
       throw error;
     }
   }
+  
 }
 
 module.exports = new userRepository();

@@ -195,17 +195,10 @@ const Rooms: React.FC = () => {
           {/* Breadcrumb Navigation */}
           <nav className="flex items-center text-sm overflow-x-auto py-1">
             <Link
-              to="/owner/dashboard"
+              to="/owner/properties"
               className="text-muted-foreground hover:text-foreground transition-colors flex items-center whitespace-nowrap"
             >
-              <Home className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
-              Dashboard
-            </Link>
-            <ChevronRight className="h-3.5 w-3.5 mx-2 text-muted-foreground/50 flex-shrink-0" />
-            <Link
-              to="/owner/properties"
-              className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
-            >
+              <Building className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
               Properties
             </Link>
             <ChevronRight className="h-3.5 w-3.5 mx-2 text-muted-foreground/50 flex-shrink-0" />

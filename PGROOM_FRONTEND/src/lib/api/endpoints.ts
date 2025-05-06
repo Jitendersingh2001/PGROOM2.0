@@ -48,4 +48,12 @@ export const ROOM = {
   UPDATE_STATUS: '/pgrooms/v1/roomStatus', // PUT endpoint for room status update
 };
 
+// Tenant endpoints
+export const TENANT = {
+  LIST: '/pgrooms/v1/getTenants',
+  CREATE: '/pgrooms/v1/tenant',
+  UPDATE: '/pgrooms/v1/tenant',
+  GET: '/pgrooms/v1/tenant',
+};
+
 // Other endpoints can be added here as needed
