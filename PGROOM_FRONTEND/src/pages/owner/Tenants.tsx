@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import AssignTenantDialog from '@/components/tenant/AssignTenantDialog';
+import TenantFormDialog from '@/components/tenant/TenantFormDialog';
 import { useLocation, City } from '@/contexts/LocationContext';
 import { tenantService, TenantUser, TenantListResponse } from '@/lib/api/services/tenantService';
 
@@ -87,6 +88,9 @@ const Tenants: React.FC = () => {
   // State for tenant assignment dialog
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<TenantUser | null>(null);
+
+  // State for add tenant dialog
+  const [isAddTenantDialogOpen, setIsAddTenantDialogOpen] = useState(false);
 
   // State for status filter
   type StatusFilter = 'Active' | 'Invited';
@@ -378,7 +382,7 @@ const Tenants: React.FC = () => {
           <Button
             className="whitespace-nowrap flex-shrink-0 shadow-sm hover:shadow transition-all"
             disabled={isLoading}
-            onClick={() => toast.info("Add New Tenant functionality would be implemented here")}
+            onClick={() => setIsAddTenantDialogOpen(true)}
           >
             {isLoading ? (
               <>
@@ -794,12 +798,28 @@ const Tenants: React.FC = () => {
         onClose={() => setIsAssignDialogOpen(false)}
         tenant={selectedTenant}
       />
+
+      {/* Add New Tenant Dialog */}
+      <TenantFormDialog
+        isOpen={isAddTenantDialogOpen}
+        onClose={() => setIsAddTenantDialogOpen(false)}
+        onSuccess={() => {
+          // Refresh the tenant list after successful addition
+          fetchTenants();
+          // Switch to the "Invited" status filter to show the newly added tenant
+          setStatusFilter('Invited');
+        }}
+      />
     </DashboardLayout>
   );
 };
 
-// Import PaginationEllipsis component
-const PaginationEllipsis = () => (
+// Custom PaginationEllipsis component with key prop
+interface PaginationEllipsisProps {
+  key?: string | number;
+}
+
+const PaginationEllipsis: React.FC<PaginationEllipsisProps> = () => (
   <span className="flex h-9 w-9 items-center justify-center">
     <span className="text-gray-400">...</span>
   </span>

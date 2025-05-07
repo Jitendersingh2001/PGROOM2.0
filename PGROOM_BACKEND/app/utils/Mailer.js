@@ -19,8 +19,8 @@ const createTransporter = () => {
       user: config.gmail.user,
       pass: config.gmail.pass,
       },
-    //   logger: true,
-    //   debug: true,
+      // logger: true,
+      // debug: true,
   });
 };
 
@@ -28,7 +28,6 @@ const createTransporter = () => {
 const sendEmail = async (res, to, subject, templateName, templateData) => {
   try {
     const transporter = createTransporter();
-
     // Correct path to templates folder
     const templatePath = path.join(__dirname, '../templates', `${templateName}.handlebars`);
     const templateSource = fs.readFileSync(templatePath, "utf-8");

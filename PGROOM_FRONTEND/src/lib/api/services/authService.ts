@@ -1,7 +1,8 @@
 import { apiService } from '../apiService';
 import { endpoints } from '../index';
 import { LoginFormData, RegisterFormData } from '@/lib/schemas/auth';
-import { ApiResponse, ApiSuccessResponse, UserData, LoginResponse } from '@/lib/types/api';
+import { ApiResponse, UserData } from '@/lib/types/api';
+import { ExtendedRegisterFormData } from '@/lib/types/auth';
 import { removeToken } from '@/lib/utils/crypto';
 
 /**
@@ -28,12 +29,12 @@ export const authService = {
 
   /**
    * Register user
-   * @param data - Registration form data
+   * @param data - Registration form data with optional status
    * @returns Promise with registration response
    */
-  register: async (data: RegisterFormData): Promise<ApiResponse<UserData>> => {
+  register: async (data: RegisterFormData | ExtendedRegisterFormData): Promise<ApiResponse<UserData>> => {
     // Transform the form data to match the API requirements
-    const apiPayload = {
+    const apiPayload: any = {
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,
@@ -45,6 +46,11 @@ export const authService = {
       confirmPassword: data.confirmPassword,
       address: data.address
     };
+
+    // Add status if it exists in the data (for tenant invitation)
+    if ('status' in data && data.status) {
+      apiPayload.status = data.status;
+    }
 
     return apiService.post<UserData>(endpoints.AUTH.REGISTER, apiPayload);
   },

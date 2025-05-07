@@ -94,6 +94,7 @@ const RegisterValidator = Joi.object({
       'any.required': 'Address is required',
       'string.empty': 'Address is required',
     }),
+  status : Joi.string().optional(),
 });
 
 module.exports = RegisterValidator;

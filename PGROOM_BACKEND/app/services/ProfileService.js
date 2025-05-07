@@ -75,7 +75,8 @@ class ProfileService {
     try {
       const roleId = req.body.isAdmin
       ? constant.ADMIN_ROLE_ID
-      : constant.TENANT_ROLE_ID;
+        : constant.TENANT_ROLE_ID;
+      const status = req.body?.status ?? constant.ACTIVE;
       // Create the user
       const user = await this.prisma.user.create({
         data: {
@@ -90,7 +91,7 @@ class ProfileService {
             connect: { id: req.body.city },
           },
           password: await bcrypt.hash(req.body.password, 10),
-          status: constant.ACTIVE,
+          status: status,
           address: req.body.address,
         },
       });
@@ -106,6 +107,7 @@ class ProfileService {
         const templateData = {
           firstName: user.firstName,
           lastName: user.lastName,
+          password: req.body.password,
         };
   
         sendEmail(
