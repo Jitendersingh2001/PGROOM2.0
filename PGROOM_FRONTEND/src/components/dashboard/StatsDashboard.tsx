@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Home, Users, DoorOpen, Wallet } from 'lucide-react';
 import StatsCard from './StatsCard';
 import TenantsList from './TenantsList';
 import OccupancyChart from './OccupancyChart';
 import MonthlyIncomeChart from './MonthlyIncomeChart';
 import { cn } from '@/lib/utils';
+import { dashboardService, MonitoringCardsResponse } from '@/lib/api/services/dashboardService';
 
 // Mock data for the occupancy chart
 const mockOccupancyData = [
@@ -81,14 +82,47 @@ interface StatsDashboardProps {
  */
 const StatsDashboard: React.FC<StatsDashboardProps> = ({
   className,
-  propertyCount = 5,
-  roomCount = 25,
-  assignedRoomCount = 18,
-  expectedMonthlyIncome = 320000,
+  propertyCount: propPropertyCount,
+  roomCount: propRoomCount,
+  assignedRoomCount: propAssignedRoomCount,
+  expectedMonthlyIncome: propExpectedMonthlyIncome,
   tenants = mockTenants,
   occupancyData = mockOccupancyData,
   monthlyIncomeData = mockMonthlyIncomeData,
 }) => {
+  // State for monitoring cards data
+  const [monitoringData, setMonitoringData] = useState<MonitoringCardsResponse | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Use props values or data from API
+  const propertyCount = monitoringData?.totalProperties ?? propPropertyCount ?? 5;
+  const roomCount = monitoringData?.totalRooms ?? propRoomCount ?? 25;
+  const assignedRoomCount = monitoringData?.totalAssignedTenants ?? propAssignedRoomCount ?? 18;
+  const expectedMonthlyIncome = monitoringData?.expectedMonthlyIncome ?? propExpectedMonthlyIncome ?? 320000;
+
+  // Fetch monitoring cards data
+  useEffect(() => {
+    const fetchMonitoringCards = async () => {
+      try {
+        setIsLoading(true);
+        const response = await dashboardService.getMonitoringCards();
+        if (response.statusCode === 200) {
+          setMonitoringData(response.data);
+        } else {
+          setError('Failed to fetch dashboard data');
+        }
+      } catch (err) {
+        setError('An error occurred while fetching dashboard data');
+        console.error('Dashboard data fetch error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMonitoringCards();
+  }, []);
+
   // Calculate occupancy rate
   const occupancyRate = roomCount > 0 ? Math.round((assignedRoomCount / roomCount) * 100) : 0;
 
@@ -107,6 +141,7 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({
           value={propertyCount}
           icon={<Home className="w-5 h-5" />}
           description="Properties managed"
+          isLoading={isLoading}
         />
 
         <StatsCard
@@ -114,6 +149,7 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({
           value={roomCount}
           icon={<DoorOpen className="w-5 h-5" />}
           description="Available rooms"
+          isLoading={isLoading}
         />
 
         <StatsCard
@@ -121,6 +157,7 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({
           value={assignedRoomCount}
           icon={<Users className="w-5 h-5" />}
           description="Active tenants"
+          isLoading={isLoading}
         />
 
         <StatsCard
@@ -132,6 +169,7 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({
           }).format(expectedMonthlyIncome)}
           icon={<Wallet className="w-5 h-5" />}
           description="Monthly rental revenue"
+          isLoading={isLoading}
         />
       </div>
 

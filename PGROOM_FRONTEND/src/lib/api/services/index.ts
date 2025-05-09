@@ -2,10 +2,12 @@ import { authService } from './authService';
 import { propertyService } from './propertyService';
 import { roomService } from './roomService';
 import { tenantService } from './tenantService';
+import { dashboardService } from './dashboardService';
 
 export {
   authService,
   propertyService,
   roomService,
-  tenantService
+  tenantService,
+  dashboardService
 };

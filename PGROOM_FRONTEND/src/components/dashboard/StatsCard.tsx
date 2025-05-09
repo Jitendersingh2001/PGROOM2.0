@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { ArrowDown, ArrowUp } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export interface StatsCardProps {
   title: string;
@@ -13,6 +14,7 @@ export interface StatsCardProps {
   iconClassName?: string;
   valueClassName?: string;
   changeDirection?: 'up' | 'down' | 'neutral';
+  isLoading?: boolean;
 }
 
 /**
@@ -40,6 +42,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
   iconClassName,
   valueClassName,
   changeDirection = 'neutral',
+  isLoading = false,
 }) => {
   // Determine the color for the change indicator
   const getChangeColor = () => {
@@ -63,41 +66,54 @@ const StatsCard: React.FC<StatsCardProps> = ({
     )}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</h3>
-        <div className={cn(
-          "p-2 rounded-full",
-          "bg-primary/10 text-primary",
-          iconClassName
-        )}>
-          {icon}
-        </div>
+        {isLoading ? (
+          <Skeleton className="h-10 w-10 rounded-full" />
+        ) : (
+          <div className={cn(
+            "p-2 rounded-full",
+            "bg-primary/10 text-primary",
+            iconClassName
+          )}>
+            {icon}
+          </div>
+        )}
       </div>
 
       <div className="space-y-1">
-        <p className={cn(
-          "text-2xl font-bold text-gray-900 dark:text-white",
-          valueClassName
-        )}>
-          {value}
-        </p>
+        {isLoading ? (
+          <>
+            <Skeleton className="h-8 w-24 mb-2" />
+            {description && <Skeleton className="h-4 w-32" />}
+          </>
+        ) : (
+          <>
+            <p className={cn(
+              "text-2xl font-bold text-gray-900 dark:text-white",
+              valueClassName
+            )}>
+              {value}
+            </p>
 
-        {description && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {description}
-          </p>
-        )}
-
-        {typeof change !== 'undefined' && (
-          <div className="flex items-center mt-2 text-sm">
-            <span className={cn("flex items-center gap-1", getChangeColor())}>
-              {getChangeIcon()}
-              {change}%
-            </span>
-            {changeTimeframe && (
-              <span className="ml-1 text-gray-500 dark:text-gray-400">
-                {changeTimeframe}
-              </span>
+            {description && (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {description}
+              </p>
             )}
-          </div>
+
+            {typeof change !== 'undefined' && (
+              <div className="flex items-center mt-2 text-sm">
+                <span className={cn("flex items-center gap-1", getChangeColor())}>
+                  {getChangeIcon()}
+                  {change}%
+                </span>
+                {changeTimeframe && (
+                  <span className="ml-1 text-gray-500 dark:text-gray-400">
+                    {changeTimeframe}
+                  </span>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

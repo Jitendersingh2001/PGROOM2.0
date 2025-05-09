@@ -1,0 +1,26 @@
+import { apiService } from '../apiService';
+import { endpoints } from '../index';
+import { ApiResponse } from '@/lib/types/api';
+
+/**
+ * Dashboard monitoring cards response interface
+ */
+export interface MonitoringCardsResponse {
+  totalProperties: number;
+  totalRooms: number;
+  totalAssignedTenants: number;
+  expectedMonthlyIncome: number;
+}
+
+/**
+ * Dashboard service for handling dashboard-related API calls
+ */
+export const dashboardService = {
+  /**
+   * Get monitoring cards data for the dashboard
+   * @returns Promise with monitoring cards data
+   */
+  getMonitoringCards: async (): Promise<ApiResponse<MonitoringCardsResponse>> => {
+    return apiService.get(endpoints.DASHBOARD.MONITORING_CARDS);
+  },
+};
