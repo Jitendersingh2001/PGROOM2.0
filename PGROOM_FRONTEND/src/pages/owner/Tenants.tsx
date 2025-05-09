@@ -321,7 +321,7 @@ const Tenants: React.FC = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-green-500"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
-              Available
+              Active
             </span>
           </Badge>
         );
@@ -473,7 +473,7 @@ const Tenants: React.FC = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Active">Available tenants</SelectItem>
+                      <SelectItem value="Active">Active</SelectItem>
                       <SelectItem value="Invited">Invited</SelectItem>
                     </SelectContent>
                   </Select>
@@ -588,7 +588,7 @@ const Tenants: React.FC = () => {
         <div className="mb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-semibold">Available Tenants</h2>
+              <h2 className="text-xl font-semibold">Tenants</h2>
               {/* Status indicator badge */}
               <span className={`text-xs px-2 py-1 rounded-full ${
                 statusFilter === "Active"
