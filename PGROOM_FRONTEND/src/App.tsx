@@ -17,6 +17,8 @@ import OwnerDashboard from "./pages/owner/Dashboard";
 import OwnerProperties from "./pages/owner/Properties";
 import OwnerRooms from "./pages/owner/Rooms";
 import OwnerTenants from "./pages/owner/Tenants";
+import OwnerPayments from "./pages/owner/Payments";
+import OwnerSupport from "./pages/owner/Support";
 import TenantDashboard from "./pages/tenant/Dashboard";
 
 const queryClient = new QueryClient();
@@ -61,6 +63,16 @@ const App = () => (
                 <Route path="/owner/tenants" element={
                   <ProtectedRoute allowedRoles={[2]}>
                     <OwnerTenants />
+                  </ProtectedRoute>
+                } />
+                <Route path="/owner/payments" element={
+                  <ProtectedRoute allowedRoles={[2]}>
+                    <OwnerPayments />
+                  </ProtectedRoute>
+                } />
+                <Route path="/owner/support" element={
+                  <ProtectedRoute allowedRoles={[2]}>
+                    <OwnerSupport />
                   </ProtectedRoute>
                 } />
                 <Route path="/tenant/dashboard" element={

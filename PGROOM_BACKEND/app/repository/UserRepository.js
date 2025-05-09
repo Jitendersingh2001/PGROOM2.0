@@ -123,6 +123,34 @@ class userRepository {
     }
   }
 
+  async getRecentTenants() {
+    try {
+      const prisma = this.baseRepository.getDBClient();
+      return await prisma.user.findMany({
+        where: {
+          userRoleLink: {
+            some: {
+              roleId: constant.TENANT_ROLE_ID,
+            },
+          },
+        },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          status: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 5,
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
 }
 
 module.exports = new userRepository();

@@ -2,19 +2,12 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-
-interface Tenant {
-  id: string | number;
-  name: string;
-  email: string;
-  status: 'active' | 'invited';
-  joinDate: string;
-  avatarUrl?: string;
-}
+import { RecentTenant } from '@/lib/api/services/dashboardService';
 
 interface TenantsListProps {
-  tenants: Tenant[];
+  tenants: RecentTenant[];
   className?: string;
+  isLoading?: boolean;
 }
 
 /**
@@ -22,8 +15,9 @@ interface TenantsListProps {
  *
  * @param tenants - Array of tenant objects
  * @param className - Optional additional class names
+ * @param isLoading - Whether the data is currently loading
  */
-const TenantsList: React.FC<TenantsListProps> = ({ tenants, className }) => {
+const TenantsList: React.FC<TenantsListProps> = ({ tenants, className, isLoading = false }) => {
   // Function to get initials from name
   const getInitials = (name: string) => {
     return name
@@ -32,6 +26,11 @@ const TenantsList: React.FC<TenantsListProps> = ({ tenants, className }) => {
       .join('')
       .toUpperCase()
       .substring(0, 2);
+  };
+
+  // Function to get full name from first and last name
+  const getFullName = (firstName: string, lastName: string) => {
+    return `${firstName} ${lastName}`;
   };
 
   // Function to format date
@@ -51,53 +50,63 @@ const TenantsList: React.FC<TenantsListProps> = ({ tenants, className }) => {
       </CardHeader>
       <CardContent className="px-2 h-full">
         <div className="space-y-4">
-          {tenants.map(tenant => (
-            <div key={tenant.id} className="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-              {/* Avatar or Initials */}
-              {tenant.avatarUrl ? (
-                <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
-                  <img
-                    src={tenant.avatarUrl}
-                    alt={tenant.name}
-                    className="w-full h-full object-cover"
-                  />
+          {isLoading ? (
+            // Loading state - show skeleton loaders
+            Array(5).fill(0).map((_, index) => (
+              <div key={index} className="flex items-center p-2 rounded-lg animate-pulse">
+                <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 mr-3"></div>
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
                 </div>
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mr-3">
-                  <span className="text-sm font-medium">{getInitials(tenant.name)}</span>
+                <div className="flex flex-col items-end ml-2">
+                  <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-1"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
                 </div>
-              )}
-
-              {/* Tenant Info */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {tenant.name}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  {tenant.email}
-                </p>
               </div>
+            ))
+          ) : (
+            // Actual content
+            tenants.map(tenant => {
+              const fullName = getFullName(tenant.firstName, tenant.lastName);
+              const isActive = tenant.status.toLowerCase() === 'active';
 
-              {/* Status Badge */}
-              <div className="flex flex-col items-end ml-2">
-                <Badge
-                  className={cn(
-                    "text-xs font-medium",
-                    tenant.status === 'active'
-                      ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40"
-                      : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900/40"
-                  )}
-                >
-                  {tenant.status === 'active' ? 'Active' : 'Invited'}
-                </Badge>
-                <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {formatDate(tenant.joinDate)}
-                </span>
-              </div>
-            </div>
-          ))}
+              return (
+                <div key={tenant.id} className="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                  {/* Initials */}
+                  <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mr-3">
+                    <span className="text-sm font-medium">{getInitials(fullName)}</span>
+                  </div>
 
-          {tenants.length === 0 && (
+                  {/* Tenant Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {fullName}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {tenant.email}
+                    </p>
+                  </div>
+
+                  {/* Status Badge */}
+                  <div className="flex flex-col items-end ml-2">
+                    <Badge
+                      className={cn(
+                        "text-xs font-medium",
+                        isActive
+                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40"
+                          : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900/40"
+                      )}
+                    >
+                      {tenant.status}
+                    </Badge>
+                  </div>
+                </div>
+              );
+            })
+          )}
+
+          {!isLoading && tenants.length === 0 && (
             <div className="text-center py-4 text-gray-500 dark:text-gray-400">
               No tenants found
             </div>

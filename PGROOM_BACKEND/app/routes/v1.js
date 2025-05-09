@@ -91,6 +91,7 @@ router
   /**
    * DASHBOARD ROUTES
    */
-  router.get("/dashboard-monitoring-cards", controller.DashboardController.getMonitoringCards);
+router.get("/dashboard-monitoring-cards", controller.DashboardController.getMonitoringCards);
+  router.get("/dashboard-recent-tenants", controller.DashboardController.getRecentTenants);
 
 module.exports = router;

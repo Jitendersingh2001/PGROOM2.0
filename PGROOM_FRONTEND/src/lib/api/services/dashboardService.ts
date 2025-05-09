@@ -13,6 +13,17 @@ export interface MonitoringCardsResponse {
 }
 
 /**
+ * Recent tenant interface
+ */
+export interface RecentTenant {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  status: string;
+}
+
+/**
  * Dashboard service for handling dashboard-related API calls
  */
 export const dashboardService = {
@@ -22,5 +33,13 @@ export const dashboardService = {
    */
   getMonitoringCards: async (): Promise<ApiResponse<MonitoringCardsResponse>> => {
     return apiService.get(endpoints.DASHBOARD.MONITORING_CARDS);
+  },
+
+  /**
+   * Get recent tenants data for the dashboard
+   * @returns Promise with recent tenants data
+   */
+  getRecentTenants: async (): Promise<ApiResponse<RecentTenant[]>> => {
+    return apiService.get(endpoints.DASHBOARD.RECENT_TENANTS);
   },
 };

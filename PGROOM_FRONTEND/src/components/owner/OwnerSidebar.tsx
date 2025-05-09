@@ -4,9 +4,7 @@ import {
   LayoutDashboard,
   Home,
   Users,
-  Settings,
   CreditCard,
-  FileText,
   HelpCircle,
   ChevronRight
 } from 'lucide-react';
@@ -55,16 +53,6 @@ const OwnerSidebar: React.FC<OwnerSidebarProps> = ({ collapsed = false }) => {
       name: 'Payments',
       path: '/owner/payments',
       icon: <CreditCard className="w-5 h-5" />,
-    },
-    {
-      name: 'Documents',
-      path: '/owner/documents',
-      icon: <FileText className="w-5 h-5" />,
-    },
-    {
-      name: 'Settings',
-      path: '/owner/settings',
-      icon: <Settings className="w-5 h-5" />,
     },
     {
       name: 'Help & Support',

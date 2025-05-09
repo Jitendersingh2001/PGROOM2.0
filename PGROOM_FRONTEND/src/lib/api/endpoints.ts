@@ -59,6 +59,7 @@ export const TENANT = {
 // Dashboard endpoints
 export const DASHBOARD = {
   MONITORING_CARDS: '/pgrooms/v1/dashboard-monitoring-cards',
+  RECENT_TENANTS: '/pgrooms/v1/dashboard-recent-tenants',
 };
 
 // Other endpoints can be added here as needed

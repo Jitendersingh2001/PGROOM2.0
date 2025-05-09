@@ -5,7 +5,7 @@ import TenantsList from './TenantsList';
 import OccupancyChart from './OccupancyChart';
 import MonthlyIncomeChart from './MonthlyIncomeChart';
 import { cn } from '@/lib/utils';
-import { dashboardService, MonitoringCardsResponse } from '@/lib/api/services/dashboardService';
+import { dashboardService, MonitoringCardsResponse, RecentTenant } from '@/lib/api/services/dashboardService';
 
 // Mock data for the occupancy chart
 const mockOccupancyData = [
@@ -90,9 +90,11 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({
   occupancyData = mockOccupancyData,
   monthlyIncomeData = mockMonthlyIncomeData,
 }) => {
-  // State for monitoring cards data
+  // State for dashboard data
   const [monitoringData, setMonitoringData] = useState<MonitoringCardsResponse | null>(null);
+  const [recentTenants, setRecentTenants] = useState<RecentTenant[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isTenantsLoading, setIsTenantsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   // Use props values or data from API
@@ -121,6 +123,27 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({
     };
 
     fetchMonitoringCards();
+  }, []);
+
+  // Fetch recent tenants data
+  useEffect(() => {
+    const fetchRecentTenants = async () => {
+      try {
+        setIsTenantsLoading(true);
+        const response = await dashboardService.getRecentTenants();
+        if (response.statusCode === 200) {
+          setRecentTenants(response.data);
+        } else {
+          console.error('Failed to fetch recent tenants data');
+        }
+      } catch (err) {
+        console.error('Recent tenants fetch error:', err);
+      } finally {
+        setIsTenantsLoading(false);
+      }
+    };
+
+    fetchRecentTenants();
   }, []);
 
   // Calculate occupancy rate
@@ -191,7 +214,11 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({
 
         {/* Tenants List - Takes up 1/2 of the width on large screens */}
         <div className="lg:col-span-1 h-full">
-          <TenantsList tenants={tenants} className="h-full" />
+          <TenantsList
+            tenants={recentTenants.length > 0 ? recentTenants : tenants}
+            className="h-full"
+            isLoading={isTenantsLoading}
+          />
         </div>
       </div>
     </div>
