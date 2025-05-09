@@ -797,6 +797,10 @@ const Tenants: React.FC = () => {
         isOpen={isAssignDialogOpen}
         onClose={() => setIsAssignDialogOpen(false)}
         tenant={selectedTenant}
+        onSuccess={() => {
+          // Refresh the tenant list after successful assignment
+          fetchTenants();
+        }}
       />
 
       {/* Add New Tenant Dialog */}

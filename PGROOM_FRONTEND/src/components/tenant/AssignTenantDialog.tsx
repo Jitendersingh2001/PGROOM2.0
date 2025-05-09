@@ -35,6 +35,7 @@ interface AssignTenantDialogProps {
   isOpen: boolean;
   onClose: () => void;
   tenant: TenantUser | null;
+  onSuccess?: () => void;
 }
 
 /**
@@ -43,7 +44,8 @@ interface AssignTenantDialogProps {
 const AssignTenantDialog: React.FC<AssignTenantDialogProps> = ({
   isOpen,
   onClose,
-  tenant
+  tenant,
+  onSuccess
 }) => {
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>('');
   const [selectedRoomId, setSelectedRoomId] = useState<string>('');
@@ -183,6 +185,10 @@ const AssignTenantDialog: React.FC<AssignTenantDialogProps> = ({
       const success = await handleAssignTenant();
       if (success) {
         toast.success('Tenant assigned successfully');
+        // Call onSuccess callback if provided
+        if (onSuccess) {
+          onSuccess();
+        }
         onClose();
       }
     } catch (error) {

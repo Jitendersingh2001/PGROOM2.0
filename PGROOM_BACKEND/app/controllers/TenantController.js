@@ -17,7 +17,7 @@ class TenantController extends Controller {
       this.sendResponse(
         res,
         result,
-        constMessage.FETCH_SUCCESSFUL.replace(":name", "Tenant"),
+        constMessage.CREATED_SUCCESSFULLY.replace(":name", "Tenant"),
         http.OK
       );
     } catch (error) {
