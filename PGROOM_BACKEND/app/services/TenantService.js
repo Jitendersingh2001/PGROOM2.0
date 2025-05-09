@@ -76,7 +76,7 @@ class tenantService {
       (id) => !updatedTenantIds.includes(id)
     );
     if (idsToDelete.length > 0) {
-      await this.deleteTenant({ ids: idsToDelete });
+      await this.deleteTenant({ ids: idsToDelete }, true);
     }
   }
 
@@ -143,10 +143,15 @@ class tenantService {
   /**
    * Function to delete tenant
    */
-  async deleteTenant(data) {
+  async deleteTenant(data, hardDelete = false) {
     try {
       const ids = data.ids.map((id) => parseInt(id, 10));
 
+      if (hardDelete) {
+        return await Promise.all(
+          ids.map((id) => this.repository.deleteTenant(id))
+        );
+      }
       return await Promise.all(
         ids.map((id) => this.repository.updateTenant(id, constant.DELETED))
       );

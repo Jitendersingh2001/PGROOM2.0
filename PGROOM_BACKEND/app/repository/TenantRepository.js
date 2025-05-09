@@ -79,6 +79,13 @@ class TenantRepository {
     }
   }
   
+  async deleteTenant(id) {
+    try {
+      return await this.baseRepository.delete(id);
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = new TenantRepository();
