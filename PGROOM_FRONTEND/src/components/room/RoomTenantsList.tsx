@@ -17,6 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { RoomTenant } from '@/lib/api/services/roomService';
 
 interface Tenant {
   id: number;
@@ -30,6 +31,7 @@ interface RoomTenantsListProps {
   initialEditMode?: boolean;
   onEditModeChange?: (isEditMode: boolean) => void;
   onTenantUnassigned?: () => void;
+  initialTenants?: RoomTenant[]; // New prop to accept tenants directly from room object
 }
 
 /**
@@ -41,21 +43,42 @@ const RoomTenantsList: React.FC<RoomTenantsListProps> = ({
   initialEditMode = false,
   onEditModeChange,
   onTenantUnassigned,
+  initialTenants,
 }) => {
-  const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Convert initialTenants to the format expected by the component
+  const convertInitialTenants = (): Tenant[] => {
+    if (!initialTenants || initialTenants.length === 0) return [];
+
+    return initialTenants.map((tenant, index) => ({
+      id: index, // Use index as temporary id since we don't have tenant.id in the new API
+      userId: tenant.user.id,
+      username: `${tenant.user.firstName} ${tenant.user.lastName}`,
+    }));
+  };
+
+  const [tenants, setTenants] = useState<Tenant[]>(convertInitialTenants());
+  const [isLoading, setIsLoading] = useState(!initialTenants);
   const [error, setError] = useState<string | null>(null);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [isUnassignDialogOpen, setIsUnassignDialogOpen] = useState(false);
   const [isUnassigning, setIsUnassigning] = useState(false);
   const [isEditMode, setIsEditMode] = useState(initialEditMode);
   const [selectedTenants, setSelectedTenants] = useState<number[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
 
   // Fetch tenants assigned to this room
   const fetchTenants = async () => {
+    if (initialTenants && !isRefreshing) {
+      // If initialTenants is provided and we're not explicitly refreshing, use it
+      setTenants(convertInitialTenants());
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
+    setIsRefreshing(true);
 
     try {
       const response = await tenantService.getTenantsByRoom(propertyId, roomId);
@@ -80,13 +103,19 @@ const RoomTenantsList: React.FC<RoomTenantsListProps> = ({
       });
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
 
-  // Load tenants when component mounts
+  // Load tenants when component mounts or when initialTenants changes
   useEffect(() => {
-    fetchTenants();
-  }, [propertyId, roomId]);
+    if (initialTenants) {
+      setTenants(convertInitialTenants());
+      setIsLoading(false);
+    } else {
+      fetchTenants();
+    }
+  }, [propertyId, roomId, initialTenants]);
 
   // Update edit mode when initialEditMode changes
   useEffect(() => {
@@ -263,7 +292,9 @@ const RoomTenantsList: React.FC<RoomTenantsListProps> = ({
             <UserMinus className="h-6 w-6" />
           </div>
           <h4 className="font-medium text-lg mb-2">No Tenants Assigned</h4>
-          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">This room doesn't have any tenants assigned yet.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+            This room doesn't have any tenants assigned yet. Click the "Assign Tenant" button below to assign tenants to this room.
+          </p>
         </div>
       ) : (
         // Tenants list

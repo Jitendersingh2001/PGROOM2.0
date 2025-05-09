@@ -144,9 +144,34 @@ const Rooms: React.FC = () => {
   });
 
   // Handle room view details
-  const handleViewRoom = (room: Room) => {
-    setSelectedRoom(room);
-    setIsRoomDetailsModalOpen(true);
+  const handleViewRoom = async (room: Room) => {
+    try {
+      // Fetch detailed room data including tenant information
+      const response = await roomService.getRoom(room.id);
+
+      if (isApiSuccessResponse(response)) {
+        setSelectedRoom(response.data);
+      } else {
+        // If API call fails, fall back to the room data we already have
+        setSelectedRoom(room);
+        toast({
+          title: 'Warning',
+          description: 'Could not fetch the latest room details. Some information may be outdated.',
+          variant: 'warning',
+        });
+      }
+    } catch (error) {
+      // If there's an error, fall back to the room data we already have
+      console.error('Error fetching room details:', error);
+      setSelectedRoom(room);
+      toast({
+        title: 'Warning',
+        description: 'Could not fetch the latest room details. Some information may be outdated.',
+        variant: 'warning',
+      });
+    } finally {
+      setIsRoomDetailsModalOpen(true);
+    }
   };
 
   // Handle room edit

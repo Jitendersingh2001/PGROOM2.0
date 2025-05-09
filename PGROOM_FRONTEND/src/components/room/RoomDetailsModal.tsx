@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Room } from '@/lib/api/services/roomService';
 import {
   Dialog,
@@ -25,6 +26,8 @@ import {
   Users,
   CalendarClock,
   UserCircle,
+  CheckSquare,
+  UserPlus,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import RoomTenantsList from './RoomTenantsList';
@@ -45,11 +48,15 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
   onClose,
   onEdit,
 }) => {
+  const navigate = useNavigate();
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('details');
   const [isEditMode, setIsEditMode] = useState(false);
+
+  // Check if there are any tenants assigned to this room
+  const hasTenants = room.Tenant && room.Tenant.length > 0;
 
   // Reset edit mode when tab changes
   const handleTabChange = (value: string) => {
@@ -284,6 +291,7 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
               roomId={room.id}
               initialEditMode={isEditMode}
               onEditModeChange={setIsEditMode}
+              initialTenants={room.Tenant}
               onTenantUnassigned={() => {
                 // Close the modal to trigger a refresh of the room data
                 onClose();
@@ -293,6 +301,7 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
         </Tabs>
 
         <DialogFooter className="flex gap-2 mt-4">
+          {/* Details tab - Edit Room button */}
           {activeTab === 'details' && onEdit && (
             <Button
               variant="default"
@@ -307,7 +316,8 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
             </Button>
           )}
 
-          {activeTab === 'tenants' && !isEditMode && (
+          {/* Tenants tab - Edit Tenants button (when not in edit mode and has tenants) */}
+          {activeTab === 'tenants' && !isEditMode && hasTenants && (
             <Button
               variant="default"
               onClick={() => setIsEditMode(true)}
@@ -318,12 +328,40 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
             </Button>
           )}
 
+          {/* Tenants tab - Assign Tenant button (when not in edit mode and has no tenants) */}
+          {activeTab === 'tenants' && !isEditMode && !hasTenants && (
+            <Button
+              variant="default"
+              onClick={() => {
+                onClose(); // Close the modal first
+                navigate('/owner/tenants'); // Navigate to the tenants page
+              }}
+              className="flex-1"
+            >
+              <UserPlus className="mr-2 h-4 w-4" />
+              Assign Tenant
+            </Button>
+          )}
+
+          {/* Tenants tab - Update button (when in edit mode) */}
+          {activeTab === 'tenants' && isEditMode && (
+            <Button
+              variant="default"
+              onClick={() => setIsEditMode(false)}
+              className="flex-1"
+            >
+              <CheckSquare className="mr-2 h-4 w-4" />
+              Update
+            </Button>
+          )}
+
+          {/* Close/Cancel button */}
           <Button
             variant="outline"
             onClick={isEditMode ? () => setIsEditMode(false) : onClose}
             className="flex-1"
           >
-            {isEditMode ? "Cancel" : "Close"}
+            {isEditMode ? "Close" : "Close"}
           </Button>
         </DialogFooter>
       </DialogContent>

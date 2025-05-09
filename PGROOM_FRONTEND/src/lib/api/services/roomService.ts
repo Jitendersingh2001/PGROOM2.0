@@ -17,6 +17,18 @@ export interface RoomListResponse {
 }
 
 /**
+ * Room tenant interface
+ * Represents a tenant assigned to a room
+ */
+export interface RoomTenant {
+  user: {
+    id: number;
+    firstName: string;
+    lastName: string;
+  };
+}
+
+/**
  * Room interface
  * Represents a room in the system
  */
@@ -33,6 +45,7 @@ export interface Room {
   amenities?: string[];
   createdAt?: string;
   updatedAt?: string;
+  Tenant?: RoomTenant[];    // Tenants assigned to this room
 }
 
 /**
