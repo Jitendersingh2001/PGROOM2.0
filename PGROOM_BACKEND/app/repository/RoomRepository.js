@@ -64,7 +64,25 @@ class roomRepository {
    */
   async getRoom(roomId) {
     try {
-      return this.baseRepository.findById(roomId);
+      const prisma = this.baseRepository.getDBClient();
+    return await prisma.rooms.findUnique({
+        where: { id: roomId },
+        include: {
+          Tenant: {
+            where: { status: constant.ACTIVE },
+            select: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true
+                }
+              }
+            }
+          }
+        }
+      });
+      
     } catch (error) {
       throw new Error(error.message);
     }
