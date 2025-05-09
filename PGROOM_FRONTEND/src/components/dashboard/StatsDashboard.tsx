@@ -126,7 +126,7 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({
   // Calculate occupancy rate
   const occupancyRate = roomCount > 0 ? Math.round((assignedRoomCount / roomCount) * 100) : 0;
 
-  // Generate occupancy data based on room counts
+  // Generate occupancy data based on room counts and assigned tenants
   const generatedOccupancyData = [
     { name: 'Occupied', value: assignedRoomCount, color: 'hsl(var(--primary))', total: roomCount },
     { name: 'Available', value: roomCount - assignedRoomCount, color: '#f59e0b', total: roomCount },
@@ -182,7 +182,11 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Occupancy Chart - Takes up 1/2 of the width on large screens */}
         <div className="lg:col-span-1 h-full">
-          <OccupancyChart data={generatedOccupancyData} className="h-full" />
+          <OccupancyChart
+            data={generatedOccupancyData}
+            className="h-full"
+            isLoading={isLoading}
+          />
         </div>
 
         {/* Tenants List - Takes up 1/2 of the width on large screens */}
