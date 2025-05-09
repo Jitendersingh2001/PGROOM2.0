@@ -61,7 +61,7 @@ const MonthlyIncomeChart: React.FC<MonthlyIncomeChartProps> = ({
   // Memoize chart configuration to prevent unnecessary re-renders
   const chartConfig = useMemo<ChartConfig>(() => ({
     income: {
-      label: "Monthly Income",
+      label: "Expected Monthly Income",
       theme: {
         light: "hsl(var(--primary))", // Use the primary green color from theme
         dark: "hsl(var(--primary))",  // Same for dark mode

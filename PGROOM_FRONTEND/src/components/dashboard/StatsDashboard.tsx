@@ -131,7 +131,7 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({
             maximumFractionDigits: 0
           }).format(totalIncome)}
           icon={<Wallet className="w-5 h-5" />}
-          description="Annual revenue"
+          description="Expected annual income"
         />
       </div>
 
