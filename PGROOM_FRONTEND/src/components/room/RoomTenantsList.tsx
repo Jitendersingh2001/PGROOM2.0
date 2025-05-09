@@ -4,7 +4,9 @@ import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { UserMinus } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
+import { UserMinus, CheckSquare, Square } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +27,8 @@ interface Tenant {
 interface RoomTenantsListProps {
   propertyId: number;
   roomId: number;
+  initialEditMode?: boolean;
+  onEditModeChange?: (isEditMode: boolean) => void;
   onTenantUnassigned?: () => void;
 }
 
@@ -34,6 +38,8 @@ interface RoomTenantsListProps {
 const RoomTenantsList: React.FC<RoomTenantsListProps> = ({
   propertyId,
   roomId,
+  initialEditMode = false,
+  onEditModeChange,
   onTenantUnassigned,
 }) => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -42,6 +48,8 @@ const RoomTenantsList: React.FC<RoomTenantsListProps> = ({
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [isUnassignDialogOpen, setIsUnassignDialogOpen] = useState(false);
   const [isUnassigning, setIsUnassigning] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(initialEditMode);
+  const [selectedTenants, setSelectedTenants] = useState<number[]>([]);
   const { toast } = useToast();
 
   // Fetch tenants assigned to this room
@@ -79,6 +87,11 @@ const RoomTenantsList: React.FC<RoomTenantsListProps> = ({
   useEffect(() => {
     fetchTenants();
   }, [propertyId, roomId]);
+
+  // Update edit mode when initialEditMode changes
+  useEffect(() => {
+    toggleEditMode(initialEditMode);
+  }, [initialEditMode]);
 
   // Handle unassign tenant
   const handleUnassignTenant = async () => {
@@ -135,6 +148,39 @@ const RoomTenantsList: React.FC<RoomTenantsListProps> = ({
     setIsUnassignDialogOpen(true);
   };
 
+  // Toggle edit mode
+  const toggleEditMode = (newEditMode: boolean) => {
+    setIsEditMode(newEditMode);
+
+    // Reset selections when exiting edit mode
+    if (!newEditMode) {
+      setSelectedTenants([]);
+    }
+
+    // Call the onEditModeChange callback if provided
+    if (onEditModeChange) {
+      onEditModeChange(newEditMode);
+    }
+  };
+
+  // Handle select all tenants
+  const handleSelectAll = () => {
+    if (selectedTenants.length === tenants.length) {
+      setSelectedTenants([]);
+    } else {
+      setSelectedTenants(tenants.map(tenant => tenant.id));
+    }
+  };
+
+  // Handle select individual tenant
+  const handleSelectTenant = (tenantId: number) => {
+    if (selectedTenants.includes(tenantId)) {
+      setSelectedTenants(selectedTenants.filter(id => id !== tenantId));
+    } else {
+      setSelectedTenants([...selectedTenants, tenantId]);
+    }
+  };
+
   // Get initials from username
   const getInitials = (name: string) => {
     return name
@@ -148,16 +194,51 @@ const RoomTenantsList: React.FC<RoomTenantsListProps> = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-xl font-semibold">Assigned Tenants</h3>
-        <Badge variant="outline" className="bg-gradient-to-r from-primary/90 to-primary text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm">
+        <Badge variant="outline" className="bg-gradient-to-r from-primary/90 to-primary dark:from-primary/70 dark:to-primary/90 text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm">
           {tenants.length} {tenants.length === 1 ? 'Tenant' : 'Tenants'}
         </Badge>
       </div>
+
+      {isEditMode && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSelectAll}
+              className="flex items-center gap-1.5 whitespace-nowrap border-green-500 dark:border-green-600 text-green-600 dark:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-700 dark:hover:text-green-400 font-medium"
+            >
+              {selectedTenants.length === tenants.length && tenants.length > 0 ? (
+                <>
+                  <Square className="h-4 w-4" />
+                  Deselect All
+                </>
+              ) : (
+                <>
+                  <CheckSquare className="h-4 w-4" />
+                  Select All
+                </>
+              )}
+            </Button>
+          </div>
+
+          {selectedTenants.length > 0 && (
+            <div className="flex items-center justify-end">
+              <span className="text-sm text-muted-foreground">
+                {selectedTenants.length} of {tenants.length} selected
+              </span>
+            </div>
+          )}
+
+          <Separator className="bg-gray-200 dark:bg-gray-700" />
+        </div>
+      )}
 
       {isLoading ? (
         // Loading state
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 bg-gray-50 animate-pulse">
+            <div key={i} className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 animate-pulse">
               <Skeleton className="h-10 w-10 rounded-full" />
               <div className="space-y-1 flex-1">
                 <Skeleton className="h-4 w-32" />
@@ -169,7 +250,7 @@ const RoomTenantsList: React.FC<RoomTenantsListProps> = ({
         </div>
       ) : error ? (
         // Error state
-        <div className="p-4 border border-red-200 rounded-lg bg-red-50 text-red-600 flex items-center gap-2 shadow-sm">
+        <div className="p-4 border border-red-200 dark:border-red-900 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-2 shadow-sm">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
           </svg>
@@ -177,12 +258,12 @@ const RoomTenantsList: React.FC<RoomTenantsListProps> = ({
         </div>
       ) : tenants.length === 0 ? (
         // Empty state
-        <div className="p-8 border border-gray-200 rounded-lg bg-gray-50 text-center flex flex-col items-center justify-center shadow-sm">
+        <div className="p-8 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50 text-center flex flex-col items-center justify-center shadow-sm">
           <div className="bg-gradient-to-br from-primary/80 to-primary p-4 rounded-full mb-4 text-white shadow-sm">
             <UserMinus className="h-6 w-6" />
           </div>
           <h4 className="font-medium text-lg mb-2">No Tenants Assigned</h4>
-          <p className="text-sm text-gray-500 max-w-xs">This room doesn't have any tenants assigned yet. Use the Edit Tenants button to assign tenants to this room.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">This room doesn't have any tenants assigned yet.</p>
         </div>
       ) : (
         // Tenants list
@@ -190,9 +271,23 @@ const RoomTenantsList: React.FC<RoomTenantsListProps> = ({
           {tenants.map(tenant => (
             <div
               key={tenant.id}
-              className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow"
+              className={`flex items-center p-4 rounded-lg border transition-all duration-200 shadow-sm ${
+                isEditMode
+                  ? selectedTenants.includes(tenant.id)
+                    ? 'bg-green-50 dark:bg-green-900/30 border-green-400 dark:border-green-700 shadow-md'
+                    : 'border-gray-200 dark:border-gray-700 hover:bg-green-50/50 dark:hover:bg-green-900/20 hover:border-green-300 dark:hover:border-green-700 hover:shadow-md cursor-pointer'
+                  : 'border-gray-200 dark:border-gray-700'
+              }`}
+              onClick={isEditMode ? () => handleSelectTenant(tenant.id) : undefined}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 w-full">
+                {isEditMode && (
+                  <Checkbox
+                    checked={selectedTenants.includes(tenant.id)}
+                    onCheckedChange={() => handleSelectTenant(tenant.id)}
+                    className="h-5 w-5 border-2 border-green-500 dark:border-green-600 data-[state=checked]:bg-green-500 dark:data-[state=checked]:bg-green-600 data-[state=checked]:text-white hover:border-green-600 dark:hover:border-green-500"
+                  />
+                )}
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/80 to-primary text-white flex items-center justify-center shadow-sm">
                   <span className="text-sm font-medium">{getInitials(tenant.username)}</span>
                 </div>
@@ -201,15 +296,6 @@ const RoomTenantsList: React.FC<RoomTenantsListProps> = ({
                   <p className="text-xs text-muted-foreground">Tenant</p>
                 </div>
               </div>
-              <Button
-                variant="destructive"
-                size="sm"
-                className="font-medium transition-all duration-200 hover:shadow-md flex items-center gap-1.5 px-3 py-1 h-9 bg-red-500 hover:bg-red-600 text-white"
-                onClick={() => openUnassignDialog(tenant)}
-              >
-                <UserMinus className="h-4 w-4" />
-                Unassign
-              </Button>
             </div>
           ))}
         </div>

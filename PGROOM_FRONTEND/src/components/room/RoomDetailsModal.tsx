@@ -49,13 +49,15 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
   const [imageError, setImageError] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('details');
+  const [isEditMode, setIsEditMode] = useState(false);
 
-  // Function to handle adding/editing tenants
-  const handleEditTenants = () => {
-    // Close the modal and open tenant assignment dialog
-    onClose();
-    // You would typically open a tenant assignment dialog here
-    // This would be implemented in the parent component
+  // Reset edit mode when tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    // If switching away from tenants tab, reset edit mode
+    if (value !== 'tenants') {
+      setIsEditMode(false);
+    }
   };
 
   // Handle image load event
@@ -105,8 +107,19 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
   console.log('Room images:', roomImages);
   console.log('Current image index:', currentImageIndex);
 
+  // Reset state when modal is closed
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      // Reset state
+      setActiveTab('details');
+      setIsEditMode(false);
+      setCurrentImageIndex(0);
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -119,7 +132,7 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
         </DialogHeader>
 
         {/* Tabs Navigation */}
-        <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs defaultValue="details" value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="details" className="flex items-center gap-1">
               <BedDouble className="h-4 w-4" />
@@ -269,6 +282,8 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
             <RoomTenantsList
               propertyId={room.propertyId}
               roomId={room.id}
+              initialEditMode={isEditMode}
+              onEditModeChange={setIsEditMode}
               onTenantUnassigned={() => {
                 // Close the modal to trigger a refresh of the room data
                 onClose();
@@ -292,10 +307,10 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
             </Button>
           )}
 
-          {activeTab === 'tenants' && (
+          {activeTab === 'tenants' && !isEditMode && (
             <Button
               variant="default"
-              onClick={handleEditTenants}
+              onClick={() => setIsEditMode(true)}
               className="flex-1"
             >
               <Users className="mr-2 h-4 w-4" />
@@ -305,10 +320,10 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
 
           <Button
             variant="outline"
-            onClick={onClose}
+            onClick={isEditMode ? () => setIsEditMode(false) : onClose}
             className="flex-1"
           >
-            Close
+            {isEditMode ? "Cancel" : "Close"}
           </Button>
         </DialogFooter>
       </DialogContent>
