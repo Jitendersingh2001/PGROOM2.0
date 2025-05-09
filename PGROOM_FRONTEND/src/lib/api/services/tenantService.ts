@@ -106,6 +106,19 @@ export const tenantService = {
   },
 
   /**
+   * Bulk update tenants in a room
+   * @param data - Bulk tenant update data with empty userIds and selected tenant ids
+   */
+  bulkUpdateTenants: async (data: {
+    userIds: number[]; // Will be empty for all
+    ids: string[] | number[]; // Contains the user ids for the selected users
+    propertyId: number;
+    roomId: number;
+  }): Promise<ApiResponse<any>> => {
+    return apiService.put(endpoints.TENANT.UPDATE, data);
+  },
+
+  /**
    * Get tenants for a specific property and room
    * @param propertyId - Property ID
    * @param roomId - Room ID

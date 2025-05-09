@@ -28,6 +28,7 @@ import {
   UserCircle,
   CheckSquare,
   UserPlus,
+  Loader2,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import RoomTenantsList from './RoomTenantsList';
@@ -54,6 +55,8 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('details');
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [roomTenantsListRef, setRoomTenantsListRef] = useState<React.RefObject<any>>(React.createRef());
 
   // Check if there are any tenants assigned to this room
   const hasTenants = room.Tenant && room.Tenant.length > 0;
@@ -287,6 +290,7 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
           {/* Tenants Tab Content */}
           <TabsContent value="tenants" className="min-h-[400px]">
             <RoomTenantsList
+              ref={roomTenantsListRef}
               propertyId={room.propertyId}
               roomId={room.id}
               initialEditMode={isEditMode}
@@ -347,11 +351,30 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
           {activeTab === 'tenants' && isEditMode && (
             <Button
               variant="default"
-              onClick={() => setIsEditMode(false)}
+              onClick={async () => {
+                if (roomTenantsListRef.current) {
+                  setIsUpdating(true);
+                  try {
+                    await roomTenantsListRef.current.handleBulkUpdateTenants();
+                  } finally {
+                    setIsUpdating(false);
+                  }
+                }
+              }}
+              disabled={isUpdating}
               className="flex-1"
             >
-              <CheckSquare className="mr-2 h-4 w-4" />
-              Update
+              {isUpdating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <CheckSquare className="mr-2 h-4 w-4" />
+                  Update
+                </>
+              )}
             </Button>
           )}
 

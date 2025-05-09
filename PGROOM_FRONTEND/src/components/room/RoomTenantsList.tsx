@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { UserMinus, CheckSquare, Square } from 'lucide-react';
+import { UserMinus, CheckSquare, Square, Save, Loader2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,14 +37,17 @@ interface RoomTenantsListProps {
 /**
  * RoomTenantsList - A component to display and manage tenants assigned to a room
  */
-const RoomTenantsList: React.FC<RoomTenantsListProps> = ({
+const RoomTenantsList = React.forwardRef<
+  { handleBulkUpdateTenants: () => Promise<void> },
+  RoomTenantsListProps
+>(({
   propertyId,
   roomId,
   initialEditMode = false,
   onEditModeChange,
   onTenantUnassigned,
   initialTenants,
-}) => {
+}, ref) => {
   // Convert initialTenants to the format expected by the component
   const convertInitialTenants = (): Tenant[] => {
     if (!initialTenants || initialTenants.length === 0) return [];
@@ -65,6 +68,7 @@ const RoomTenantsList: React.FC<RoomTenantsListProps> = ({
   const [isEditMode, setIsEditMode] = useState(initialEditMode);
   const [selectedTenants, setSelectedTenants] = useState<number[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   // Fetch tenants assigned to this room
@@ -121,6 +125,11 @@ const RoomTenantsList: React.FC<RoomTenantsListProps> = ({
   useEffect(() => {
     toggleEditMode(initialEditMode);
   }, [initialEditMode]);
+
+  // Expose the handleBulkUpdateTenants function via ref
+  React.useImperativeHandle(ref, () => ({
+    handleBulkUpdateTenants
+  }));
 
   // Handle unassign tenant
   const handleUnassignTenant = async () => {
@@ -210,6 +219,69 @@ const RoomTenantsList: React.FC<RoomTenantsListProps> = ({
     }
   };
 
+  // Handle bulk update of tenants
+  const handleBulkUpdateTenants = async () => {
+    if (selectedTenants.length === 0) {
+      toast({
+        title: 'No tenants selected',
+        description: 'Please select at least one tenant to update',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      // Get the tenant IDs from the selected tenants
+      const selectedTenantIds = selectedTenants.map(id => {
+        const tenant = tenants.find(t => t.id === id);
+        return tenant ? tenant.userId : null;
+      }).filter(Boolean);
+
+      // Call the bulk update API with the selected tenant IDs
+      const response = await tenantService.bulkUpdateTenants({
+        userIds: [], // Empty array as per the new API requirement
+        ids: selectedTenantIds as number[], // Selected tenant user IDs
+        propertyId,
+        roomId,
+      });
+
+      if (response.statusCode === 200) {
+        toast({
+          title: 'Success',
+          description: 'Tenants updated successfully',
+        });
+
+        // Refresh the tenants list
+        fetchTenants();
+
+        // Exit edit mode
+        toggleEditMode(false);
+
+        // Call the callback if provided
+        if (onTenantUnassigned) {
+          onTenantUnassigned();
+        }
+      } else {
+        toast({
+          title: 'Error',
+          description: response.message || 'Failed to update tenants',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error updating tenants:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update tenants',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Get initials from username
   const getInitials = (name: string) => {
     return name
@@ -223,9 +295,17 @@ const RoomTenantsList: React.FC<RoomTenantsListProps> = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-xl font-semibold">Assigned Tenants</h3>
-        <Badge variant="outline" className="bg-gradient-to-r from-primary/90 to-primary dark:from-primary/70 dark:to-primary/90 text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm">
-          {tenants.length} {tenants.length === 1 ? 'Tenant' : 'Tenants'}
-        </Badge>
+        <div className="flex items-center gap-2">
+          {isSaving && (
+            <div className="flex items-center gap-1 text-primary">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-xs">Saving...</span>
+            </div>
+          )}
+          <Badge variant="outline" className="bg-gradient-to-r from-primary/90 to-primary dark:from-primary/70 dark:to-primary/90 text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm">
+            {tenants.length} {tenants.length === 1 ? 'Tenant' : 'Tenants'}
+          </Badge>
+        </div>
       </div>
 
       {isEditMode && (
@@ -359,6 +439,6 @@ const RoomTenantsList: React.FC<RoomTenantsListProps> = ({
       </AlertDialog>
     </div>
   );
-};
+});
 
 export default RoomTenantsList;
