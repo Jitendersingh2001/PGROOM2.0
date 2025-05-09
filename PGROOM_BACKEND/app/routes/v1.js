@@ -87,4 +87,10 @@ router
     controller.TenantController.getTenants
   );
 
+
+  /**
+   * DASHBOARD ROUTES
+   */
+  router.get("/dashboard-monitoring-cards", controller.DashboardController.getMonitoringCards);
+
 module.exports = router;

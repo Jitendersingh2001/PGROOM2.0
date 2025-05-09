@@ -92,6 +92,38 @@ class PropertyRepository {
       throw new Error(`Error updating property status: ${error.message}`);
     }
   }
+async getPropertyCount(userId) {
+  try {
+    return await this.baseRepository.getDBClient().userProperties.count({
+      where: {
+        userId,
+        status: {
+          not: constant.DELETED,
+        },
+      },
+    });
+  } catch (error) {
+    throw new Error(`Error fetching property count: ${error.message}`);
+  }
+}
+  async getAllPropertiesIds(userId) {
+    try {
+      return await this.baseRepository.getDBClient().userProperties.findMany({
+        where: {
+          userId,
+          status: {
+            not: constant.DELETED,
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+    } catch (error) {
+      throw new Error(`Error fetching property IDs: ${error.message}`);
+    }
+  }
+
 }
 
 module.exports = PropertyRepository;

@@ -86,6 +86,21 @@ class TenantRepository {
       throw error;
     }
   }
+
+  async getAssignedTenantsCount(roomIds, status = constant.ACTIVE) {
+    try {
+      return await this.dbClient.tenant.count({
+        where: {
+          roomId: {
+            in: roomIds.map((room) => room.id),
+          },
+          status: status,
+        },
+      });
+    } catch (error) {
+      throw new Error(`Error fetching assigned tenants count: ${error.message}`);
+    }
+  }
 }
 
 module.exports = new TenantRepository();

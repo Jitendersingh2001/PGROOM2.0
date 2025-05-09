@@ -98,6 +98,71 @@ class roomRepository {
       throw new Error(error.message);
     }
   }
+
+  async getRoomCount(propertyIds) {
+    try {
+      return await this.baseRepository.getDBClient().rooms.count({
+        where: {
+          propertyId: {
+            in: propertyIds.map((property) => property.id),
+          },
+          status: {
+            not: constant.DELETED,
+          },
+        },
+      });
+    } catch (error) {
+      throw new Error(`Error fetching room count: ${error.message}`);
+    }
+  }
+  async getAllRoomsIds(propertyIds) {
+    try {
+      return await this.baseRepository.getDBClient().rooms.findMany({
+        where: {
+          propertyId: {
+            in: propertyIds.map((property) => property.id),
+          },
+          status: {
+            not: constant.DELETED,
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+    } catch (error) {
+      throw new Error(`Error fetching room IDs: ${error.message}`);
+    }
+  }
+  
+  async getExpectedMonthlyIncome(propertyIds) {
+    try {
+      const rooms = await this.baseRepository.getDBClient().rooms.findMany({
+        where: {
+          propertyId: {
+            in: propertyIds.map((property) => property.id),
+          },
+          status: {
+            not: constant.DELETED,
+          },
+        },
+        select: {
+          rent: true,
+          totalBed: true,
+        },
+      });
+  
+      return rooms.reduce((sum, room) => {
+        const rent = parseFloat(room.rent);
+        const totalBed = room.totalBed || 0;
+        const income = (isNaN(rent) ? 0 : rent) * totalBed;
+        return sum + income;
+      }, 0);
+    } catch (error) {
+      throw new Error(`Error fetching expected income: ${error.message}`);
+    }
+  }
+  
 }
 
 module.exports = new roomRepository();
