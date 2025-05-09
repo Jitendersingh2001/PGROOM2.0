@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import {
-  HelpCircle,
-  FileText,
   Search,
   ChevronRight,
-  ExternalLink
+  X,
+  ArrowLeft
 } from 'lucide-react';
 
 // Layout components
@@ -14,7 +13,7 @@ import DashboardLayout from '@/components/layouts/DashboardLayout';
 
 // UI components
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import {
@@ -25,6 +24,26 @@ import {
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+
+/**
+ * Interface for Help Article content
+ */
+interface HelpArticleContent {
+  id: number;
+  title: string;
+  excerpt: string;
+  category: string;
+  content: string;
+  lastUpdated: string;
+}
 
 /**
  * FAQItem - Component for displaying a single FAQ item
@@ -76,14 +95,54 @@ const HelpArticle: React.FC<{
 };
 
 /**
+ * HelpArticleModal - Component for displaying a help article in a modal
+ */
+interface HelpArticleModalProps {
+  article: HelpArticleContent | null;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const HelpArticleModal: React.FC<HelpArticleModalProps> = ({ article, isOpen, onClose }) => {
+  if (!article) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center gap-2 mb-1">
+            <Badge variant="outline" className="w-fit">{article.category}</Badge>
+          </div>
+          <DialogTitle className="text-xl">{article.title}</DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            Last updated: {article.lastUpdated}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="py-4">
+          <div dangerouslySetInnerHTML={{ __html: article.content }} />
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+/**
  * OwnerSupport - Help and Support page for property owners
  */
 const OwnerSupport: React.FC = () => {
   const [activeTab, setActiveTab] = useState('help-center');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedArticle, setSelectedArticle] = useState<HelpArticleContent | null>(null);
+  const [isArticleModalOpen, setIsArticleModalOpen] = useState(false);
 
-  // Mock FAQ data
+  // FAQ data
   const faqItems = [
+    // Property Management
     {
       id: 'faq-1',
       question: 'How do I add a new property?',
@@ -91,27 +150,63 @@ const OwnerSupport: React.FC = () => {
     },
     {
       id: 'faq-2',
+      question: 'How do I edit or update property details?',
+      answer: 'Go to the <strong>Properties</strong> section, find the property you want to edit, and click on the edit icon. Update the necessary information in the form and save your changes.'
+    },
+    {
+      id: 'faq-3',
+      question: 'Can I delete a property from my account?',
+      answer: 'Yes, you can delete a property by going to the <strong>Properties</strong> section, finding the property you want to remove, and clicking on the delete option. Please note that this action cannot be undone and will remove all associated rooms and tenant assignments.'
+    },
+
+    // Room Management
+    {
+      id: 'faq-4',
+      question: 'How do I add rooms to my property?',
+      answer: 'After adding a property, go to the property details page and click on <strong>Add Room</strong>. Fill in the room details including room number, total beds, rent amount, and description. You can also upload images of the room.'
+    },
+
+    // Tenant Management
+    {
+      id: 'faq-7',
       question: 'How do I invite tenants to my property?',
       answer: 'Go to the <strong>Tenants</strong> section, click on <strong>Add New Tenant</strong>, fill in their details, and send an invitation. They will receive an email with instructions to create an account.'
     },
     {
-      id: 'faq-3',
+      id: 'faq-8',
       question: 'How do I manage room assignments?',
       answer: 'You can assign tenants to rooms by going to the <strong>Tenants</strong> section, selecting a tenant, and clicking on <strong>Assign</strong>. Then select the property and room you want to assign them to.'
     },
     {
-      id: 'faq-4',
-      question: 'How do I update my payment information?',
-      answer: 'Navigate to <strong>Payments</strong> in the sidebar, then select the <strong>Payment Methods</strong> tab. Here you can add, remove, or update your payment methods.'
+      id: 'faq-9',
+      question: 'How do I remove a tenant from a room?',
+      answer: 'To unassign a tenant from a room, go to the <strong>Rooms</strong> section, click on <strong>View Room</strong> for the specific room, navigate to the <strong>Tenants</strong> tab, and use the unassign option next to the tenant\'s name.'
     },
     {
-      id: 'faq-5',
+      id: 'faq-10',
+      question: 'What\'s the difference between "Active" and "Invited" tenant status?',
+      answer: '"Invited" status means you\'ve sent an invitation to the tenant but they haven\'t yet created their account. "Active" status means the tenant has registered and their account is active in the system.'
+    },
+
+    // Dashboard & Reports
+    {
+      id: 'faq-11',
+      question: 'What information can I see on the dashboard?',
+      answer: 'The dashboard provides an overview of your property management statistics, including total properties, total rooms, assigned tenants, expected monthly income, room occupancy rates, and a list of recent tenants.'
+    },
+    {
+      id: 'faq-12',
+      question: 'How is the "Expected Monthly Income" calculated?',
+      answer: 'Expected Monthly Income is calculated based on the total rent amount set for all your rooms. It represents the potential income if all rooms were occupied and all rent payments were collected.'
+    },
+    {
+      id: 'faq-13',
       question: 'Can I generate reports for my properties?',
       answer: 'Yes, you can view basic reports on the <strong>Dashboard</strong>. We are working on more detailed reporting features that will be available soon.'
     },
   ];
 
-  // Mock help articles
+  // Help articles
   const helpArticles = [
     {
       id: 1,
@@ -127,27 +222,63 @@ const OwnerSupport: React.FC = () => {
     },
     {
       id: 3,
+      title: 'Complete Guide to Room Management',
+      excerpt: 'Learn how to add, edit, and manage rooms across your properties.',
+      category: 'Room Management'
+    },
+    {
+      id: 4,
+      title: 'Tenant Management System Overview',
+      excerpt: 'A comprehensive guide to inviting, assigning, and managing tenants.',
+      category: 'Tenant Management'
+    },
+    {
+      id: 5,
       title: 'Tenant Communication Best Practices',
       excerpt: 'How to maintain good relationships with your tenants through effective communication.',
       category: 'Tenant Management'
     },
     {
-      id: 4,
+      id: 6,
+      title: 'Understanding the Dashboard Analytics',
+      excerpt: 'Learn how to interpret and use the data displayed on your dashboard.',
+      category: 'Dashboard'
+    },
+    {
+      id: 7,
       title: 'Understanding Billing and Payments',
       excerpt: 'A comprehensive guide to the billing system and payment processing.',
       category: 'Billing'
     },
     {
-      id: 5,
+      id: 8,
+      title: 'Setting Up Payment Methods',
+      excerpt: 'Step-by-step guide to adding and managing your payment methods.',
+      category: 'Billing'
+    },
+    {
+      id: 9,
       title: 'Security Best Practices for Property Owners',
       excerpt: 'Keep your account and property information secure with these tips.',
       category: 'Security'
     },
     {
-      id: 6,
+      id: 10,
       title: 'Troubleshooting Common Issues',
       excerpt: 'Solutions to common problems you might encounter while using the platform.',
       category: 'Troubleshooting'
+    },
+    {
+      id: 11,
+      title: 'Mobile App User Guide',
+      excerpt: 'How to use the mobile app to manage your properties on the go.',
+      category: 'Mobile'
+    },
+    {
+      id: 12,
+      title: 'Optimizing Your Property Listings',
+      excerpt: 'Tips to make your property listings more attractive to potential tenants.',
+      category: 'Marketing'
     }
   ];
 
