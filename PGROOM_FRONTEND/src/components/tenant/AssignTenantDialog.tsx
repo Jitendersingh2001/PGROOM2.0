@@ -20,11 +20,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, User } from 'lucide-react';
+import { Loader2, User, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // API and types
-import { TenantUser } from '@/lib/api/services/tenantService';
+import { TenantUser, tenantService } from '@/lib/api/services/tenantService';
+import { propertyService, Property, PropertyListResponse } from '@/lib/api/services/propertyService';
+import { roomService, Room, RoomListResponse } from '@/lib/api/services/roomService';
+
+// Room creation component
+import AddRoomModal from '@/components/room/AddRoomModal';
 
 interface AssignTenantDialogProps {
   isOpen: boolean;
@@ -43,104 +48,121 @@ const AssignTenantDialog: React.FC<AssignTenantDialogProps> = ({
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>('');
   const [selectedRoomId, setSelectedRoomId] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingProperties, setIsLoadingProperties] = useState(false);
+  const [isLoadingRooms, setIsLoadingRooms] = useState(false);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [isAddRoomModalOpen, setIsAddRoomModalOpen] = useState(false);
 
   // Reset form when dialog opens/closes
   useEffect(() => {
     if (!isOpen) {
       setSelectedPropertyId('');
       setSelectedRoomId('');
+      setError(null);
+    } else {
+      // Fetch properties when dialog opens
+      fetchProperties();
     }
   }, [isOpen]);
 
-  // Mock properties data
-  const mockProperties = [
-    { id: 1, propertyName: 'Sunset Apartments' },
-    { id: 2, propertyName: 'Ocean View Residences' },
-    { id: 3, propertyName: 'Mountain Lodge' },
-    { id: 4, propertyName: 'City Center Suites' }
-  ];
+  // Fetch properties from API
+  const fetchProperties = async () => {
+    setIsLoadingProperties(true);
+    setError(null);
 
-  // Mock rooms data based on selected property
-  const mockRoomsByProperty = {
-    '1': [
-      { id: 101, roomName: 'Room 101 - Sunset' },
-      { id: 102, roomName: 'Room 102 - Sunset' },
-      { id: 103, roomName: 'Room 103 - Sunset' }
-    ],
-    '2': [
-      { id: 201, roomName: 'Room 201 - Ocean' },
-      { id: 202, roomName: 'Room 202 - Ocean' }
-    ],
-    '3': [
-      { id: 301, roomName: 'Room 301 - Mountain' },
-      { id: 302, roomName: 'Room 302 - Mountain' },
-      { id: 303, roomName: 'Room 303 - Mountain' },
-      { id: 304, roomName: 'Room 304 - Mountain' }
-    ],
-    '4': [
-      { id: 401, roomName: 'Room 401 - City' },
-      { id: 402, roomName: 'Room 402 - City' }
-    ]
+    try {
+      const response = await propertyService.getProperties({
+        page: 1,
+        limit: 100, // Fetch a large number to avoid pagination in the dropdown
+        filters: {
+          status: 'Active' // Only fetch active properties
+        }
+      });
+
+      if (response.statusCode === 200 && response.data) {
+        setProperties(response.data.data || []);
+      } else {
+        setError('Failed to load properties');
+        toast.error('Failed to load properties');
+      }
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+      setError('Failed to load properties');
+      toast.error('Failed to load properties');
+    } finally {
+      setIsLoadingProperties(false);
+    }
   };
 
-  // Mock loading states for UI demonstration
-  const [isLoadingProperties, setIsLoadingProperties] = useState(true);
-  const [isLoadingRooms, setIsLoadingRooms] = useState(false);
-
-  // Simulate loading delay for properties
-  useEffect(() => {
-    if (isOpen) {
-      const timer = setTimeout(() => {
-        setIsLoadingProperties(false);
-      }, 800);
-
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
-
-  // Simulate loading delay for rooms when property changes
+  // Fetch rooms when property changes
   useEffect(() => {
     if (selectedPropertyId) {
-      setIsLoadingRooms(true);
-      const timer = setTimeout(() => {
-        setIsLoadingRooms(false);
-      }, 600);
-
-      return () => clearTimeout(timer);
+      fetchRooms(parseInt(selectedPropertyId));
+    } else {
+      setRooms([]);
     }
   }, [selectedPropertyId]);
 
-  // Create mock data structures that match what the component expects
-  const propertiesData = {
-    data: mockProperties
+  // Fetch rooms from API
+  const fetchRooms = async (propertyId: number) => {
+    setIsLoadingRooms(true);
+    setError(null);
+    setSelectedRoomId(''); // Reset room selection when property changes
+
+    try {
+      const response = await roomService.getRooms({
+        propertyId,
+        page: 1,
+        limit: 100, // Fetch a large number to avoid pagination in the dropdown
+        filters: {
+          status: 'Available' // Only fetch available rooms
+        }
+      });
+
+      if (response.statusCode === 200 && response.data) {
+        setRooms(response.data.data || []);
+      } else {
+        setError('Failed to load rooms');
+        toast.error('Failed to load rooms');
+      }
+    } catch (error) {
+      console.error('Error fetching rooms:', error);
+      setError('Failed to load rooms');
+      toast.error('Failed to load rooms');
+    } finally {
+      setIsLoadingRooms(false);
+    }
   };
 
-  const roomsData = {
-    data: selectedPropertyId ? mockRoomsByProperty[selectedPropertyId] || [] : []
-  };
-
-  // Mock tenant assignment function
+  // Assign tenant to property and room
   const handleAssignTenant = async () => {
     if (!tenant || !selectedPropertyId || !selectedRoomId) {
       toast.error('Missing required fields');
       return false;
     }
 
-    // Log the assignment details
-    console.log('Assigning tenant:', {
-      tenant: tenant.user.firstName + ' ' + tenant.user.lastName,
-      propertyId: selectedPropertyId,
-      roomId: selectedRoomId
-    });
+    try {
+      // Call the tenant assignment API
+      const response = await tenantService.assignTenant({
+        userIds: [tenant.user.id], // Array of user IDs to assign
+        propertyId: parseInt(selectedPropertyId),
+        roomId: parseInt(selectedRoomId)
+      });
 
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Simulate success
-    return true;
+      // Check if the assignment was successful
+      if (response.statusCode === 200) {
+        return true;
+      } else {
+        toast.error(response.message || 'Failed to assign tenant');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error assigning tenant:', error);
+      return false;
+    }
   };
-
-  // We already have isSubmitting state defined above
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -171,15 +193,33 @@ const AssignTenantDialog: React.FC<AssignTenantDialogProps> = ({
     }
   };
 
+  // Handle room creation success
+  const handleRoomCreated = () => {
+    console.log("Room created successfully, refreshing rooms list");
+
+    // Close the add room modal
+    setIsAddRoomModalOpen(false);
+
+    // Refresh the rooms list for the selected property
+    if (selectedPropertyId) {
+      console.log("Fetching rooms for property ID:", selectedPropertyId);
+      fetchRooms(parseInt(selectedPropertyId));
+    }
+
+    // Show success message
+    toast.success('Room added successfully');
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-xl">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
-        >
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-xl">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
           {/* Header with gradient background */}
           <div className="relative bg-gradient-to-r from-green-600 to-emerald-700 p-6 text-white">
             <DialogTitle className="text-xl font-bold text-white mb-1">
@@ -246,7 +286,7 @@ const AssignTenantDialog: React.FC<AssignTenantDialogProps> = ({
                         <Loader2 className="h-4 w-4 animate-spin mr-2 text-primary" />
                         <span>Loading properties...</span>
                       </motion.div>
-                    ) : propertiesData?.data.length === 0 ? (
+                    ) : properties.length === 0 ? (
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -256,7 +296,7 @@ const AssignTenantDialog: React.FC<AssignTenantDialogProps> = ({
                         No properties available
                       </motion.div>
                     ) : (
-                      propertiesData?.data.map((property) => (
+                      properties.map((property) => (
                         <SelectItem key={property.id} value={String(property.id)}>
                           {property.propertyName}
                         </SelectItem>
@@ -290,19 +330,41 @@ const AssignTenantDialog: React.FC<AssignTenantDialogProps> = ({
                         <Loader2 className="h-4 w-4 animate-spin mr-2 text-primary" />
                         <span>Loading rooms...</span>
                       </motion.div>
-                    ) : roomsData?.data.length === 0 ? (
+                    ) : rooms.length === 0 ? (
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="p-4 text-center text-sm text-gray-500"
+                        className="p-4 flex flex-col items-center justify-center gap-2"
                       >
-                        No rooms available for this property
+                        <p className="text-center text-sm text-gray-500">
+                          No rooms available for this property
+                        </p>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="mt-2 flex items-center gap-1 text-primary hover:text-primary hover:bg-primary/5"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log("Add Room button clicked");
+                            // Close the select dropdown first
+                            document.body.click(); // This will close any open dropdowns
+                            // Then open the modal with a slight delay to ensure the dropdown is closed
+                            setTimeout(() => {
+                              setIsAddRoomModalOpen(true);
+                            }, 100);
+                          }}
+                        >
+                          <PlusCircle className="h-4 w-4 mr-1" />
+                          Add Room
+                        </Button>
                       </motion.div>
                     ) : (
-                      roomsData?.data.map((room) => (
+                      rooms.map((room) => (
                         <SelectItem key={room.id} value={String(room.id)}>
-                          {room.roomName}
+                          Room {room.roomNo}
                         </SelectItem>
                       ))
                     )}
@@ -347,8 +409,17 @@ const AssignTenantDialog: React.FC<AssignTenantDialogProps> = ({
             </DialogFooter>
           </form>
         </motion.div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Room Modal */}
+      <AddRoomModal
+        isOpen={isAddRoomModalOpen && !!selectedPropertyId}
+        onClose={() => setIsAddRoomModalOpen(false)}
+        propertyId={selectedPropertyId ? parseInt(selectedPropertyId) : 0}
+        onSuccess={handleRoomCreated}
+      />
+    </>
   );
 };
 

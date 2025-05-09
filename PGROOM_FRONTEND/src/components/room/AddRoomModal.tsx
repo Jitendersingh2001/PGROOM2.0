@@ -59,6 +59,7 @@ interface AddRoomModalProps {
   isOpen: boolean;
   onClose: () => void;
   propertyId: number;
+  onSuccess?: () => void;
 }
 
 // Define the steps for the multi-step form
@@ -96,9 +97,14 @@ const steps: Step[] = [
   },
 ];
 
-const AddRoomModal: React.FC<AddRoomModalProps> = ({ isOpen, onClose, propertyId }) => {
+const AddRoomModal: React.FC<AddRoomModalProps> = ({ isOpen, onClose, propertyId, onSuccess }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Log when the modal is opened or closed
+  React.useEffect(() => {
+    console.log("AddRoomModal isOpen:", isOpen, "propertyId:", propertyId);
+  }, [isOpen, propertyId]);
 
   // State for current step
   const [currentStep, setCurrentStep] = useState(0);
@@ -286,6 +292,14 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({ isOpen, onClose, propertyId
 
       // Reset form and close modal
       handleClose();
+
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        console.log("Calling onSuccess callback");
+        onSuccess();
+      } else {
+        console.log("No onSuccess callback provided");
+      }
     } catch (error) {
       toast({
         title: 'Error',
