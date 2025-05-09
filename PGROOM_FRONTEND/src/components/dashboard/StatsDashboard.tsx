@@ -66,7 +66,7 @@ interface StatsDashboardProps {
   propertyCount?: number;
   roomCount?: number;
   assignedRoomCount?: number;
-  totalIncome?: number;
+  expectedMonthlyIncome?: number;
   tenants?: typeof mockTenants;
   occupancyData?: typeof mockOccupancyData;
   monthlyIncomeData?: typeof mockMonthlyIncomeData;
@@ -84,7 +84,7 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({
   propertyCount = 5,
   roomCount = 25,
   assignedRoomCount = 18,
-  totalIncome = 320000,
+  expectedMonthlyIncome = 320000,
   tenants = mockTenants,
   occupancyData = mockOccupancyData,
   monthlyIncomeData = mockMonthlyIncomeData,
@@ -124,14 +124,14 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({
         />
 
         <StatsCard
-          title="Total Income"
+          title="Expected Monthly Income"
           value={new Intl.NumberFormat('en-IN', {
             style: 'currency',
             currency: 'INR',
             maximumFractionDigits: 0
-          }).format(totalIncome)}
+          }).format(expectedMonthlyIncome)}
           icon={<Wallet className="w-5 h-5" />}
-          description="Expected annual income"
+          description="Monthly rental revenue"
         />
       </div>
 
