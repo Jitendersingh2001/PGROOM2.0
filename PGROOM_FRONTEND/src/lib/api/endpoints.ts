@@ -62,4 +62,19 @@ export const DASHBOARD = {
   RECENT_TENANTS: '/pgrooms/v1/dashboard-recent-tenants',
 };
 
+// Payment endpoints
+export const PAYMENT = {
+  CREATE_ORDER: '/pgrooms/v1/payment/create-order',
+  VERIFY: '/pgrooms/v1/payment/verify',
+  DETAILS: (id: string | number) => `/pgrooms/v1/payment/${id}`,
+  LIST: '/pgrooms/v1/payment/list',
+  TENANT_PAYMENTS: '/pgrooms/v1/payment/tenant',
+  PROPERTY_PAYMENTS: '/pgrooms/v1/payment/property',
+  REFUND: '/pgrooms/v1/payment/refund',
+  STATS: '/pgrooms/v1/payment/stats',
+  RECENT: '/pgrooms/v1/payment/recent',
+  MONTHLY_ANALYTICS: '/pgrooms/v1/payment/analytics/monthly',
+  WEBHOOK: '/pgrooms/payment/webhook',
+};
+
 // Other endpoints can be added here as needed

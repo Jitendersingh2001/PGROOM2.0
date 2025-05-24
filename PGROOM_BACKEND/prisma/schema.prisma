@@ -20,6 +20,7 @@ model User {
   password       String           @db.VarChar
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
+  payments       Payment[]        @relation("TenantPayments")
   tenant         Tenant[]
   city           City             @relation(fields: [cityId], references: [id])
   state          State            @relation(fields: [stateId], references: [id])
@@ -57,11 +58,12 @@ model UserProperties {
   status          PropertyStatus
   createdAt       DateTime       @default(now()) @db.Timestamp(6)
   updatedAt       DateTime       @updatedAt @db.Timestamp(6)
+  payments        Payment[]      @relation("PropertyPayments")
   rooms           Rooms[]
   tenant          Tenant[]
-  user            User           @relation(fields: [userId], references: [id])
   city            City           @relation(fields: [cityId], references: [id])
   state           State          @relation(fields: [stateId], references: [id])
+  user            User           @relation(fields: [userId], references: [id])
 }
 
 model Rooms {
@@ -75,6 +77,7 @@ model Rooms {
   rent           String         @db.VarChar
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+  payments       Payment[]      @relation("RoomPayments")
   userProperties UserProperties @relation(fields: [propertyId], references: [id])
   Tenant         Tenant[]
 }
@@ -111,6 +114,33 @@ model City {
   state          State            @relation(fields: [stateId], references: [id])
   users          User[]
   userProperties UserProperties[]
+}
+
+model Payment {
+  id                Int            @id @default(autoincrement())
+  tenantId          Int
+  propertyId        Int
+  roomId            Int
+  amount            Float
+  currency          String         @default("INR")
+  razorpayOrderId   String?        @unique
+  razorpayPaymentId String?        @unique
+  razorpaySignature String?
+  status            PaymentStatus
+  paymentMethod     PaymentMethod?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  property          UserProperties @relation("PropertyPayments", fields: [propertyId], references: [id])
+  room              Rooms          @relation("RoomPayments", fields: [roomId], references: [id])
+  tenant            User           @relation("TenantPayments", fields: [tenantId], references: [id])
+}
+
+enum PaymentStatus {
+  Pending
+  Authorized
+  Captured
+  Failed
+  Refunded
 }
 
 enum Status {

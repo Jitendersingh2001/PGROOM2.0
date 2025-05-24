@@ -94,4 +94,57 @@ router
 router.get("/dashboard-monitoring-cards", controller.DashboardController.getMonitoringCards);
   router.get("/dashboard-recent-tenants", controller.DashboardController.getRecentTenants);
 
+/**
+ * PAYMENT ROUTES
+ */
+router
+  .route("/payment/create-order")
+  .post(
+    validateRequest(validators.PaymentValidator.CreatePaymentOrderValidator),
+    controller.PaymentController.createPaymentOrder
+  );
+
+router
+  .route("/payment/verify")
+  .post(
+    validateRequest(validators.PaymentValidator.VerifyPaymentValidator),
+    controller.PaymentController.verifyPayment
+  );
+
+router
+  .route("/payment/list")
+  .post(
+    validateRequest(validators.PaymentValidator.PaymentListValidator),
+    controller.PaymentController.getAllPayments
+  );
+
+router
+  .route("/payment/tenant")
+  .post(
+    validateRequest(validators.PaymentValidator.TenantPaymentsValidator),
+    controller.PaymentController.getPaymentsByTenant
+  );
+
+router
+  .route("/payment/property")
+  .post(
+    validateRequest(validators.PaymentValidator.PropertyPaymentsValidator),
+    controller.PaymentController.getPaymentsByProperty
+  );
+
+router
+  .route("/payment/refund")
+  .post(
+    validateRequest(validators.PaymentValidator.RefundValidator),
+    controller.PaymentController.initiateRefund
+  );
+
+router
+  .route("/payment/:id")
+  .get(controller.PaymentController.getPaymentById);
+
+router.get("/payment/stats", controller.PaymentController.getPaymentStats);
+router.get("/payment/recent", controller.PaymentController.getRecentPayments);
+router.get("/payment/analytics/monthly", controller.PaymentController.getMonthlyAnalytics);
+
 module.exports = router;
