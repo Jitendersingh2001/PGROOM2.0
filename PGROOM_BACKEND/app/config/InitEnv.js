@@ -38,6 +38,10 @@ const config = {
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     bucketRegion: process.env.AWS_BUCKET_REGION,
     bucketName: process.env.AWS_BUCKET_NAME,
+  },
+  payment: {
+    keyId: process.env.RAZORPAY_KEY_ID,
+    keySecret: process.env.RAZORPAY_KEY_SECRET,
   }
 };
 module.exports = config;
