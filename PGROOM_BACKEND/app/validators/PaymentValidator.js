@@ -148,6 +148,32 @@ const PaymentListValidator = Joi.object({
       'number.base': 'Room ID must be a number',
       'number.integer': 'Room ID must be an integer',
       'number.positive': 'Room ID must be positive'
+    }),
+
+  search: Joi.string()
+    .max(255)
+    .optional()
+    .messages({
+      'string.base': 'Search must be a string',
+      'string.max': 'Search cannot exceed 255 characters'
+    }),
+
+  startDate: Joi.date()
+    .iso()
+    .optional()
+    .messages({
+      'date.base': 'Start date must be a valid date',
+      'date.format': 'Start date must be in ISO format'
+    }),
+
+  endDate: Joi.date()
+    .iso()
+    .min(Joi.ref('startDate'))
+    .optional()
+    .messages({
+      'date.base': 'End date must be a valid date',
+      'date.format': 'End date must be in ISO format',
+      'date.min': 'End date must be after start date'
     })
 });
 

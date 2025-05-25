@@ -176,8 +176,16 @@ class PaymentRepository extends BasePrismaRepository {
    */
   async getPaymentById(paymentId) {
     try {
+      // Validate paymentId
+      if (!paymentId || isNaN(paymentId)) {
+        throw new Error('Invalid payment ID provided');
+      }
+
+      // Convert to integer to ensure proper type
+      const id = parseInt(paymentId);
+
       return await this.prisma.payment.findUnique({
-        where: { id: paymentId },
+        where: { id },
         include: {
           tenant: {
             select: {
@@ -346,7 +354,17 @@ class PaymentRepository extends BasePrismaRepository {
    */
   async getAllPayments(options = {}) {
     try {
-      const { page = 1, limit = 10, status, tenantId, propertyId, roomId } = options;
+      const {
+        page = 1,
+        limit = 10,
+        status,
+        tenantId,
+        propertyId,
+        roomId,
+        search,
+        startDate,
+        endDate
+      } = options;
       const skip = (page - 1) * limit;
 
       const where = {};
@@ -354,6 +372,43 @@ class PaymentRepository extends BasePrismaRepository {
       if (tenantId) where.tenantId = tenantId;
       if (propertyId) where.propertyId = propertyId;
       if (roomId) where.roomId = roomId;
+
+      // Add search functionality
+      if (search) {
+        where.OR = [
+          {
+            tenant: {
+              OR: [
+                { firstName: { contains: search, mode: 'insensitive' } },
+                { lastName: { contains: search, mode: 'insensitive' } },
+                { email: { contains: search, mode: 'insensitive' } }
+              ]
+            }
+          },
+          {
+            property: {
+              propertyName: { contains: search, mode: 'insensitive' }
+            }
+          },
+          {
+            id: isNaN(parseInt(search)) ? undefined : parseInt(search)
+          }
+        ].filter(condition => condition.id !== undefined || condition.tenant || condition.property);
+      }
+
+      // Add date range filtering
+      if (startDate || endDate) {
+        where.createdAt = {};
+        if (startDate) {
+          where.createdAt.gte = new Date(startDate);
+        }
+        if (endDate) {
+          // Add one day to include the end date
+          const endDateTime = new Date(endDate);
+          endDateTime.setDate(endDateTime.getDate() + 1);
+          where.createdAt.lt = endDateTime;
+        }
+      }
 
       const [payments, total] = await Promise.all([
         this.prisma.payment.findMany({

@@ -5,12 +5,13 @@
  */
 
 export { default as PaymentTable } from './PaymentTable';
-export { default as PaymentStats } from './PaymentStats';
+export { default as PaymentStats, DetailedPaymentStats } from './PaymentStats';
 export { default as PaymentForm } from './PaymentForm';
 export { default as PaymentFormModal } from './PaymentFormModal';
 export { default as PaymentDetailsModal } from './PaymentDetailsModal';
+export { default as PaymentFilters } from './PaymentFilters';
+export { default as PaymentPagination } from './PaymentPagination';
 export { default as RefundModal } from './RefundModal';
-export { default as MonthlyAnalyticsChart } from './MonthlyAnalyticsChart';
 
 // Re-export types for convenience
 export type {
@@ -20,7 +21,5 @@ export type {
   CreatePaymentOrderRequest,
   PaymentVerificationRequest,
   RefundRequest,
-  PaymentStats,
-  MonthlyAnalyticsData,
-  PaymentFilters
+  MonthlyAnalyticsData
 } from '@/lib/types/payment';

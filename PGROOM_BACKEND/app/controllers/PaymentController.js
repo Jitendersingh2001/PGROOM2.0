@@ -67,7 +67,20 @@ class PaymentController extends Controller {
    */
   getPaymentById = async (req, res) => {
     try {
-      const paymentId = parseInt(req.params.id);
+      const idParam = req.params.id;
+
+      // Check if ID parameter exists
+      if (!idParam) {
+        return this.sendErrorResponse(res, new Error('Payment ID is required'), http.BAD_REQUEST);
+      }
+
+      const paymentId = parseInt(idParam);
+
+      // Validate payment ID
+      if (isNaN(paymentId) || paymentId <= 0) {
+        return this.sendErrorResponse(res, new Error(`Invalid payment ID: ${idParam}`), http.BAD_REQUEST);
+      }
+
       const result = await this.paymentService.getPaymentById(paymentId);
       this.sendResponse(
         res,
@@ -163,15 +176,22 @@ class PaymentController extends Controller {
       // Get basic payment statistics
       const allPayments = await this.paymentService.getAllPayments({ limit: 1000 });
 
+      // Calculate revenue from only completed (captured) payments
+      const capturedPayments = allPayments.data.filter(p => p.status === 'Captured');
+      const refundedPayments = allPayments.data.filter(p => p.status === 'Refunded');
+
+      // Total revenue = Sum of only completed payments
+      const totalRevenue = capturedPayments.reduce((sum, payment) => sum + payment.amount, 0);
+
       const stats = {
         totalPayments: allPayments.pagination.total,
-        totalAmount: allPayments.data.reduce((sum, payment) => sum + payment.amount, 0),
-        successfulPayments: allPayments.data.filter(p => p.status === 'Captured').length,
+        totalAmount: totalRevenue, // Only count revenue from completed payments
+        successfulPayments: capturedPayments.length,
         pendingPayments: allPayments.data.filter(p => p.status === 'Pending').length,
         failedPayments: allPayments.data.filter(p => p.status === 'Failed').length,
-        refundedPayments: allPayments.data.filter(p => p.status === 'Refunded').length,
+        refundedPayments: refundedPayments.length,
         successRate: allPayments.pagination.total > 0
-          ? ((allPayments.data.filter(p => p.status === 'Captured').length / allPayments.pagination.total) * 100).toFixed(2)
+          ? parseFloat(((capturedPayments.length / allPayments.pagination.total) * 100).toFixed(2))
           : 0
       };
 

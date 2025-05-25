@@ -1,6 +1,6 @@
 /**
  * Payment Types and Interfaces
- * 
+ *
  * This file contains all TypeScript interfaces and types related to payments,
  * following the backend API structure and Razorpay integration.
  */
@@ -101,6 +101,9 @@ export interface PaymentListParams {
   tenantId?: number;
   propertyId?: number;
   roomId?: number;
+  search?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 /**
@@ -176,7 +179,8 @@ export interface PaymentStats {
   pendingPayments: number;
   failedPayments: number;
   refundedPayments: number;
-  successRate: string;
+  successRate: number;
+  currency?: string;
 }
 
 /**

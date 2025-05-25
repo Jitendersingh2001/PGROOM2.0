@@ -1,11 +1,16 @@
 /**
- * OwnerPayments - Payment management page for property owners
+ * OwnerPayments - Comprehensive payment management page for property owners
  *
- * Simplified version with just create payment functionality
+ * Features:
+ * 1. Create new payments
+ * 2. View payment listings with advanced filtering
+ * 3. Payment statistics and analytics
+ * 4. Payment details and management
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { CreditCard, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 
 // Layout components
 import OwnerNavbar from '@/components/owner/OwnerNavbar';
@@ -16,20 +21,76 @@ import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
 
 // Payment components
-import PaymentFormModal from '@/components/payments/PaymentFormModal';
+import {
+  PaymentTable,
+  PaymentStats,
+  PaymentFormModal,
+  PaymentDetailsModal,
+  PaymentFilters,
+  PaymentPagination,
+  RefundModal
+} from '@/components/payments';
 
-// Context
+// Context and hooks
 import { PaymentProvider } from '@/contexts/PaymentContext';
+import { usePaymentList } from '@/hooks/usePayments';
 
-// Simple payment management component
+// Types
+import { Payment, PaymentListParams, PaginationMeta } from '@/lib/types/payment';
+
+// Comprehensive payment management component
 const PaymentManagement = () => {
+  // State management
   const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [showPaymentDetails, setShowPaymentDetails] = useState(false);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [filters, setFilters] = useState<PaymentListParams>({ page: 1, limit: 10 });
 
-  const handlePaymentSuccess = (paymentId: string) => {
+  // Use payment list hook
+  const {
+    payments,
+    pagination,
+    stats,
+    statsError,
+    isLoading,
+    error,
+    refetch
+  } = usePaymentList(filters);
+
+  // Handle payment creation success
+  const handlePaymentSuccess = useCallback((paymentId: string) => {
     setShowPaymentForm(false);
-    // You can add additional success handling here if needed
-    console.log('Payment created successfully:', paymentId);
-  };
+    toast.success('Payment created successfully!');
+    refetch(); // Refresh the payment list
+  }, [refetch]);
+
+  // Handle view payment details
+  const handleViewDetails = useCallback((payment: Payment) => {
+    setSelectedPayment(payment);
+    setShowPaymentDetails(true);
+  }, []);
+
+  // Handle refund initiation
+  const handleRefund = useCallback((payment: Payment) => {
+    setSelectedPayment(payment);
+    setShowRefundModal(true);
+  }, []);
+
+  // Handle filter changes
+  const handleFiltersChange = useCallback((newFilters: PaymentListParams) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  }, []);
+
+  // Handle page changes
+  const handlePageChange = useCallback((page: number) => {
+    setFilters(prev => ({ ...prev, page }));
+  }, []);
+
+  // Handle page size changes
+  const handlePageSizeChange = useCallback((limit: number) => {
+    setFilters(prev => ({ ...prev, limit, page: 1 }));
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -38,7 +99,7 @@ const PaymentManagement = () => {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Payment Management</h1>
           <p className="text-muted-foreground mt-1">
-            Create and manage rent payments
+            Create, manage, and track all payment transactions
           </p>
         </div>
         <Button onClick={() => setShowPaymentForm(true)}>
@@ -47,12 +108,74 @@ const PaymentManagement = () => {
         </Button>
       </div>
 
-      {/* Create Payment Modal */}
+      {/* Payment Statistics */}
+      <PaymentStats
+        stats={stats}
+        error={statsError}
+        isLoading={isLoading}
+      />
+
+      {/* Payment Management Section */}
+      <div className="space-y-6">
+        {/* Filters */}
+        <PaymentFilters
+          onFiltersChange={handleFiltersChange}
+          isLoading={isLoading}
+        />
+
+        {/* Payment Table */}
+        <PaymentTable
+          payments={payments}
+          isLoading={isLoading}
+          onViewDetails={handleViewDetails}
+          onRefund={handleRefund}
+        />
+
+        {/* Pagination */}
+        {pagination && pagination.total > 0 && (
+          <PaymentPagination
+            pagination={pagination}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            isLoading={isLoading}
+          />
+        )}
+      </div>
+
+      {/* Modals */}
       <PaymentFormModal
         isOpen={showPaymentForm}
         onClose={() => setShowPaymentForm(false)}
         onSuccess={handlePaymentSuccess}
       />
+
+      {selectedPayment && (
+        <>
+          <PaymentDetailsModal
+            payment={selectedPayment}
+            isOpen={showPaymentDetails}
+            onClose={() => {
+              setShowPaymentDetails(false);
+              setSelectedPayment(null);
+            }}
+          />
+
+          <RefundModal
+            payment={selectedPayment}
+            isOpen={showRefundModal}
+            onClose={() => {
+              setShowRefundModal(false);
+              setSelectedPayment(null);
+            }}
+            onSuccess={() => {
+              setShowRefundModal(false);
+              setSelectedPayment(null);
+              refetch();
+              toast.success('Refund initiated successfully');
+            }}
+          />
+        </>
+      )}
     </div>
   );
 };

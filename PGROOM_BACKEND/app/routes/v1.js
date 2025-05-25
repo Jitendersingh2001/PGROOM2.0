@@ -139,12 +139,14 @@ router
     controller.PaymentController.initiateRefund
   );
 
-router
-  .route("/payment/:id")
-  .get(controller.PaymentController.getPaymentById);
-
+// Specific payment routes (must come before parameterized routes)
 router.get("/payment/stats", controller.PaymentController.getPaymentStats);
 router.get("/payment/recent", controller.PaymentController.getRecentPayments);
 router.get("/payment/analytics/monthly", controller.PaymentController.getMonthlyAnalytics);
+
+// Parameterized payment routes (must come after specific routes)
+router
+  .route("/payment/:id")
+  .get(controller.PaymentController.getPaymentById);
 
 module.exports = router;

@@ -18,7 +18,8 @@ import {
   PaymentVerificationRequest,
   RefundRequest,
   PaymentError,
-  PaymentFilters
+  PaymentFilters,
+  PaginationMeta
 } from '@/lib/types/payment';
 
 /**
@@ -267,6 +268,75 @@ export function usePayment(paymentId?: number) {
     verifyPayment,
     processPayment,
     initiateRefund,
+    setError
+  };
+}
+
+/**
+ * Hook for managing payment list with filtering, pagination, and stats
+ */
+export function usePaymentList(params: PaymentListParams = {}) {
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
+  const [stats, setStats] = useState<PaymentStats | null>(null);
+  const [statsError, setStatsError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<PaymentError | null>(null);
+
+  // Fetch payments with current parameters
+  const fetchPayments = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await paymentService.getPayments(params);
+      setPayments(response.data);
+      setPagination(response.pagination);
+    } catch (err) {
+      const error = err as PaymentError;
+      setError(error);
+      toast.error(error.message || 'Failed to fetch payments');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [params]);
+
+  // Fetch payment statistics
+  const fetchStats = useCallback(async () => {
+    try {
+      setStatsError(null);
+      const statsResponse = await paymentService.getPaymentStats();
+      setStats(statsResponse);
+    } catch (err: any) {
+      console.error('Failed to fetch payment stats:', err);
+      setStatsError(err.message || 'Failed to load payment statistics');
+    }
+  }, []);
+
+  // Refetch data
+  const refetch = useCallback(() => {
+    fetchPayments();
+    fetchStats();
+  }, [fetchPayments, fetchStats]);
+
+  // Fetch data on mount and when params change
+  useEffect(() => {
+    fetchPayments();
+  }, [fetchPayments]);
+
+  // Fetch stats on mount
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  return {
+    payments,
+    pagination,
+    stats,
+    statsError,
+    isLoading,
+    error,
+    refetch,
     setError
   };
 }
