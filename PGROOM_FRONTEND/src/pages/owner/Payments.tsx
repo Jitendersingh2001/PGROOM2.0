@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { CreditCard, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -79,7 +80,13 @@ const PaymentManagement = () => {
 
   // Handle filter changes
   const handleFiltersChange = useCallback((newFilters: PaymentListParams) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
+    // If only page and limit are provided, it means we're clearing filters but preserving pagination
+    if (Object.keys(newFilters).length <= 2 && newFilters.page !== undefined) {
+      setFilters({ page: newFilters.page, limit: newFilters.limit || 10 });
+    } else {
+      // Normal filter update - merge with previous
+      setFilters(prev => ({ ...prev, ...newFilters }));
+    }
   }, []);
 
   // Handle page changes
@@ -87,41 +94,76 @@ const PaymentManagement = () => {
     setFilters(prev => ({ ...prev, page }));
   }, []);
 
-  // Handle page size changes
-  const handlePageSizeChange = useCallback((limit: number) => {
-    setFilters(prev => ({ ...prev, limit, page: 1 }));
-  }, []);
+
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      className="space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
+      <motion.div
+        className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+      >
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+        >
           <h1 className="text-2xl font-bold text-foreground">Payment Management</h1>
           <p className="text-muted-foreground mt-1">
             Create, manage, and track all payment transactions
           </p>
-        </div>
-        <Button onClick={() => setShowPaymentForm(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Payment
-        </Button>
-      </div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <Button onClick={() => setShowPaymentForm(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Payment
+          </Button>
+        </motion.div>
+      </motion.div>
 
       {/* Payment Statistics */}
-      <PaymentStats
-        stats={stats}
-        error={statsError}
-        isLoading={isLoading}
-      />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.4 }}
+      >
+        <PaymentStats
+          stats={stats}
+          error={statsError}
+          isLoading={isLoading}
+        />
+      </motion.div>
 
       {/* Payment Management Section */}
-      <div className="space-y-6">
+      <motion.div
+        className="space-y-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.5 }}
+      >
         {/* Filters */}
         <PaymentFilters
           onFiltersChange={handleFiltersChange}
           isLoading={isLoading}
         />
+
+        {/* Payments Section Title */}
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold">Payments</h2>
+        </div>
 
         {/* Payment Table */}
         <PaymentTable
@@ -132,15 +174,23 @@ const PaymentManagement = () => {
         />
 
         {/* Pagination */}
-        {pagination && pagination.total > 0 && (
-          <PaymentPagination
-            pagination={pagination}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-            isLoading={isLoading}
-          />
-        )}
-      </div>
+        <AnimatePresence>
+          {pagination && pagination.total > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <PaymentPagination
+                pagination={pagination}
+                onPageChange={handlePageChange}
+                isLoading={isLoading}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
 
       {/* Modals */}
       <PaymentFormModal
@@ -176,7 +226,7 @@ const PaymentManagement = () => {
           />
         </>
       )}
-    </div>
+    </motion.div>
   );
 };
 

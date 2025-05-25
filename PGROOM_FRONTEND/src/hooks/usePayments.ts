@@ -283,13 +283,26 @@ export function usePaymentList(params: PaymentListParams = {}) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<PaymentError | null>(null);
 
+  // Memoize params to prevent infinite re-renders
+  const memoizedParams = useMemo(() => params, [
+    params.page,
+    params.limit,
+    params.status,
+    params.tenantId,
+    params.propertyId,
+    params.roomId,
+    params.search,
+    params.startDate,
+    params.endDate
+  ]);
+
   // Fetch payments with current parameters
   const fetchPayments = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await paymentService.getPayments(params);
+      const response = await paymentService.getPayments(memoizedParams);
       setPayments(response.data);
       setPagination(response.pagination);
     } catch (err) {
@@ -299,7 +312,7 @@ export function usePaymentList(params: PaymentListParams = {}) {
     } finally {
       setIsLoading(false);
     }
-  }, [params]);
+  }, [memoizedParams]);
 
   // Fetch payment statistics
   const fetchStats = useCallback(async () => {

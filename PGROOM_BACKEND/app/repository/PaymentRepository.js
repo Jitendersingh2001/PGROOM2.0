@@ -375,25 +375,47 @@ class PaymentRepository extends BasePrismaRepository {
 
       // Add search functionality
       if (search) {
-        where.OR = [
+        const searchConditions = [
+          // Search in tenant details
           {
             tenant: {
               OR: [
                 { firstName: { contains: search, mode: 'insensitive' } },
                 { lastName: { contains: search, mode: 'insensitive' } },
-                { email: { contains: search, mode: 'insensitive' } }
+                { email: { contains: search, mode: 'insensitive' } },
+                { mobileNo: { contains: search, mode: 'insensitive' } }
               ]
             }
           },
+          // Search in property name
           {
             property: {
               propertyName: { contains: search, mode: 'insensitive' }
             }
           },
+          // Search in room number
           {
-            id: isNaN(parseInt(search)) ? undefined : parseInt(search)
+            room: {
+              roomNo: isNaN(parseInt(search)) ? undefined : parseInt(search)
+            }
           }
-        ].filter(condition => condition.id !== undefined || condition.tenant || condition.property);
+        ];
+
+        // Add payment ID search if search term is numeric
+        if (!isNaN(parseInt(search))) {
+          searchConditions.push({
+            id: parseInt(search)
+          });
+        }
+
+        // Filter out undefined conditions
+        where.OR = searchConditions.filter(condition => {
+          if (condition.id !== undefined) return true;
+          if (condition.tenant) return true;
+          if (condition.property) return true;
+          if (condition.room && condition.room.roomNo !== undefined) return true;
+          return false;
+        });
       }
 
       // Add date range filtering

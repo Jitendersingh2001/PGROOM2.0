@@ -1,26 +1,20 @@
 /**
  * PaymentPagination Component
- * 
+ *
  * A modern pagination component for payment tables with proper navigation,
  * page size selection, and accessibility features.
  */
 
 import React, { memo, useCallback } from 'react';
 import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  MoreHorizontal
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from '@/components/ui/pagination';
 import { PaginationMeta } from '@/lib/types/payment';
 import { cn } from '@/lib/utils';
 
@@ -28,239 +22,141 @@ import { cn } from '@/lib/utils';
 interface PaymentPaginationProps {
   pagination: PaginationMeta;
   onPageChange: (page: number) => void;
-  onPageSizeChange?: (pageSize: number) => void;
   isLoading?: boolean;
   className?: string;
 }
 
-// Page size options
-const pageSizeOptions = [
-  { value: '10', label: '10 per page' },
-  { value: '25', label: '25 per page' },
-  { value: '50', label: '50 per page' },
-  { value: '100', label: '100 per page' },
-];
+// Generate pagination items matching other pages
+const renderPaginationItems = (page: number, totalPages: number, onPageChange: (page: number) => void) => {
+  const items = [];
 
-// Generate page numbers for pagination
-const generatePageNumbers = (currentPage: number, totalPages: number) => {
-  const pages: (number | 'ellipsis')[] = [];
-  const maxVisiblePages = 7;
+  // Always show first page
+  items.push(
+    <PaginationItem key="first">
+      <PaginationLink
+        isActive={page === 1}
+        onClick={() => {
+          if (page !== 1) {
+            onPageChange(1);
+          }
+        }}
+      >
+        1
+      </PaginationLink>
+    </PaginationItem>
+  );
 
-  if (totalPages <= maxVisiblePages) {
-    // Show all pages if total is small
-    for (let i = 1; i <= totalPages; i++) {
-      pages.push(i);
-    }
-  } else {
-    // Always show first page
-    pages.push(1);
-
-    if (currentPage > 4) {
-      pages.push('ellipsis');
-    }
-
-    // Show pages around current page
-    const start = Math.max(2, currentPage - 1);
-    const end = Math.min(totalPages - 1, currentPage + 1);
-
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
-    }
-
-    if (currentPage < totalPages - 3) {
-      pages.push('ellipsis');
-    }
-
-    // Always show last page
-    if (totalPages > 1) {
-      pages.push(totalPages);
-    }
-  }
-
-  return pages;
-};
-
-// Page button component
-interface PageButtonProps {
-  page: number | 'ellipsis';
-  currentPage: number;
-  onClick: (page: number) => void;
-  disabled?: boolean;
-}
-
-const PageButton = memo<PageButtonProps>(({ page, currentPage, onClick, disabled }) => {
-  if (page === 'ellipsis') {
-    return (
-      <Button variant="ghost" size="sm" disabled className="w-9 h-9">
-        <MoreHorizontal className="h-4 w-4" />
-      </Button>
+  // Show ellipsis if there are more than 5 pages and we're not at the beginning
+  if (totalPages > 5 && page > 3) {
+    items.push(
+      <PaginationItem key="ellipsis-1">
+        <PaginationEllipsis />
+      </PaginationItem>
     );
   }
 
-  const isActive = page === currentPage;
+  // Show current page and surrounding pages
+  for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) {
+    if (i === 1 || i === totalPages) continue; // Skip first and last page as they're always shown
+    items.push(
+      <PaginationItem key={i}>
+        <PaginationLink
+          isActive={page === i}
+          onClick={() => {
+            if (page !== i) {
+              onPageChange(i);
+            }
+          }}
 
-  return (
-    <Button
-      variant={isActive ? 'default' : 'ghost'}
-      size="sm"
-      onClick={() => onClick(page)}
-      disabled={disabled}
-      className={cn(
-        'w-9 h-9',
-        isActive && 'bg-primary text-primary-foreground'
-      )}
-    >
-      {page}
-    </Button>
-  );
-});
+        >
+          {i}
+        </PaginationLink>
+      </PaginationItem>
+    );
+  }
 
-PageButton.displayName = 'PageButton';
+  // Show ellipsis if there are more than 5 pages and we're not at the end
+  if (totalPages > 5 && page < totalPages - 2) {
+    items.push(
+      <PaginationItem key="ellipsis-2">
+        <PaginationEllipsis />
+      </PaginationItem>
+    );
+  }
+
+  // Always show last page if there's more than one page
+  if (totalPages > 1) {
+    items.push(
+      <PaginationItem key="last">
+        <PaginationLink
+          isActive={page === totalPages}
+          onClick={() => {
+            if (page !== totalPages) {
+              onPageChange(totalPages);
+            }
+          }}
+          className="h-8 w-8 text-sm"
+        >
+          {totalPages}
+        </PaginationLink>
+      </PaginationItem>
+    );
+  }
+
+  return items;
+};
 
 // Main PaymentPagination Component
 export const PaymentPagination = memo<PaymentPaginationProps>(({
   pagination,
   onPageChange,
-  onPageSizeChange,
   isLoading = false,
   className
 }) => {
-  const { page, limit, total, totalPages } = pagination;
+  const { page, totalPages, total } = pagination;
 
-  // Calculate display range
-  const startItem = (page - 1) * limit + 1;
-  const endItem = Math.min(page * limit, total);
-
-  // Handle page navigation
-  const handleFirstPage = useCallback(() => {
-    if (page > 1) onPageChange(1);
-  }, [page, onPageChange]);
-
-  const handlePreviousPage = useCallback(() => {
-    if (page > 1) onPageChange(page - 1);
-  }, [page, onPageChange]);
-
-  const handleNextPage = useCallback(() => {
-    if (page < totalPages) onPageChange(page + 1);
-  }, [page, totalPages, onPageChange]);
-
-  const handleLastPage = useCallback(() => {
-    if (page < totalPages) onPageChange(totalPages);
-  }, [page, totalPages, onPageChange]);
-
-  const handlePageSizeChange = useCallback((value: string) => {
-    const newPageSize = parseInt(value);
-    onPageSizeChange?.(newPageSize);
-    // Reset to first page when changing page size
-    onPageChange(1);
-  }, [onPageChange, onPageSizeChange]);
-
-  // Don't render if no data
-  if (total === 0) {
+  // Don't render if no pagination needed
+  if (totalPages <= 1) {
     return null;
   }
 
-  const pageNumbers = generatePageNumbers(page, totalPages);
-
   return (
-    <div className={cn(
-      'flex flex-col sm:flex-row items-center justify-between gap-4 px-2',
-      className
-    )}>
-      {/* Results info */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span>
-          Showing {startItem.toLocaleString()} to {endItem.toLocaleString()} of{' '}
-          {total.toLocaleString()} results
-        </span>
-      </div>
+    <div className="flex justify-between items-center mt-6">
+      {/* Total Records - Left side */}
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        Total Records: {total || 0}
+      </p>
 
-      {/* Pagination controls */}
-      <div className="flex items-center gap-2">
-        {/* Page size selector */}
-        {onPageSizeChange && (
-          <Select
-            value={limit.toString()}
-            onValueChange={handlePageSizeChange}
-            disabled={isLoading}
-          >
-            <SelectTrigger className="w-[140px] h-9">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {pageSizeOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+      {/* Pagination - Right side */}
+      <Pagination className="mx-0 w-auto justify-end">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              onClick={() => {
+                if (page > 1) {
+                  onPageChange(page - 1);
+                }
+              }}
+              aria-disabled={page === 1 || isLoading}
+              className={page === 1 ? "opacity-50 pointer-events-none" : ""}
+            />
+          </PaginationItem>
 
-        {/* Navigation buttons */}
-        <div className="flex items-center gap-1">
-          {/* First page */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleFirstPage}
-            disabled={page <= 1 || isLoading}
-            className="w-9 h-9"
-            title="First page"
-          >
-            <ChevronsLeft className="h-4 w-4" />
-          </Button>
+          {renderPaginationItems(page, totalPages, onPageChange)}
 
-          {/* Previous page */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handlePreviousPage}
-            disabled={page <= 1 || isLoading}
-            className="w-9 h-9"
-            title="Previous page"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-
-          {/* Page numbers */}
-          <div className="flex items-center gap-1">
-            {pageNumbers.map((pageNum, index) => (
-              <PageButton
-                key={`${pageNum}-${index}`}
-                page={pageNum}
-                currentPage={page}
-                onClick={onPageChange}
-                disabled={isLoading}
-              />
-            ))}
-          </div>
-
-          {/* Next page */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleNextPage}
-            disabled={page >= totalPages || isLoading}
-            className="w-9 h-9"
-            title="Next page"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-
-          {/* Last page */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLastPage}
-            disabled={page >= totalPages || isLoading}
-            className="w-9 h-9"
-            title="Last page"
-          >
-            <ChevronsRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+          <PaginationItem>
+            <PaginationNext
+              onClick={() => {
+                if (page < totalPages) {
+                  onPageChange(page + 1);
+                }
+              }}
+              aria-disabled={page === totalPages || isLoading}
+              className={page === totalPages ? "opacity-50 pointer-events-none" : ""}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
     </div>
   );
 });

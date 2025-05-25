@@ -438,7 +438,7 @@ const Tenants: React.FC = () => {
               <div className="relative md:col-span-3">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
-                  placeholder="Search by name"
+                  placeholder="Search by name, email, mobile, or location"
                   className="pl-10 w-full transition-all duration-200 focus-visible:ring-primary"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
