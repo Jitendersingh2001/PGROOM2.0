@@ -6,71 +6,10 @@ import OccupancyChart from './OccupancyChart';
 import MonthlyIncomeChart from './MonthlyIncomeChart';
 import { cn } from '@/lib/utils';
 import { dashboardService, MonitoringCardsResponse, RecentTenant } from '@/lib/api/services/dashboardService';
-
-// Mock data for the occupancy chart
-const mockOccupancyData = [
-  { name: 'Occupied', value: 18, color: 'hsl(var(--primary))', total: 25 },
-  { name: 'Available', value: 7, color: '#f59e0b', total: 25 },
-];
-
-// Mock data for the tenants list
-const mockTenants = [
-  {
-    id: 1,
-    name: 'Rahul Sharma',
-    email: 'rahul.sharma@example.com',
-    status: 'active' as const,
-    joinDate: '2023-05-15T00:00:00Z',
-  },
-  {
-    id: 2,
-    name: 'Priya Patel',
-    email: 'priya.patel@example.com',
-    status: 'active' as const,
-    joinDate: '2023-06-02T00:00:00Z',
-  },
-  {
-    id: 3,
-    name: 'Amit Kumar',
-    email: 'amit.kumar@example.com',
-    status: 'invited' as const,
-    joinDate: '2023-06-10T00:00:00Z',
-  },
-  {
-    id: 4,
-    name: 'Sneha Gupta',
-    email: 'sneha.gupta@example.com',
-    status: 'active' as const,
-    joinDate: '2023-06-15T00:00:00Z',
-  },
-];
-
-// Mock data for monthly income chart
-const mockMonthlyIncomeData = [
-  { name: 'Jan', income: 25000 },
-  { name: 'Feb', income: 28000 },
-  { name: 'Mar', income: 32000 },
-  { name: 'Apr', income: 30000 },
-  { name: 'May', income: 35000 },
-  { name: 'Jun', income: 38000 },
-  { name: 'Jul', income: 42000 },
-  { name: 'Aug', income: 45000 },
-  { name: 'Sep', income: 40000 },
-  { name: 'Oct', income: 38000 },
-  { name: 'Nov', income: 35000 },
-  { name: 'Dec', income: 32000 },
-];
+import { paymentService } from '@/lib/api/services/paymentService';
 
 interface StatsDashboardProps {
   className?: string;
-  // In a real application, these would be fetched from an API
-  propertyCount?: number;
-  roomCount?: number;
-  assignedRoomCount?: number;
-  expectedMonthlyIncome?: number;
-  tenants?: typeof mockTenants;
-  occupancyData?: typeof mockOccupancyData;
-  monthlyIncomeData?: typeof mockMonthlyIncomeData;
 }
 
 /**
@@ -82,26 +21,21 @@ interface StatsDashboardProps {
  */
 const StatsDashboard: React.FC<StatsDashboardProps> = ({
   className,
-  propertyCount: propPropertyCount,
-  roomCount: propRoomCount,
-  assignedRoomCount: propAssignedRoomCount,
-  expectedMonthlyIncome: propExpectedMonthlyIncome,
-  tenants = mockTenants,
-  occupancyData = mockOccupancyData,
-  monthlyIncomeData = mockMonthlyIncomeData,
 }) => {
   // State for dashboard data
   const [monitoringData, setMonitoringData] = useState<MonitoringCardsResponse | null>(null);
   const [recentTenants, setRecentTenants] = useState<RecentTenant[]>([]);
+  const [monthlyIncomeData, setMonthlyIncomeData] = useState<{ name: string; income: number }[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isTenantsLoading, setIsTenantsLoading] = useState<boolean>(true);
+  const [isMonthlyDataLoading, setIsMonthlyDataLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Use props values or data from API
-  const propertyCount = monitoringData?.totalProperties ?? propPropertyCount ?? 5;
-  const roomCount = monitoringData?.totalRooms ?? propRoomCount ?? 25;
-  const assignedRoomCount = monitoringData?.totalAssignedTenants ?? propAssignedRoomCount ?? 18;
-  const expectedMonthlyIncome = monitoringData?.expectedMonthlyIncome ?? propExpectedMonthlyIncome ?? 320000;
+  // Use data from API only
+  const propertyCount = monitoringData?.totalProperties ?? 0;
+  const roomCount = monitoringData?.totalRooms ?? 0;
+  const assignedRoomCount = monitoringData?.totalAssignedTenants ?? 0;
+  const expectedMonthlyIncome = monitoringData?.expectedMonthlyIncome ?? 0;
 
   // Fetch monitoring cards data
   useEffect(() => {
@@ -144,6 +78,32 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({
     };
 
     fetchRecentTenants();
+  }, []);
+
+  // Fetch monthly income data
+  useEffect(() => {
+    const fetchMonthlyIncomeData = async () => {
+      try {
+        setIsMonthlyDataLoading(true);
+        const response = await paymentService.getMonthlyAnalytics();
+
+        // Transform the analytics data to match the chart format
+        const chartData = response.map(item => ({
+          name: item.month,
+          income: item.totalAmount
+        }));
+
+        setMonthlyIncomeData(chartData);
+      } catch (err) {
+        console.error('Monthly income data fetch error:', err);
+        // Set empty data on error
+        setMonthlyIncomeData([]);
+      } finally {
+        setIsMonthlyDataLoading(false);
+      }
+    };
+
+    fetchMonthlyIncomeData();
   }, []);
 
   // Calculate occupancy rate
@@ -215,7 +175,7 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({
         {/* Tenants List - Takes up 1/2 of the width on large screens */}
         <div className="lg:col-span-1 h-full">
           <TenantsList
-            tenants={recentTenants.length > 0 ? recentTenants : tenants}
+            tenants={recentTenants}
             className="h-full"
             isLoading={isTenantsLoading}
           />

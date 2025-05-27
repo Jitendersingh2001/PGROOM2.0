@@ -302,6 +302,24 @@ export interface PaymentActions {
 }
 
 /**
+ * Invoice Download Options
+ */
+export interface InvoiceDownloadOptions {
+  filename?: string;
+  includeQRCode?: boolean;
+  watermark?: string;
+  format?: 'a4' | 'letter';
+}
+
+/**
+ * Extended Payment interface with invoice capabilities
+ */
+export interface PaymentWithInvoice extends Payment {
+  canDownloadInvoice: boolean;
+  invoiceNumber?: string;
+}
+
+/**
  * Payment Context Type
  */
 export interface PaymentContextType extends PaymentState, PaymentActions {}

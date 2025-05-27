@@ -48,9 +48,12 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
-  ChevronDown
+  ChevronDown,
+  FileText,
+  Loader2
 } from 'lucide-react';
 import { Payment, PaymentStatus } from '@/lib/types/payment';
+import { useInvoiceDownload } from '@/hooks/useInvoiceDownload';
 import { cn } from '@/lib/utils';
 
 // Props interface
@@ -287,13 +290,8 @@ const PaymentTableRow = memo<{
   onRefund?: (payment: Payment) => void;
   onStatusChange?: (payment: Payment, newStatus: PaymentStatus) => void;
 }>(({ payment, onViewDetails, onRefund, onStatusChange }) => {
-  // Format currency
-  const formatCurrency = useCallback((amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: payment.currency || 'INR'
-    }).format(amount);
-  }, [payment.currency]);
+  // Invoice download hook
+  const { downloadInvoice, isGenerating } = useInvoiceDownload();
 
   // Format date
   const formatDate = useCallback((dateString: string) => {
@@ -305,15 +303,16 @@ const PaymentTableRow = memo<{
     return format(new Date(dateString), 'hh:mm a');
   }, []);
 
+  // Handle invoice download
+  const handleDownloadInvoice = useCallback(async () => {
+    await downloadInvoice(payment);
+  }, [downloadInvoice, payment]);
+
   const canRefund = payment.status === 'Captured';
-  const [isHovered, setIsHovered] = useState(false);
+  const canDownloadInvoice = true; // Allow invoice download for all payments
 
   return (
-    <TableRow
-      className="hover:bg-muted/50 transition-colors group"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <TableRow className="hover:bg-muted/50 transition-colors group">
       {/* Payment ID */}
       <TableCell className="font-medium">
         <span className="font-mono text-sm">
@@ -391,10 +390,30 @@ const PaymentTableRow = memo<{
                 Initiate Refund
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem>
-              <Download className="mr-2 h-4 w-4" />
-              Download Receipt
-            </DropdownMenuItem>
+            {canDownloadInvoice && (
+              <DropdownMenuItem
+                onClick={handleDownloadInvoice}
+                disabled={isGenerating}
+              >
+                {isGenerating ? (
+                  <>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="mr-2"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </motion.div>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Invoice
+                  </>
+                )}
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </TableCell>
@@ -514,7 +533,7 @@ export const PaymentTable = memo<PaymentTableProps>(({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {payments.map((payment, index) => (
+                {payments.map((payment) => (
                   <PaymentTableRow
                     key={payment.id}
                     payment={payment}
