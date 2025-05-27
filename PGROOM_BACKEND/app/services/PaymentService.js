@@ -224,39 +224,112 @@ class PaymentService {
    */
   async initiateRefund(refundData) {
     try {
+      // Validate input data
+      if (!refundData || typeof refundData !== 'object') {
+        throw new Error('Invalid refund data provided');
+      }
+
       const { paymentId, amount, reason } = refundData;
+
+      // Validate required fields
+      if (!paymentId) {
+        throw new Error('Payment ID is required');
+      }
+
+      console.log(`Initiating refund for payment ID: ${paymentId}, amount: ${amount}, reason: ${reason}`);
 
       // Get payment record
       const payment = await this.paymentRepository.getPaymentById(paymentId);
       if (!payment) {
-        throw new Error('Payment not found');
+        throw new Error(`Payment with ID ${paymentId} not found`);
       }
 
-      if (payment.status !== 'Captured') {
-        throw new Error('Only captured payments can be refunded');
+      console.log(`Payment found: ${JSON.stringify(payment, null, 2)}`);
+
+      // Validate payment status
+      if (payment.status !== 'Captured' && payment.status !== 'PartiallyRefunded') {
+        throw new Error(`Only captured or partially refunded payments can be refunded. Current status: ${payment.status}`);
+      }
+
+      // Validate Razorpay payment ID
+      if (!payment.razorpayPaymentId) {
+        throw new Error('Payment does not have a valid Razorpay payment ID');
+      }
+
+      console.log(`Initiating Razorpay refund for payment ID: ${payment.razorpayPaymentId}`);
+
+      // Prepare refund data for Razorpay
+      const refundOptions = {
+        notes: {
+          reason: reason || 'Refund requested',
+          paymentId: paymentId.toString(),
+          originalAmount: payment.amount.toString()
+        }
+      };
+
+      // Add amount only if it's a partial refund
+      if (amount && amount > 0 && amount < payment.amount) {
+        refundOptions.amount = Math.round(amount * 100); // Convert to paise
+        console.log(`Partial refund amount: ${refundOptions.amount} paise`);
+      } else {
+        console.log('Full refund requested');
       }
 
       // Create refund in Razorpay
-      const refund = await razorpay.payments.refund(payment.razorpayPaymentId, {
-        amount: amount ? Math.round(amount * 100) : undefined, // Partial or full refund
-        notes: {
-          reason: reason || 'Refund requested',
-          paymentId: paymentId.toString()
-        }
-      });
+      const refund = await razorpay.payments.refund(payment.razorpayPaymentId, refundOptions);
+
+      console.log(`Razorpay refund created: ${JSON.stringify(refund, null, 2)}`);
+
+      // Determine new payment status
+      const isPartialRefund = amount && amount > 0 && amount < payment.amount;
+      const newStatus = isPartialRefund ? 'PartiallyRefunded' : 'Refunded';
 
       // Update payment status
-      await this.paymentRepository.updatePayment(paymentId, {
-        status: amount && amount < payment.amount ? 'Partially Refunded' : 'Refunded'
+      const updatedPayment = await this.paymentRepository.updatePayment(paymentId, {
+        status: newStatus
       });
+
+      console.log(`Payment status updated to: ${newStatus}`);
 
       return {
         success: true,
-        refund,
-        payment
+        refund: {
+          id: refund.id,
+          amount: refund.amount / 100, // Convert back to rupees
+          currency: refund.currency,
+          payment_id: refund.payment_id,
+          status: refund.status,
+          created_at: refund.created_at
+        },
+        payment: updatedPayment
       };
     } catch (error) {
-      throw new Error(`Failed to initiate refund: ${error.message}`);
+      // Enhanced error logging
+      console.error('Refund initiation failed:', {
+        error: error,
+        message: error?.message,
+        stack: error?.stack,
+        refundData: refundData
+      });
+
+      // Handle different types of errors
+      let errorMessage = 'Failed to initiate refund';
+
+      if (error && typeof error === 'object') {
+        if (error.message) {
+          errorMessage = `Failed to initiate refund: ${error.message}`;
+        } else if (error.description) {
+          errorMessage = `Failed to initiate refund: ${error.description}`;
+        } else if (error.error && error.error.description) {
+          errorMessage = `Failed to initiate refund: ${error.error.description}`;
+        } else {
+          errorMessage = `Failed to initiate refund: ${JSON.stringify(error)}`;
+        }
+      } else if (typeof error === 'string') {
+        errorMessage = `Failed to initiate refund: ${error}`;
+      }
+
+      throw new Error(errorMessage);
     }
   }
 
@@ -341,6 +414,60 @@ class PaymentService {
       await this.paymentRepository.updatePayment(payment.id, { status: 'Captured' });
     }
     return { success: true, message: 'Order paid' };
+  }
+
+  /**
+   * Cancel a pending payment
+   * @param {number} paymentId - Payment ID to cancel
+   * @param {string} reason - Reason for cancellation (optional)
+   * @returns {Promise<Object>} Cancelled payment record
+   */
+  async cancelPayment(paymentId, reason = 'Cancelled by user') {
+    try {
+      // Find payment record
+      const payment = await this.paymentRepository.findById(paymentId);
+      if (!payment) {
+        throw new Error('Payment not found');
+      }
+
+      // Validate payment status - only pending payments can be cancelled
+      if (payment.status !== 'Pending') {
+        throw new Error(`Cannot cancel payment with status: ${payment.status}. Only pending payments can be cancelled.`);
+      }
+
+      // If payment has a Razorpay order ID, we should cancel it on Razorpay side too
+      if (payment.razorpayOrderId) {
+        try {
+          // Note: Razorpay doesn't have a direct cancel order API
+          // Orders automatically expire after a certain time
+          // We'll just update our local status
+          console.log(`Cancelling payment order: ${payment.razorpayOrderId}`);
+        } catch (razorpayError) {
+          console.warn(`Failed to cancel Razorpay order ${payment.razorpayOrderId}:`, razorpayError.message);
+          // Continue with local cancellation even if Razorpay fails
+        }
+      }
+
+      // Update payment status to Failed (representing cancelled state)
+      const updateData = {
+        status: 'Failed',
+        // We could add a cancellation reason field in future if needed
+        // For now, the status change and timestamp indicate cancellation
+      };
+
+      const cancelledPayment = await this.paymentRepository.updatePayment(paymentId, updateData);
+
+      console.log(`Payment ${paymentId} cancelled successfully. Reason: ${reason}`);
+
+      return {
+        success: true,
+        payment: cancelledPayment,
+        message: 'Payment cancelled successfully'
+      };
+    } catch (error) {
+      console.error(`Failed to cancel payment ${paymentId}:`, error);
+      throw new Error(`Failed to cancel payment: ${error.message}`);
+    }
   }
 }
 

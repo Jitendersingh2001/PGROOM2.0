@@ -51,11 +51,7 @@ const statusConfig: Record<PaymentStatus, {
     icon: Clock,
     className: 'bg-yellow-50 text-yellow-700 border-yellow-200'
   },
-  Authorized: {
-    label: 'Authorized',
-    icon: AlertCircle,
-    className: 'bg-blue-50 text-blue-700 border-blue-200'
-  },
+
   Captured: {
     label: 'Captured',
     icon: CheckCircle2,
@@ -70,6 +66,11 @@ const statusConfig: Record<PaymentStatus, {
     label: 'Refunded',
     icon: RefreshCw,
     className: 'bg-gray-50 text-gray-700 border-gray-200'
+  },
+  PartiallyRefunded: {
+    label: 'Partially Refunded',
+    icon: RefreshCw,
+    className: 'bg-orange-50 text-orange-700 border-orange-200'
   }
 };
 
@@ -79,9 +80,9 @@ const StatusBadge = memo<{ status: PaymentStatus }>(({ status }) => {
   const Icon = config.icon;
 
   return (
-    <Badge variant="outline" className={cn(config.className, 'flex items-center gap-1')}>
-      <Icon className="h-3 w-3" />
-      {config.label}
+    <Badge variant="outline" className={cn(config.className, 'flex items-center gap-1.5 max-w-[130px] px-2 py-0.5')}>
+      <Icon className="h-3 w-3 flex-shrink-0" />
+      <span className="truncate min-w-0">{config.label}</span>
     </Badge>
   );
 });

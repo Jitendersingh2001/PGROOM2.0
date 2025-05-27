@@ -113,11 +113,11 @@ const PaymentListValidator = Joi.object({
     }),
 
   status: Joi.string()
-    .valid('Pending', 'Authorized', 'Captured', 'Failed', 'Refunded')
+    .valid('Pending', 'Captured', 'Failed', 'Refunded','PartiallyRefunded')
     .optional()
     .messages({
       'string.base': 'Status must be a string',
-      'any.only': 'Status must be one of: Pending, Authorized, Captured, Failed, Refunded'
+      'any.only': 'Status must be one of: Pending, Captured, Failed, Refunded, PartiallyRefunded'
     }),
 
   tenantId: Joi.number()
@@ -264,11 +264,11 @@ const TenantPaymentsValidator = Joi.object({
     }),
 
   status: Joi.string()
-    .valid('Pending', 'Authorized', 'Captured', 'Failed', 'Refunded')
+    .valid('Pending', 'Captured', 'Failed', 'Refunded', 'PartiallyRefunded')
     .optional()
     .messages({
       'string.base': 'Status must be a string',
-      'any.only': 'Status must be one of: Pending, Authorized, Captured, Failed, Refunded'
+      'any.only': 'Status must be one of: Pending, Captured, Failed, Refunded, PartiallyRefunded'
     })
 });
 
@@ -310,11 +310,36 @@ const PropertyPaymentsValidator = Joi.object({
     }),
 
   status: Joi.string()
-    .valid('Pending', 'Authorized', 'Captured', 'Failed', 'Refunded')
+    .valid('Pending', 'Captured', 'Failed', 'Refunded', 'PartiallyRefunded')
     .optional()
     .messages({
       'string.base': 'Status must be a string',
-      'any.only': 'Status must be one of: Pending, Authorized, Captured, Failed, Refunded'
+      'any.only': 'Status must be one of: Pending, Captured, Failed, Refunded, PartiallyRefunded'
+    })
+});
+
+/**
+ * Validation schema for cancel payment request
+ */
+const CancelPaymentValidator = Joi.object({
+  paymentId: Joi.number()
+    .integer()
+    .positive()
+    .required()
+    .messages({
+      'number.base': 'Payment ID must be a number',
+      'number.integer': 'Payment ID must be an integer',
+      'number.positive': 'Payment ID must be positive',
+      'any.required': 'Payment ID is required'
+    }),
+
+  reason: Joi.string()
+    .max(255)
+    .optional()
+    .default('Cancelled by user')
+    .messages({
+      'string.base': 'Reason must be a string',
+      'string.max': 'Reason cannot exceed 255 characters'
     })
 });
 
@@ -325,5 +350,6 @@ module.exports = {
   RefundValidator,
   PaymentIdValidator,
   TenantPaymentsValidator,
-  PropertyPaymentsValidator
+  PropertyPaymentsValidator,
+  CancelPaymentValidator
 };

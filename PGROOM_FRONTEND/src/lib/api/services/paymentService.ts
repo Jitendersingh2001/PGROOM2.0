@@ -1,6 +1,6 @@
 /**
  * Payment Service
- * 
+ *
  * This service handles all payment-related API calls including Razorpay integration.
  * It provides a clean interface for payment operations with proper error handling
  * and type safety.
@@ -21,6 +21,8 @@ import {
   PropertyPaymentsRequest,
   RefundRequest,
   RefundResponse,
+  CancelPaymentRequest,
+  CancelPaymentResponse,
   PaymentStats,
   MonthlyAnalyticsData,
   RazorpayCheckoutOptions,
@@ -30,7 +32,7 @@ import {
 
 /**
  * Payment Service Class
- * 
+ *
  * Provides methods for all payment-related operations including:
  * - Creating payment orders
  * - Verifying payments
@@ -41,7 +43,7 @@ import {
 class PaymentService {
   /**
    * Create a new payment order for rent payment
-   * 
+   *
    * @param orderData - Payment order creation data
    * @returns Promise<CreatePaymentOrderResponse>
    */
@@ -51,11 +53,11 @@ class PaymentService {
         endpoints.PAYMENT.CREATE_ORDER,
         orderData
       );
-      
+
       if (response.statusCode === 200 && response.data) {
         return response.data;
       }
-      
+
       throw new Error(response.message || 'Failed to create payment order');
     } catch (error) {
       console.error('Payment order creation failed:', error);
@@ -65,7 +67,7 @@ class PaymentService {
 
   /**
    * Verify payment signature and update payment status
-   * 
+   *
    * @param verificationData - Payment verification data from Razorpay
    * @returns Promise<PaymentVerificationResponse>
    */
@@ -75,11 +77,11 @@ class PaymentService {
         endpoints.PAYMENT.VERIFY,
         verificationData
       );
-      
+
       if (response.statusCode === 200 && response.data) {
         return response.data;
       }
-      
+
       throw new Error(response.message || 'Payment verification failed');
     } catch (error) {
       console.error('Payment verification failed:', error);
@@ -89,7 +91,7 @@ class PaymentService {
 
   /**
    * Get payment details by ID
-   * 
+   *
    * @param paymentId - Payment ID
    * @returns Promise<Payment>
    */
@@ -98,11 +100,11 @@ class PaymentService {
       const response = await apiService.get<ApiResponse<Payment>>(
         endpoints.PAYMENT.DETAILS(paymentId)
       );
-      
+
       if (response.statusCode === 200 && response.data) {
         return response.data;
       }
-      
+
       throw new Error(response.message || 'Payment not found');
     } catch (error) {
       console.error('Failed to get payment details:', error);
@@ -112,7 +114,7 @@ class PaymentService {
 
   /**
    * Get all payments with filtering and pagination
-   * 
+   *
    * @param params - Filter and pagination parameters
    * @returns Promise<PaymentListResponse>
    */
@@ -122,11 +124,11 @@ class PaymentService {
         endpoints.PAYMENT.LIST,
         params
       );
-      
+
       if (response.statusCode === 200 && response.data) {
         return response.data;
       }
-      
+
       throw new Error(response.message || 'Failed to fetch payments');
     } catch (error) {
       console.error('Failed to fetch payments:', error);
@@ -136,7 +138,7 @@ class PaymentService {
 
   /**
    * Get payments for a specific tenant
-   * 
+   *
    * @param params - Tenant payment parameters
    * @returns Promise<PaymentListResponse>
    */
@@ -146,11 +148,11 @@ class PaymentService {
         endpoints.PAYMENT.TENANT_PAYMENTS,
         params
       );
-      
+
       if (response.statusCode === 200 && response.data) {
         return response.data;
       }
-      
+
       throw new Error(response.message || 'Failed to fetch tenant payments');
     } catch (error) {
       console.error('Failed to fetch tenant payments:', error);
@@ -160,7 +162,7 @@ class PaymentService {
 
   /**
    * Get payments for a specific property
-   * 
+   *
    * @param params - Property payment parameters
    * @returns Promise<PaymentListResponse>
    */
@@ -170,11 +172,11 @@ class PaymentService {
         endpoints.PAYMENT.PROPERTY_PAYMENTS,
         params
       );
-      
+
       if (response.statusCode === 200 && response.data) {
         return response.data;
       }
-      
+
       throw new Error(response.message || 'Failed to fetch property payments');
     } catch (error) {
       console.error('Failed to fetch property payments:', error);
@@ -184,7 +186,7 @@ class PaymentService {
 
   /**
    * Initiate a refund for a payment
-   * 
+   *
    * @param refundData - Refund request data
    * @returns Promise<RefundResponse>
    */
@@ -194,11 +196,11 @@ class PaymentService {
         endpoints.PAYMENT.REFUND,
         refundData
       );
-      
+
       if (response.statusCode === 200 && response.data) {
         return response.data;
       }
-      
+
       throw new Error(response.message || 'Failed to initiate refund');
     } catch (error) {
       console.error('Refund initiation failed:', error);
@@ -207,8 +209,32 @@ class PaymentService {
   }
 
   /**
+   * Cancel a pending payment
+   *
+   * @param cancelData - Cancel payment request data
+   * @returns Promise<CancelPaymentResponse>
+   */
+  async cancelPayment(cancelData: CancelPaymentRequest): Promise<CancelPaymentResponse> {
+    try {
+      const response = await apiService.post<ApiResponse<CancelPaymentResponse>>(
+        endpoints.PAYMENT.CANCEL,
+        cancelData
+      );
+
+      if (response.statusCode === 200 && response.data) {
+        return response.data;
+      }
+
+      throw new Error(response.message || 'Failed to cancel payment');
+    } catch (error) {
+      console.error('Payment cancellation failed:', error);
+      throw this.handlePaymentError(error, 'Failed to cancel payment');
+    }
+  }
+
+  /**
    * Get payment statistics
-   * 
+   *
    * @returns Promise<PaymentStats>
    */
   async getPaymentStats(): Promise<PaymentStats> {
@@ -216,11 +242,11 @@ class PaymentService {
       const response = await apiService.get<ApiResponse<PaymentStats>>(
         endpoints.PAYMENT.STATS
       );
-      
+
       if (response.statusCode === 200 && response.data) {
         return response.data;
       }
-      
+
       throw new Error(response.message || 'Failed to fetch payment statistics');
     } catch (error) {
       console.error('Failed to fetch payment statistics:', error);
@@ -230,7 +256,7 @@ class PaymentService {
 
   /**
    * Get recent payments
-   * 
+   *
    * @returns Promise<Payment[]>
    */
   async getRecentPayments(): Promise<Payment[]> {
@@ -238,11 +264,11 @@ class PaymentService {
       const response = await apiService.get<ApiResponse<Payment[]>>(
         endpoints.PAYMENT.RECENT
       );
-      
+
       if (response.statusCode === 200 && response.data) {
         return response.data;
       }
-      
+
       throw new Error(response.message || 'Failed to fetch recent payments');
     } catch (error) {
       console.error('Failed to fetch recent payments:', error);
@@ -252,7 +278,7 @@ class PaymentService {
 
   /**
    * Get monthly payment analytics
-   * 
+   *
    * @returns Promise<MonthlyAnalyticsData[]>
    */
   async getMonthlyAnalytics(): Promise<MonthlyAnalyticsData[]> {
@@ -260,11 +286,11 @@ class PaymentService {
       const response = await apiService.get<ApiResponse<MonthlyAnalyticsData[]>>(
         endpoints.PAYMENT.MONTHLY_ANALYTICS
       );
-      
+
       if (response.statusCode === 200 && response.data) {
         return response.data;
       }
-      
+
       throw new Error(response.message || 'Failed to fetch monthly analytics');
     } catch (error) {
       console.error('Failed to fetch monthly analytics:', error);
@@ -274,7 +300,7 @@ class PaymentService {
 
   /**
    * Initialize Razorpay checkout
-   * 
+   *
    * @param options - Razorpay checkout options
    * @returns Promise<RazorpayPaymentResponse>
    */
@@ -310,7 +336,7 @@ class PaymentService {
 
   /**
    * Complete payment flow (create order + initialize checkout + verify)
-   * 
+   *
    * @param orderData - Payment order data
    * @param userDetails - User details for prefill
    * @returns Promise<PaymentVerificationResponse>
@@ -356,7 +382,7 @@ class PaymentService {
 
   /**
    * Handle payment errors with consistent error format
-   * 
+   *
    * @param error - Original error
    * @param defaultMessage - Default error message
    * @returns PaymentError

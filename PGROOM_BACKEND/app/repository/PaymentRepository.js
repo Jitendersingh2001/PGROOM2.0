@@ -1,10 +1,8 @@
-const BasePrismaRepository = require('./BasePrismaRepository');
-const { PrismaClient } = require('@prisma/client');
+const BaseRepository = require('./BasePrismaRepository');
 
-class PaymentRepository extends BasePrismaRepository {
+class PaymentRepository extends BaseRepository {
   constructor() {
-    super();
-    this.prisma = new PrismaClient();
+    super('payment');
   }
 
   /**
@@ -14,7 +12,7 @@ class PaymentRepository extends BasePrismaRepository {
    */
   async createPayment(paymentData) {
     try {
-      return await this.prisma.payment.create({
+      return await this.repository.create({
         data: paymentData,
         include: {
           tenant: {
@@ -55,7 +53,7 @@ class PaymentRepository extends BasePrismaRepository {
    */
   async updatePayment(paymentId, updateData) {
     try {
-      return await this.prisma.payment.update({
+      return await this.repository.update({
         where: { id: paymentId },
         data: updateData,
         include: {
@@ -96,7 +94,7 @@ class PaymentRepository extends BasePrismaRepository {
    */
   async findByRazorpayOrderId(razorpayOrderId) {
     try {
-      return await this.prisma.payment.findUnique({
+      return await this.repository.findUnique({
         where: { razorpayOrderId },
         include: {
           tenant: {
@@ -136,7 +134,7 @@ class PaymentRepository extends BasePrismaRepository {
    */
   async findByRazorpayPaymentId(razorpayPaymentId) {
     try {
-      return await this.prisma.payment.findUnique({
+      return await this.repository.findUnique({
         where: { razorpayPaymentId },
         include: {
           tenant: {
@@ -170,11 +168,11 @@ class PaymentRepository extends BasePrismaRepository {
   }
 
   /**
-   * Get payment by ID
+   * Find payment by ID (override base method to include relations)
    * @param {number} paymentId - Payment ID
    * @returns {Promise<Object|null>} Payment record or null
    */
-  async getPaymentById(paymentId) {
+  async findById(paymentId) {
     try {
       // Validate paymentId
       if (!paymentId || isNaN(paymentId)) {
@@ -184,7 +182,7 @@ class PaymentRepository extends BasePrismaRepository {
       // Convert to integer to ensure proper type
       const id = parseInt(paymentId);
 
-      return await this.prisma.payment.findUnique({
+      return await this.repository.findUnique({
         where: { id },
         include: {
           tenant: {
@@ -213,8 +211,17 @@ class PaymentRepository extends BasePrismaRepository {
         }
       });
     } catch (error) {
-      throw new Error(`Failed to get payment by ID: ${error.message}`);
+      throw new Error(`Failed to find payment by ID: ${error.message}`);
     }
+  }
+
+  /**
+   * Get payment by ID (alias for findById)
+   * @param {number} paymentId - Payment ID
+   * @returns {Promise<Object|null>} Payment record or null
+   */
+  async getPaymentById(paymentId) {
+    return this.findById(paymentId);
   }
 
   /**
@@ -234,7 +241,7 @@ class PaymentRepository extends BasePrismaRepository {
       }
 
       const [payments, total] = await Promise.all([
-        this.prisma.payment.findMany({
+        this.repository.findMany({
           where,
           skip,
           take: limit,
@@ -265,7 +272,7 @@ class PaymentRepository extends BasePrismaRepository {
             }
           }
         }),
-        this.prisma.payment.count({ where })
+        this.repository.count({ where })
       ]);
 
       return {
@@ -299,7 +306,7 @@ class PaymentRepository extends BasePrismaRepository {
       }
 
       const [payments, total] = await Promise.all([
-        this.prisma.payment.findMany({
+        this.repository.findMany({
           where,
           skip,
           take: limit,
@@ -330,7 +337,7 @@ class PaymentRepository extends BasePrismaRepository {
             }
           }
         }),
-        this.prisma.payment.count({ where })
+        this.repository.count({ where })
       ]);
 
       return {
@@ -433,7 +440,7 @@ class PaymentRepository extends BasePrismaRepository {
       }
 
       const [payments, total] = await Promise.all([
-        this.prisma.payment.findMany({
+        this.repository.findMany({
           where,
           skip,
           take: limit,
@@ -464,7 +471,7 @@ class PaymentRepository extends BasePrismaRepository {
             }
           }
         }),
-        this.prisma.payment.count({ where })
+        this.repository.count({ where })
       ]);
 
       return {

@@ -29,12 +29,14 @@ import {
   PaymentDetailsModal,
   PaymentFilters,
   PaymentPagination,
-  RefundModal
+  RefundModal,
+  CancelPaymentModal
 } from '@/components/payments';
 
 // Context and hooks
 import { PaymentProvider } from '@/contexts/PaymentContext';
 import { usePaymentList } from '@/hooks/usePayments';
+import { useCancelPayment } from '@/hooks/useCancelPayment';
 
 // Types
 import { Payment, PaymentListParams, PaginationMeta } from '@/lib/types/payment';
@@ -45,6 +47,7 @@ const PaymentManagement = () => {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showPaymentDetails, setShowPaymentDetails] = useState(false);
   const [showRefundModal, setShowRefundModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [filters, setFilters] = useState<PaymentListParams>({ page: 1, limit: 10 });
 
@@ -58,6 +61,9 @@ const PaymentManagement = () => {
     error,
     refetch
   } = usePaymentList(filters);
+
+  // Use cancel payment hook
+  const { cancelPayment, isLoading: isCancelling } = useCancelPayment();
 
   // Handle payment creation success
   const handlePaymentSuccess = useCallback((paymentId: string) => {
@@ -77,6 +83,25 @@ const PaymentManagement = () => {
     setSelectedPayment(payment);
     setShowRefundModal(true);
   }, []);
+
+  // Handle cancel payment
+  const handleCancel = useCallback((payment: Payment) => {
+    setSelectedPayment(payment);
+    setShowCancelModal(true);
+  }, []);
+
+  // Handle cancel payment confirmation
+  const handleCancelConfirm = useCallback(async (paymentId: number, reason?: string) => {
+    try {
+      await cancelPayment(paymentId, reason);
+      setShowCancelModal(false);
+      setSelectedPayment(null);
+      refetch(); // Refresh the payment list to show updated status
+    } catch (error) {
+      // Error is already handled by the hook with toast
+      console.error('Cancel payment failed:', error);
+    }
+  }, [cancelPayment, refetch]);
 
   // Handle filter changes
   const handleFiltersChange = useCallback((newFilters: PaymentListParams) => {
@@ -171,6 +196,7 @@ const PaymentManagement = () => {
           isLoading={isLoading}
           onViewDetails={handleViewDetails}
           onRefund={handleRefund}
+          onCancel={handleCancel}
         />
 
         {/* Pagination */}
@@ -220,9 +246,19 @@ const PaymentManagement = () => {
             onSuccess={() => {
               setShowRefundModal(false);
               setSelectedPayment(null);
-              refetch();
-              toast.success('Refund initiated successfully');
+              refetch(); // Refresh the payment list to show updated status
             }}
+          />
+
+          <CancelPaymentModal
+            payment={selectedPayment}
+            isOpen={showCancelModal}
+            onClose={() => {
+              setShowCancelModal(false);
+              setSelectedPayment(null);
+            }}
+            onConfirm={handleCancelConfirm}
+            isLoading={isCancelling}
           />
         </>
       )}

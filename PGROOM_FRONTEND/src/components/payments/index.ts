@@ -12,6 +12,8 @@ export { default as PaymentDetailsModal } from './PaymentDetailsModal';
 export { default as PaymentFilters } from './PaymentFilters';
 export { default as PaymentPagination } from './PaymentPagination';
 export { default as RefundModal } from './RefundModal';
+export { default as RefundConfirmationDialog } from './RefundConfirmationDialog';
+export { default as CancelPaymentModal } from './CancelPaymentModal';
 export { default as InvoiceTemplate } from './InvoiceTemplate';
 
 // Re-export types for convenience

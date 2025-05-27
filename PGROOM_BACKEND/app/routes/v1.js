@@ -139,6 +139,13 @@ router
     controller.PaymentController.initiateRefund
   );
 
+router
+  .route("/payment/cancel")
+  .post(
+    validateRequest(validators.PaymentValidator.CancelPaymentValidator),
+    controller.PaymentController.cancelPayment
+  );
+
 // Specific payment routes (must come before parameterized routes)
 router.get("/payment/stats", controller.PaymentController.getPaymentStats);
 router.get("/payment/recent", controller.PaymentController.getRecentPayments);

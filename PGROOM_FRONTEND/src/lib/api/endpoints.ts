@@ -71,6 +71,7 @@ export const PAYMENT = {
   TENANT_PAYMENTS: '/pgrooms/v1/payment/tenant',
   PROPERTY_PAYMENTS: '/pgrooms/v1/payment/property',
   REFUND: '/pgrooms/v1/payment/refund',
+  CANCEL: '/pgrooms/v1/payment/cancel',
   STATS: '/pgrooms/v1/payment/stats',
   RECENT: '/pgrooms/v1/payment/recent',
   MONTHLY_ANALYTICS: '/pgrooms/v1/payment/analytics/monthly',

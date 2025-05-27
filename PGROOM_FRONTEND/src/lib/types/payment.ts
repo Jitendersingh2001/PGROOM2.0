@@ -6,7 +6,7 @@
  */
 
 // Base payment status enum matching backend
-export type PaymentStatus = 'Pending' | 'Authorized' | 'Captured' | 'Failed' | 'Refunded';
+export type PaymentStatus = 'Pending' | 'Captured' | 'Failed' | 'Refunded' | 'PartiallyRefunded';
 
 // Payment method enum matching backend
 export type PaymentMethod = 'Cash' | 'UPI';
@@ -180,6 +180,7 @@ export interface PaymentStats {
   pendingPayments: number;
   failedPayments: number;
   refundedPayments: number;
+  partiallyRefundedPayments?: number;
   successRate: number;
   currency?: string;
 }
@@ -283,6 +284,23 @@ export interface PaymentState {
 }
 
 /**
+ * Cancel Payment Request Interface
+ */
+export interface CancelPaymentRequest {
+  paymentId: number;
+  reason?: string;
+}
+
+/**
+ * Cancel Payment Response Interface
+ */
+export interface CancelPaymentResponse {
+  success: boolean;
+  payment: Payment;
+  message: string;
+}
+
+/**
  * Payment Actions for Context/Store
  */
 export interface PaymentActions {
@@ -293,6 +311,7 @@ export interface PaymentActions {
   getTenantPayments: (params: TenantPaymentsRequest) => Promise<PaymentListResponse>;
   getPropertyPayments: (params: PropertyPaymentsRequest) => Promise<PaymentListResponse>;
   initiateRefund: (data: RefundRequest) => Promise<RefundResponse>;
+  cancelPayment: (data: CancelPaymentRequest) => Promise<CancelPaymentResponse>;
   getPaymentStats: () => Promise<PaymentStats>;
   getRecentPayments: () => Promise<Payment[]>;
   getMonthlyAnalytics: () => Promise<MonthlyAnalyticsData[]>;

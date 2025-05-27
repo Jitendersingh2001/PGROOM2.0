@@ -1,6 +1,6 @@
 /**
  * Payment Context
- * 
+ *
  * Global state management for payments using React Context API.
  * Provides centralized payment state and actions across the application.
  */
@@ -17,6 +17,7 @@ import {
   CreatePaymentOrderRequest,
   PaymentVerificationRequest,
   RefundRequest,
+  CancelPaymentRequest,
   PaymentListParams,
   TenantPaymentsRequest,
   PropertyPaymentsRequest
@@ -194,12 +195,12 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
 
     try {
       const response = await paymentService.verifyPayment(data);
-      
+
       // Update payment in state
       if (response.payment) {
         dispatch({ type: 'UPDATE_PAYMENT', payload: response.payment });
       }
-      
+
       return response;
     } catch (error) {
       setError(error as PaymentError);
@@ -276,12 +277,12 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
 
     try {
       const response = await paymentService.initiateRefund(data);
-      
+
       // Update payment in state
       if (response.payment) {
         dispatch({ type: 'UPDATE_PAYMENT', payload: response.payment });
       }
-      
+
       return response;
     } catch (error) {
       setError(error as PaymentError);
@@ -333,11 +334,31 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
     }
   }, [setLoading, clearError, setError]);
 
+  const cancelPayment = useCallback(async (data: CancelPaymentRequest) => {
+    setLoading(true);
+    clearError();
+
+    try {
+      const response = await paymentService.cancelPayment(data);
+
+      // Update the payment in the state
+      dispatch({
+        type: 'UPDATE_PAYMENT',
+        payload: response.payment
+      });
+
+      return response;
+    } catch (error) {
+      setError(error as PaymentError);
+      throw error;
+    }
+  }, [setLoading, clearError, setError]);
+
   // Context Value
   const contextValue: PaymentContextType = {
     // State
     ...state,
-    
+
     // Actions
     createPaymentOrder,
     verifyPayment,
@@ -346,6 +367,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
     getTenantPayments,
     getPropertyPayments,
     initiateRefund,
+    cancelPayment,
     getPaymentStats,
     getRecentPayments,
     getMonthlyAnalytics,

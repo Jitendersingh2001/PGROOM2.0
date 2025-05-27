@@ -6,8 +6,8 @@
  * Enhanced with micro-interactions and visual feedback.
  */
 
-import React, { memo, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { memo, useState, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import {
   Table,
@@ -31,26 +31,17 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '@/components/ui/select';
 import {
   Eye,
   MoreHorizontal,
   CreditCard,
-  User,
-  Building,
-  Home,
-  Calendar,
-  DollarSign,
   RefreshCw,
   Download,
   Clock,
   CheckCircle2,
   XCircle,
-  AlertCircle,
   ChevronDown,
-  FileText,
-  Loader2
 } from 'lucide-react';
 import { Payment, PaymentStatus } from '@/lib/types/payment';
 import { useInvoiceDownload } from '@/hooks/useInvoiceDownload';
@@ -62,41 +53,12 @@ interface PaymentTableProps {
   isLoading?: boolean;
   onViewDetails?: (payment: Payment) => void;
   onRefund?: (payment: Payment) => void;
+  onCancel?: (payment: Payment) => void;
   onStatusChange?: (payment: Payment, newStatus: PaymentStatus) => void;
   className?: string;
 }
 
-// Status badge configuration
-const getStatusConfig = (status: PaymentStatus) => {
-  const configs = {
-    Pending: {
-      variant: 'secondary' as const,
-      className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-      icon: RefreshCw
-    },
-    Authorized: {
-      variant: 'secondary' as const,
-      className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-      icon: CreditCard
-    },
-    Captured: {
-      variant: 'default' as const,
-      className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-      icon: CreditCard
-    },
-    Failed: {
-      variant: 'destructive' as const,
-      className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-      icon: CreditCard
-    },
-    Refunded: {
-      variant: 'outline' as const,
-      className: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
-      icon: RefreshCw
-    }
-  };
-  return configs[status] || configs.Pending;
-};
+
 
 // Interactive Status Component
 const InteractiveStatusBadge = memo<{
@@ -115,13 +77,7 @@ const InteractiveStatusBadge = memo<{
       hoverClassName: 'hover:bg-yellow-100 dark:hover:bg-yellow-900/30',
       dotColor: 'bg-yellow-500'
     },
-    Authorized: {
-      icon: AlertCircle,
-      label: 'Authorized',
-      className: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800',
-      hoverClassName: 'hover:bg-blue-100 dark:hover:bg-blue-900/30',
-      dotColor: 'bg-blue-500'
-    },
+
     Captured: {
       icon: CheckCircle2,
       label: 'Completed',
@@ -142,23 +98,29 @@ const InteractiveStatusBadge = memo<{
       className: 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800',
       hoverClassName: 'hover:bg-gray-100 dark:hover:bg-gray-900/30',
       dotColor: 'bg-gray-500'
+    },
+    PartiallyRefunded: {
+      icon: RefreshCw,
+      label: 'Partially Refunded',
+      className: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800',
+      hoverClassName: 'hover:bg-orange-100 dark:hover:bg-orange-900/30',
+      dotColor: 'bg-orange-500'
     }
   };
 
   const config = statusConfigs[status];
-  const IconComponent = config.icon;
 
   // Available status transitions (business logic)
   const getAvailableStatuses = (currentStatus: PaymentStatus): PaymentStatus[] => {
     switch (currentStatus) {
       case 'Pending':
-        return ['Authorized', 'Failed'];
-      case 'Authorized':
         return ['Captured', 'Failed'];
       case 'Captured':
-        return ['Refunded'];
+        return ['Refunded', 'PartiallyRefunded'];
       case 'Failed':
         return ['Pending']; // Allow retry
+      case 'PartiallyRefunded':
+        return ['Refunded']; // Can complete the refund
       case 'Refunded':
         return []; // Final state
       default:
@@ -186,15 +148,15 @@ const InteractiveStatusBadge = memo<{
       >
         <Badge
           variant="outline"
-          className={cn('text-xs font-medium px-2.5 py-0.5', config.className)}
+          className={cn('text-xs font-medium px-2 py-0.5 max-w-[110px]', config.className)}
         >
-          <span className="flex items-center gap-1">
-            <span className={cn('relative flex h-2 w-2 rounded-full', config.dotColor)}>
+          <span className="flex items-center gap-1.5 min-w-0">
+            <span className={cn('relative flex h-2 w-2 rounded-full flex-shrink-0', config.dotColor)}>
               {status === 'Pending' && (
                 <span className={cn('animate-ping absolute inline-flex h-full w-full rounded-full opacity-75', config.dotColor)}></span>
               )}
             </span>
-            {config.label}
+            <span className="truncate min-w-0">{config.label}</span>
           </span>
         </Badge>
       </motion.div>
@@ -220,20 +182,20 @@ const InteractiveStatusBadge = memo<{
           <Badge
             variant="outline"
             className={cn(
-              'text-xs font-medium px-2.5 py-0.5 cursor-pointer transition-all duration-200',
+              'text-xs font-medium px-2 py-0.5 cursor-pointer transition-all duration-200 max-w-[130px]',
               config.className,
               config.hoverClassName,
               'hover:shadow-sm'
             )}
           >
-            <span className="flex items-center gap-1">
-              <span className={cn('relative flex h-2 w-2 rounded-full', config.dotColor)}>
+            <span className="flex items-center gap-1.5 min-w-0">
+              <span className={cn('relative flex h-2 w-2 rounded-full flex-shrink-0', config.dotColor)}>
                 {status === 'Pending' && (
                   <span className={cn('animate-ping absolute inline-flex h-full w-full rounded-full opacity-75', config.dotColor)}></span>
                 )}
               </span>
-              {config.label}
-              <ChevronDown className="h-3 w-3 opacity-50 ml-1" />
+              <span className="truncate min-w-0 flex-1">{config.label}</span>
+              <ChevronDown className="h-3 w-3 opacity-50 flex-shrink-0" />
             </span>
           </Badge>
         </motion.div>
@@ -288,8 +250,9 @@ const PaymentTableRow = memo<{
   payment: Payment;
   onViewDetails?: (payment: Payment) => void;
   onRefund?: (payment: Payment) => void;
+  onCancel?: (payment: Payment) => void;
   onStatusChange?: (payment: Payment, newStatus: PaymentStatus) => void;
-}>(({ payment, onViewDetails, onRefund, onStatusChange }) => {
+}>(({ payment, onViewDetails, onRefund, onCancel, onStatusChange }) => {
   // Invoice download hook
   const { downloadInvoice, isGenerating } = useInvoiceDownload();
 
@@ -308,7 +271,8 @@ const PaymentTableRow = memo<{
     await downloadInvoice(payment);
   }, [downloadInvoice, payment]);
 
-  const canRefund = payment.status === 'Captured';
+  const canRefund = payment.status === 'Captured' || payment.status === 'PartiallyRefunded';
+  const canCancel = payment.status === 'Pending';
   const canDownloadInvoice = true; // Allow invoice download for all payments
 
   return (
@@ -384,6 +348,15 @@ const PaymentTableRow = memo<{
               <Eye className="mr-2 h-4 w-4" />
               View Details
             </DropdownMenuItem>
+            {canCancel && (
+              <DropdownMenuItem
+                onClick={() => onCancel?.(payment)}
+                className="text-red-600 focus:text-red-600"
+              >
+                <XCircle className="mr-2 h-4 w-4" />
+                Cancel Payment
+              </DropdownMenuItem>
+            )}
             {canRefund && (
               <DropdownMenuItem onClick={() => onRefund?.(payment)}>
                 <RefreshCw className="mr-2 h-4 w-4" />
@@ -429,6 +402,7 @@ export const PaymentTable = memo<PaymentTableProps>(({
   isLoading = false,
   onViewDetails,
   onRefund,
+  onCancel,
   onStatusChange,
   className
 }) => {
@@ -539,6 +513,7 @@ export const PaymentTable = memo<PaymentTableProps>(({
                     payment={payment}
                     onViewDetails={onViewDetails}
                     onRefund={onRefund}
+                    onCancel={onCancel}
                     onStatusChange={onStatusChange}
                   />
                 ))}

@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   CreditCard,
-  DollarSign,
+  IndianRupee,
   TrendingUp,
   Clock,
   CheckCircle,
@@ -294,7 +294,7 @@ export const PaymentStats = memo<PaymentStatsProps>(({
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Revenue
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-muted-foreground">--</div>
@@ -372,7 +372,7 @@ export const PaymentStats = memo<PaymentStatsProps>(({
           title="Total Revenue"
           value={formatCurrency(stats.totalAmount)}
           subtitle="From all successful payments"
-          icon={DollarSign}
+          icon={IndianRupee}
           iconClassName="text-green-600"
           className="border-l-4 border-l-green-500"
         />

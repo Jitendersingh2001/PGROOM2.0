@@ -128,9 +128,9 @@ model Payment {
   razorpaySignature    String?
   status               PaymentStatus
   paymentMethod        PaymentMethod?
-  paymentMethodDetails String?        // Stores detailed payment method from Razorpay (card, upi, netbanking, wallet, emi)
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
+  paymentMethodDetails String?
   property             UserProperties @relation("PropertyPayments", fields: [propertyId], references: [id])
   room                 Rooms          @relation("RoomPayments", fields: [roomId], references: [id])
   tenant               User           @relation("TenantPayments", fields: [tenantId], references: [id])
@@ -142,6 +142,7 @@ enum PaymentStatus {
   Captured
   Failed
   Refunded
+  PartiallyRefunded
 }
 
 enum Status {
