@@ -95,7 +95,8 @@ class PaymentService {
         razorpayPaymentId: razorpay_payment_id,
         razorpaySignature: razorpay_signature,
         status: razorpayPayment.status === 'captured' ? 'Captured' : 'Authorized',
-        paymentMethod: this.mapPaymentMethod(razorpayPayment.method)
+        paymentMethod: this.mapPaymentMethod(razorpayPayment.method),
+        paymentMethodDetails: razorpayPayment.method // Store the actual Razorpay method
       };
 
       const updatedPayment = await this.paymentRepository.updatePayment(payment.id, updateData);
@@ -296,12 +297,14 @@ class PaymentService {
    * @returns {string} Internal payment method
    */
   mapPaymentMethod(razorpayMethod) {
+    // Map all digital payment methods to UPI for the enum constraint
+    // The actual method is stored in paymentMethodDetails field
     const methodMap = {
       'upi': 'UPI',
-      'card': 'UPI', // Map card to UPI for simplicity
-      'netbanking': 'UPI',
-      'wallet': 'UPI',
-      'emi': 'UPI'
+      'card': 'UPI', // Digital payment - actual method stored in paymentMethodDetails
+      'netbanking': 'UPI', // Digital payment - actual method stored in paymentMethodDetails
+      'wallet': 'UPI', // Digital payment - actual method stored in paymentMethodDetails
+      'emi': 'UPI' // Digital payment - actual method stored in paymentMethodDetails
     };
     return methodMap[razorpayMethod] || 'UPI';
   }

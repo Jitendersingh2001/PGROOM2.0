@@ -260,14 +260,20 @@ const InteractiveStatusBadge = memo<{
 InteractiveStatusBadge.displayName = 'InteractiveStatusBadge';
 
 // Payment Method Badge Component
-const PaymentMethodBadge = memo<{ method?: string }>(({ method }) => {
+const PaymentMethodBadge = memo<{ method?: string; methodDetails?: string }>(({ method, methodDetails }) => {
   if (!method) {
     return <span className="text-muted-foreground text-sm">-</span>;
   }
 
+  // Display detailed method if available, otherwise fall back to general method
+  const displayMethod = methodDetails || method;
+
+  // Capitalize the method name for better display
+  const formattedMethod = displayMethod.charAt(0).toUpperCase() + displayMethod.slice(1);
+
   return (
     <Badge variant="outline" className="text-xs">
-      {method}
+      {formattedMethod}
     </Badge>
   );
 });
@@ -346,7 +352,7 @@ const PaymentTableRow = memo<{
 
       {/* Payment Method */}
       <TableCell>
-        <PaymentMethodBadge method={payment.paymentMethod} />
+        <PaymentMethodBadge method={payment.paymentMethod} methodDetails={payment.paymentMethodDetails} />
       </TableCell>
 
       {/* Status */}

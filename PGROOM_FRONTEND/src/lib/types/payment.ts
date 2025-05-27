@@ -29,6 +29,7 @@ export interface Payment {
   razorpaySignature?: string;
   status: PaymentStatus;
   paymentMethod?: PaymentMethod;
+  paymentMethodDetails?: string; // Stores detailed payment method from Razorpay (card, upi, netbanking, wallet, emi)
   createdAt: string;
   updatedAt: string;
   tenant?: {

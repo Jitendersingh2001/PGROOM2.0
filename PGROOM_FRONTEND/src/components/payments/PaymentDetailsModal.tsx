@@ -1,6 +1,6 @@
 /**
  * Payment Details Modal Component
- * 
+ *
  * A comprehensive modal for displaying detailed payment information
  * with proper formatting and accessibility features.
  */
@@ -174,7 +174,14 @@ export const PaymentDetailsModal = memo<PaymentDetailsModalProps>(({
               <DetailRow
                 icon={CreditCard}
                 label="Payment Method"
-                value={payment.paymentMethod || 'N/A'}
+                value={
+                  <div className="text-right">
+                    <div>{payment.paymentMethodDetails ? payment.paymentMethodDetails.charAt(0).toUpperCase() + payment.paymentMethodDetails.slice(1) : payment.paymentMethod || 'N/A'}</div>
+                    {payment.paymentMethodDetails && payment.paymentMethodDetails !== payment.paymentMethod && (
+                      <div className="text-xs text-muted-foreground">via {payment.paymentMethod}</div>
+                    )}
+                  </div>
+                }
               />
 
               <DetailRow

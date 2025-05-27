@@ -33,6 +33,7 @@ import { Loader2, CreditCard, User, Building, Home } from 'lucide-react';
 import { CreatePaymentOrderRequest, PaymentFormData } from '@/lib/types/payment';
 import { usePayment } from '@/hooks/usePayments';
 import { propertyService, tenantService, roomService } from '@/lib/api/services';
+import { cn } from '@/lib/utils';
 
 // Validation schema - Updated order: Property → Room → Tenant
 const paymentFormSchema = z.object({

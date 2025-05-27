@@ -117,22 +117,23 @@ model City {
 }
 
 model Payment {
-  id                Int            @id @default(autoincrement())
-  tenantId          Int
-  propertyId        Int
-  roomId            Int
-  amount            Float
-  currency          String         @default("INR")
-  razorpayOrderId   String?        @unique
-  razorpayPaymentId String?        @unique
-  razorpaySignature String?
-  status            PaymentStatus
-  paymentMethod     PaymentMethod?
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  property          UserProperties @relation("PropertyPayments", fields: [propertyId], references: [id])
-  room              Rooms          @relation("RoomPayments", fields: [roomId], references: [id])
-  tenant            User           @relation("TenantPayments", fields: [tenantId], references: [id])
+  id                   Int            @id @default(autoincrement())
+  tenantId             Int
+  propertyId           Int
+  roomId               Int
+  amount               Float
+  currency             String         @default("INR")
+  razorpayOrderId      String?        @unique
+  razorpayPaymentId    String?        @unique
+  razorpaySignature    String?
+  status               PaymentStatus
+  paymentMethod        PaymentMethod?
+  paymentMethodDetails String?        // Stores detailed payment method from Razorpay (card, upi, netbanking, wallet, emi)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  property             UserProperties @relation("PropertyPayments", fields: [propertyId], references: [id])
+  room                 Rooms          @relation("RoomPayments", fields: [roomId], references: [id])
+  tenant               User           @relation("TenantPayments", fields: [tenantId], references: [id])
 }
 
 enum PaymentStatus {
