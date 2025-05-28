@@ -1,23 +1,23 @@
 -- CreateEnum
+CREATE TYPE "PaymentStatus" AS ENUM ('Pending', 'Authorized', 'Captured', 'Failed', 'Refunded');
+
+-- CreateEnum
 CREATE TYPE "Status" AS ENUM ('Active', 'Deleted', 'Invited');
 
 -- CreateEnum
 CREATE TYPE "Roles" AS ENUM ('SuperAdmin', 'Admin', 'Tenant');
 
 -- CreateEnum
-CREATE TYPE "PropertyStatus" AS ENUM ('Active', 'Inactive');
+CREATE TYPE "PropertyStatus" AS ENUM ('Active', 'Inactive', 'Deleted');
 
 -- CreateEnum
-CREATE TYPE "RoomStatus" AS ENUM ('Available', 'Occupied');
+CREATE TYPE "RoomStatus" AS ENUM ('Available', 'Occupied', 'Deleted');
 
 -- CreateEnum
 CREATE TYPE "PaymentMethod" AS ENUM ('Cash', 'UPI');
 
 -- CreateEnum
-CREATE TYPE "RentStatus" AS ENUM ('Paid', 'Unpaid');
-
--- CreateEnum
-CREATE TYPE "BillStatus" AS ENUM ('Paid', 'Unpaid');
+CREATE TYPE "TenantStatus" AS ENUM ('Active', 'Deleted');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -62,13 +62,15 @@ CREATE TABLE "UserRoleLink" (
 CREATE TABLE "UserProperties" (
     "id" SERIAL NOT NULL,
     "userId" INTEGER NOT NULL,
-    "state" INTEGER NOT NULL,
-    "city" INTEGER NOT NULL,
+    "stateId" INTEGER NOT NULL,
+    "cityId" INTEGER NOT NULL,
     "propertyName" VARCHAR NOT NULL,
     "propertyImage" VARCHAR NOT NULL,
+    "propertyContact" VARCHAR NOT NULL,
+    "propertyAddress" VARCHAR NOT NULL,
     "status" "PropertyStatus" NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(6) NOT NULL,
 
     CONSTRAINT "UserProperties_pkey" PRIMARY KEY ("id")
 );
@@ -78,9 +80,11 @@ CREATE TABLE "Rooms" (
     "id" SERIAL NOT NULL,
     "propertyId" INTEGER NOT NULL,
     "roomNo" INTEGER NOT NULL,
-    "roomImage" VARCHAR NOT NULL,
+    "roomImage" JSONB NOT NULL,
+    "totalBed" INTEGER NOT NULL,
     "status" "RoomStatus" NOT NULL,
     "description" VARCHAR NOT NULL,
+    "rent" VARCHAR NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -93,38 +97,11 @@ CREATE TABLE "Tenant" (
     "userId" INTEGER NOT NULL,
     "propertyId" INTEGER NOT NULL,
     "roomId" INTEGER NOT NULL,
+    "status" "TenantStatus" NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Tenant_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Rent" (
-    "id" SERIAL NOT NULL,
-    "amount" INTEGER NOT NULL,
-    "roomId" INTEGER NOT NULL,
-    "paymentMethod" "PaymentMethod" NOT NULL,
-    "upiId" VARCHAR,
-    "status" "RentStatus" NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "Rent_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "ElectricityBill" (
-    "id" SERIAL NOT NULL,
-    "roomId" INTEGER NOT NULL,
-    "amount" INTEGER NOT NULL,
-    "paymentMethod" "PaymentMethod" NOT NULL,
-    "upiId" VARCHAR,
-    "status" "BillStatus" NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "ElectricityBill_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -148,23 +125,55 @@ CREATE TABLE "City" (
     CONSTRAINT "City_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Payment" (
+    "id" SERIAL NOT NULL,
+    "tenantId" INTEGER NOT NULL,
+    "propertyId" INTEGER NOT NULL,
+    "roomId" INTEGER NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "currency" TEXT NOT NULL DEFAULT 'INR',
+    "razorpayOrderId" TEXT,
+    "razorpayPaymentId" TEXT,
+    "razorpaySignature" TEXT,
+    "status" "PaymentStatus" NOT NULL,
+    "paymentMethod" "PaymentMethod",
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "paymentMethodDetails" TEXT,
+
+    CONSTRAINT "Payment_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_mobileNo_key" ON "User"("mobileNo");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
--- AddForeignKey
-ALTER TABLE "User" ADD CONSTRAINT "User_stateId_fkey" FOREIGN KEY ("stateId") REFERENCES "State"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+-- CreateIndex
+CREATE UNIQUE INDEX "Payment_razorpayOrderId_key" ON "Payment"("razorpayOrderId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Payment_razorpayPaymentId_key" ON "Payment"("razorpayPaymentId");
 
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_cityId_fkey" FOREIGN KEY ("cityId") REFERENCES "City"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "UserRoleLink" ADD CONSTRAINT "UserRoleLink_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "User" ADD CONSTRAINT "User_stateId_fkey" FOREIGN KEY ("stateId") REFERENCES "State"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "UserRoleLink" ADD CONSTRAINT "UserRoleLink_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "UserRole"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserRoleLink" ADD CONSTRAINT "UserRoleLink_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserProperties" ADD CONSTRAINT "UserProperties_cityId_fkey" FOREIGN KEY ("cityId") REFERENCES "City"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserProperties" ADD CONSTRAINT "UserProperties_stateId_fkey" FOREIGN KEY ("stateId") REFERENCES "State"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "UserProperties" ADD CONSTRAINT "UserProperties_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -173,19 +182,22 @@ ALTER TABLE "UserProperties" ADD CONSTRAINT "UserProperties_userId_fkey" FOREIGN
 ALTER TABLE "Rooms" ADD CONSTRAINT "Rooms_propertyId_fkey" FOREIGN KEY ("propertyId") REFERENCES "UserProperties"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Tenant" ADD CONSTRAINT "Tenant_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "Tenant" ADD CONSTRAINT "Tenant_propertyId_fkey" FOREIGN KEY ("propertyId") REFERENCES "UserProperties"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Tenant" ADD CONSTRAINT "Tenant_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Rooms"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Rent" ADD CONSTRAINT "Rent_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Rooms"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "ElectricityBill" ADD CONSTRAINT "ElectricityBill_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Rooms"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Tenant" ADD CONSTRAINT "Tenant_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "City" ADD CONSTRAINT "City_stateId_fkey" FOREIGN KEY ("stateId") REFERENCES "State"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Payment" ADD CONSTRAINT "Payment_propertyId_fkey" FOREIGN KEY ("propertyId") REFERENCES "UserProperties"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Payment" ADD CONSTRAINT "Payment_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Rooms"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Payment" ADD CONSTRAINT "Payment_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
