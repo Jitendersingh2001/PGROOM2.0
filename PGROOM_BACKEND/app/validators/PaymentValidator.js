@@ -113,11 +113,11 @@ const PaymentListValidator = Joi.object({
     }),
 
   status: Joi.string()
-    .valid('Pending', 'Captured', 'Failed', 'Refunded','PartiallyRefunded')
+    .valid('Pending', 'Captured', 'Failed', 'Refunded')
     .optional()
     .messages({
       'string.base': 'Status must be a string',
-      'any.only': 'Status must be one of: Pending, Captured, Failed, Refunded, PartiallyRefunded'
+      'any.only': 'Status must be one of: Pending, Captured, Failed, Refunded'
     }),
 
   tenantId: Joi.number()
@@ -264,11 +264,11 @@ const TenantPaymentsValidator = Joi.object({
     }),
 
   status: Joi.string()
-    .valid('Pending', 'Captured', 'Failed', 'Refunded', 'PartiallyRefunded')
+    .valid('Pending', 'Captured', 'Failed', 'Refunded')
     .optional()
     .messages({
       'string.base': 'Status must be a string',
-      'any.only': 'Status must be one of: Pending, Captured, Failed, Refunded, PartiallyRefunded'
+      'any.only': 'Status must be one of: Pending, Captured, Failed, Refunded'
     })
 });
 
@@ -310,11 +310,11 @@ const PropertyPaymentsValidator = Joi.object({
     }),
 
   status: Joi.string()
-    .valid('Pending', 'Captured', 'Failed', 'Refunded', 'PartiallyRefunded')
+    .valid('Pending', 'Captured', 'Failed', 'Refunded')
     .optional()
     .messages({
       'string.base': 'Status must be a string',
-      'any.only': 'Status must be one of: Pending, Captured, Failed, Refunded, PartiallyRefunded'
+      'any.only': 'Status must be one of: Pending, Captured, Failed, Refunded'
     })
 });
 

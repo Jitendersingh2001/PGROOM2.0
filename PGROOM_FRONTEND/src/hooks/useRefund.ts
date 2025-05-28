@@ -39,7 +39,7 @@ interface RefundState {
  * Refund hook return type
  */
 interface UseRefundReturn extends RefundState {
-  validateRefund: (payment: Payment, amount?: number) => RefundValidation;
+  validateRefund: (payment: Payment) => RefundValidation;
   initiateRefund: (payment: Payment, refundData: Omit<RefundRequest, 'paymentId'>) => Promise<RefundResponse>;
   clearError: () => void;
   reset: () => void;
@@ -57,14 +57,14 @@ export function useRefund(): UseRefundReturn {
   });
 
   /**
-   * Validate if a payment can be refunded and calculate limits
+   * Validate if a payment can be refunded
    */
-  const validateRefund = useCallback((payment: Payment, amount?: number): RefundValidation => {
+  const validateRefund = useCallback((payment: Payment): RefundValidation => {
     // Check payment status
-    if (payment.status !== 'Captured' && payment.status !== 'PartiallyRefunded') {
+    if (payment.status !== 'Captured') {
       return {
         canRefund: false,
-        reason: `Payment must be in 'Captured' or 'PartiallyRefunded' status to be refunded. Current status: ${payment.status}`,
+        reason: `Payment must be in 'Captured' status to be refunded. Current status: ${payment.status}`,
         maxRefundAmount: 0,
         minRefundAmount: 0
       };
@@ -80,44 +80,11 @@ export function useRefund(): UseRefundReturn {
       };
     }
 
-    // Calculate refund limits
-    const maxRefundAmount = payment.amount;
-    const minRefundAmount = 0.01; // Minimum refund amount
-
-    // Validate specific amount if provided
-    if (amount !== undefined) {
-      if (amount <= 0) {
-        return {
-          canRefund: false,
-          reason: 'Refund amount must be greater than 0',
-          maxRefundAmount,
-          minRefundAmount
-        };
-      }
-
-      if (amount > maxRefundAmount) {
-        return {
-          canRefund: false,
-          reason: `Refund amount cannot exceed the original payment amount of ₹${maxRefundAmount.toLocaleString('en-IN')}`,
-          maxRefundAmount,
-          minRefundAmount
-        };
-      }
-
-      if (amount < minRefundAmount) {
-        return {
-          canRefund: false,
-          reason: `Refund amount must be at least ₹${minRefundAmount}`,
-          maxRefundAmount,
-          minRefundAmount
-        };
-      }
-    }
-
+    // All validations passed - full refund only
     return {
       canRefund: true,
-      maxRefundAmount,
-      minRefundAmount
+      maxRefundAmount: payment.amount,
+      minRefundAmount: payment.amount
     };
   }, []);
 
@@ -129,7 +96,7 @@ export function useRefund(): UseRefundReturn {
     refundData: Omit<RefundRequest, 'paymentId'>
   ): Promise<RefundResponse> => {
     // Validate refund before proceeding
-    const validation = validateRefund(payment, refundData.amount);
+    const validation = validateRefund(payment);
     if (!validation.canRefund) {
       const error: PaymentError = {
         code: 'REFUND_VALIDATION_ERROR',
@@ -157,7 +124,7 @@ export function useRefund(): UseRefundReturn {
 
       // Success toast with green background
       toast.success('Refund initiated successfully!', {
-        description: `Refund of ₹${(refundData.amount || payment.amount).toLocaleString('en-IN')} has been processed.`,
+        description: `Full refund of ₹${payment.amount.toLocaleString('en-IN')} has been processed.`,
         duration: 5000,
         style: {
           backgroundColor: '#22c55e',

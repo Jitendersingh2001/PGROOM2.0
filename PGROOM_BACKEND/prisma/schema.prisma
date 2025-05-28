@@ -142,7 +142,6 @@ enum PaymentStatus {
   Captured
   Failed
   Refunded
-  PartiallyRefunded
 }
 
 enum Status {

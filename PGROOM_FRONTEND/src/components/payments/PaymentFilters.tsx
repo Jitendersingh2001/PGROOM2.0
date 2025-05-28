@@ -68,7 +68,6 @@ const statusOptions: { value: PaymentStatus | 'all'; label: string; color: strin
   { value: 'Pending', label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
   { value: 'Captured', label: 'Completed', color: 'bg-green-100 text-green-800' },
   { value: 'Failed', label: 'Failed', color: 'bg-red-100 text-red-800' },
-  { value: 'PartiallyRefunded', label: 'Partially Refunded', color: 'bg-orange-100 text-orange-800' },
   { value: 'Refunded', label: 'Refunded', color: 'bg-gray-100 text-gray-800' },
 ];
 

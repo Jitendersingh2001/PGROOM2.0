@@ -6,7 +6,7 @@
  */
 
 // Base payment status enum matching backend
-export type PaymentStatus = 'Pending' | 'Captured' | 'Failed' | 'Refunded' | 'PartiallyRefunded';
+export type PaymentStatus = 'Pending' | 'Captured' | 'Failed' | 'Refunded';
 
 // Payment method enum matching backend
 export type PaymentMethod = 'Cash' | 'UPI';

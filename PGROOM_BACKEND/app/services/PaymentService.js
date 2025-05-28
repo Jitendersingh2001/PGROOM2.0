@@ -247,8 +247,8 @@ class PaymentService {
       console.log(`Payment found: ${JSON.stringify(payment, null, 2)}`);
 
       // Validate payment status
-      if (payment.status !== 'Captured' && payment.status !== 'PartiallyRefunded') {
-        throw new Error(`Only captured or partially refunded payments can be refunded. Current status: ${payment.status}`);
+      if (payment.status !== 'Captured') {
+        throw new Error(`Only captured payments can be refunded. Current status: ${payment.status}`);
       }
 
       // Validate Razorpay payment ID
@@ -258,38 +258,28 @@ class PaymentService {
 
       console.log(`Initiating Razorpay refund for payment ID: ${payment.razorpayPaymentId}`);
 
-      // Prepare refund data for Razorpay
+      // Prepare refund data for Razorpay (full refund only)
       const refundOptions = {
         notes: {
-          reason: reason || 'Refund requested',
+          reason: reason || 'Full refund requested',
           paymentId: paymentId.toString(),
           originalAmount: payment.amount.toString()
         }
       };
 
-      // Add amount only if it's a partial refund
-      if (amount && amount > 0 && amount < payment.amount) {
-        refundOptions.amount = Math.round(amount * 100); // Convert to paise
-        console.log(`Partial refund amount: ${refundOptions.amount} paise`);
-      } else {
-        console.log('Full refund requested');
-      }
+      console.log('Full refund requested');
 
       // Create refund in Razorpay
       const refund = await razorpay.payments.refund(payment.razorpayPaymentId, refundOptions);
 
       console.log(`Razorpay refund created: ${JSON.stringify(refund, null, 2)}`);
 
-      // Determine new payment status
-      const isPartialRefund = amount && amount > 0 && amount < payment.amount;
-      const newStatus = isPartialRefund ? 'PartiallyRefunded' : 'Refunded';
-
-      // Update payment status
+      // Update payment status to Refunded (full refund only)
       const updatedPayment = await this.paymentRepository.updatePayment(paymentId, {
-        status: newStatus
+        status: 'Refunded'
       });
 
-      console.log(`Payment status updated to: ${newStatus}`);
+      console.log(`Payment status updated to: Refunded`);
 
       return {
         success: true,

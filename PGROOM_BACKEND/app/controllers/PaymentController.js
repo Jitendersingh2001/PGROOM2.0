@@ -179,27 +179,25 @@ class PaymentController extends Controller {
       // Calculate revenue from only completed (captured) payments
       const capturedPayments = allPayments.data.filter(p => p.status === 'Captured');
       const refundedPayments = allPayments.data.filter(p => p.status === 'Refunded');
-      const partiallyRefundedPayments = allPayments.data.filter(p => p.status === 'PartiallyRefunded');
       const authorizedPayments = allPayments.data.filter(p => p.status === 'Authorized');
 
-      // Total revenue = Sum of only completed payments (including partially refunded)
-      const totalRevenue = [...capturedPayments, ...partiallyRefundedPayments].reduce((sum, payment) => sum + payment.amount, 0);
+      // Total revenue = Sum of only completed payments
+      const totalRevenue = capturedPayments.reduce((sum, payment) => sum + payment.amount, 0);
 
-      // Total successful payments include captured and partially refunded
-      const successfulPayments = capturedPayments.length + partiallyRefundedPayments.length;
+      // Total successful payments include only captured
+      const successfulPayments = capturedPayments.length;
 
-      // Total refunded payments include both full and partial refunds
-      const totalRefundedPayments = refundedPayments.length + partiallyRefundedPayments.length;
+      // Total refunded payments
+      const totalRefundedPayments = refundedPayments.length;
 
       const stats = {
         totalPayments: allPayments.pagination.total,
-        totalAmount: totalRevenue, // Count revenue from completed and partially refunded payments
+        totalAmount: totalRevenue, // Count revenue from completed payments only
         successfulPayments: successfulPayments,
         pendingPayments: allPayments.data.filter(p => p.status === 'Pending').length,
         authorizedPayments: authorizedPayments.length,
         failedPayments: allPayments.data.filter(p => p.status === 'Failed').length,
         refundedPayments: totalRefundedPayments,
-        partiallyRefundedPayments: partiallyRefundedPayments.length,
         successRate: allPayments.pagination.total > 0
           ? parseFloat(((successfulPayments / allPayments.pagination.total) * 100).toFixed(2))
           : 0

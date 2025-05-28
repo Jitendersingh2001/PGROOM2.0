@@ -56,17 +56,10 @@ import { cn } from '@/lib/utils';
 
 // Enhanced refund form schema with better validation
 const refundFormSchema = z.object({
-  amount: z.number({
-    required_error: 'Refund amount is required',
-    invalid_type_error: 'Please enter a valid amount'
-  })
-    .min(0.01, 'Amount must be greater than ₹0.01')
-    .max(999999.99, 'Amount cannot exceed ₹9,99,999.99'),
   reason: z.string()
     .min(3, 'Reason must be at least 3 characters')
     .max(500, 'Reason cannot exceed 500 characters')
     .optional(),
-  isPartialRefund: z.boolean().default(false),
 });
 
 type RefundFormValues = z.infer<typeof refundFormSchema>;
@@ -118,24 +111,12 @@ export const RefundModal = memo<RefundModalProps>(({
 
   // Form setup with dynamic validation
   const form = useForm<RefundFormValues>({
-    resolver: zodResolver(refundFormSchema.refine((data) => {
-      const validation = validateRefund(payment, data.amount);
-      return validation.canRefund;
-    }, {
-      message: 'Invalid refund amount',
-      path: ['amount']
-    })),
+    resolver: zodResolver(refundFormSchema),
     defaultValues: {
-      amount: payment.amount,
       reason: '',
-      isPartialRefund: false,
     },
     mode: 'onChange'
   });
-
-  // Watch form values for real-time validation
-  const watchedAmount = form.watch('amount');
-  const watchedIsPartial = form.watch('isPartialRefund');
 
   // Format currency
   const formatCurrency = useCallback((amount: number) => {
@@ -146,7 +127,7 @@ export const RefundModal = memo<RefundModalProps>(({
   }, [payment.currency]);
 
   // Validate current form state
-  const validation = validateRefund(payment, watchedAmount);
+  const validation = validateRefund(payment);
 
   // Handle form submission (show confirmation)
   const onSubmit = useCallback((values: RefundFormValues) => {
@@ -163,7 +144,6 @@ export const RefundModal = memo<RefundModalProps>(({
 
     try {
       await initiateRefund(payment, {
-        amount: pendingRefundData.amount,
         reason: pendingRefundData.reason
       });
 
@@ -188,27 +168,15 @@ export const RefundModal = memo<RefundModalProps>(({
     }
   }, [isLoading, form, clearError, onClose]);
 
-  // Handle partial refund toggle
-  const handlePartialToggle = useCallback((isPartial: boolean) => {
-    if (isPartial) {
-      form.setValue('amount', Math.round(payment.amount * 0.5 * 100) / 100);
-    } else {
-      form.setValue('amount', payment.amount);
-    }
-    form.setValue('isPartialRefund', isPartial);
-  }, [form, payment.amount]);
-
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
       form.reset({
-        amount: payment.amount,
         reason: '',
-        isPartialRefund: false,
       });
       clearError();
     }
-  }, [isOpen, form, payment.amount, clearError]);
+  }, [isOpen, form, clearError]);
 
   // Check if payment can be refunded
   const baseValidation = validateRefund(payment);
@@ -379,102 +347,23 @@ export const RefundModal = memo<RefundModalProps>(({
                 <CardContent>
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
-                      {/* Refund Type Selection */}
-                      <FormField
-                        control={form.control}
-                        name="isPartialRefund"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm sm:text-base">Refund Type</FormLabel>
-                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                              <Button
-                                type="button"
-                                variant={!field.value ? "default" : "outline"}
-                                onClick={() => handlePartialToggle(false)}
-                                disabled={isLoading}
-                                className="flex-1 text-xs sm:text-sm h-auto py-2 sm:py-3"
-                              >
-                                <span className="text-center">
-                                  Full Refund<br />
-                                  <span className="text-xs opacity-80">({formatCurrency(payment.amount)})</span>
-                                </span>
-                              </Button>
-                              <Button
-                                type="button"
-                                variant={field.value ? "default" : "outline"}
-                                onClick={() => handlePartialToggle(true)}
-                                disabled={isLoading}
-                                className="flex-1 text-xs sm:text-sm h-auto py-2 sm:py-3"
-                              >
-                                Partial Refund
-                              </Button>
-                            </div>
-                            <FormDescription className="text-xs sm:text-sm">
-                              Choose whether to refund the full amount or a partial amount.
-                            </FormDescription>
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* Refund Amount */}
-                      <FormField
-                        control={form.control}
-                        name="amount"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Refund Amount</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  min="0.01"
-                                  max={payment.amount}
-                                  placeholder="Enter refund amount"
-                                  className={cn(
-                                    "pl-10",
-                                    !validation.canRefund && "border-red-300 focus:border-red-500"
-                                  )}
-                                  value={field.value || ''}
-                                  onChange={(e) => {
-                                    const inputValue = e.target.value;
-
-                                    // Handle empty input
-                                    if (inputValue === '') {
-                                      field.onChange(0);
-                                      form.setValue('isPartialRefund', true);
-                                      return;
-                                    }
-
-                                    // Handle decimal point only
-                                    if (inputValue === '.') {
-                                      return; // Don't update, let user continue typing
-                                    }
-
-                                    // Parse the numeric value
-                                    const numericValue = parseFloat(inputValue);
-                                    if (!isNaN(numericValue) && numericValue >= 0) {
-                                      field.onChange(numericValue);
-                                      form.setValue('isPartialRefund', numericValue !== payment.amount);
-                                    }
-                                  }}
-                                  disabled={isLoading}
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                            <div className="flex justify-between text-xs text-muted-foreground">
-                              <span>Range: ₹0.01 - {formatCurrency(payment.amount)}</span>
-                              {watchedAmount && (
-                                <span className={validation.canRefund ? "text-green-600" : "text-red-600"}>
-                                  {validation.canRefund ? "✓ Valid amount" : validation.reason}
-                                </span>
-                              )}
-                            </div>
-                          </FormItem>
-                        )}
-                      />
+                      {/* Refund Amount Display */}
+                      <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <IndianRupee className="h-5 w-5 text-blue-600" />
+                            <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                              Full Refund Amount
+                            </span>
+                          </div>
+                          <span className="text-lg font-bold text-blue-900 dark:text-blue-100">
+                            {formatCurrency(payment.amount)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                          The entire payment amount will be refunded to the tenant.
+                        </p>
+                      </div>
 
                       {/* Refund Reason */}
                       <FormField
@@ -499,9 +388,9 @@ export const RefundModal = memo<RefundModalProps>(({
                         )}
                       />
 
-                      {/* Real-time Validation Feedback */}
+                      {/* Validation Feedback */}
                       <AnimatePresence>
-                        {!validation.canRefund && watchedAmount > 0 && (
+                        {!validation.canRefund && (
                           <motion.div
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
@@ -550,7 +439,7 @@ export const RefundModal = memo<RefundModalProps>(({
       {pendingRefundData && (
         <RefundConfirmationDialog
           payment={payment}
-          refundAmount={pendingRefundData.amount}
+          refundAmount={payment.amount}
           reason={pendingRefundData.reason}
           isOpen={showConfirmation}
           isLoading={isLoading}

@@ -66,11 +66,6 @@ const statusConfig: Record<PaymentStatus, {
     label: 'Refunded',
     icon: RefreshCw,
     className: 'bg-gray-50 text-gray-700 border-gray-200'
-  },
-  PartiallyRefunded: {
-    label: 'Partially Refunded',
-    icon: RefreshCw,
-    className: 'bg-orange-50 text-orange-700 border-orange-200'
   }
 };
 

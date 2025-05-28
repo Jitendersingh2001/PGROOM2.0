@@ -99,13 +99,7 @@ const InteractiveStatusBadge = memo<{
       hoverClassName: 'hover:bg-gray-100 dark:hover:bg-gray-900/30',
       dotColor: 'bg-gray-500'
     },
-    PartiallyRefunded: {
-      icon: RefreshCw,
-      label: 'Partially Refunded',
-      className: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800',
-      hoverClassName: 'hover:bg-orange-100 dark:hover:bg-orange-900/30',
-      dotColor: 'bg-orange-500'
-    }
+
   };
 
   const config = statusConfigs[status];
@@ -116,11 +110,9 @@ const InteractiveStatusBadge = memo<{
       case 'Pending':
         return ['Captured', 'Failed'];
       case 'Captured':
-        return ['Refunded', 'PartiallyRefunded'];
+        return ['Refunded'];
       case 'Failed':
         return ['Pending']; // Allow retry
-      case 'PartiallyRefunded':
-        return ['Refunded']; // Can complete the refund
       case 'Refunded':
         return []; // Final state
       default:
@@ -271,7 +263,7 @@ const PaymentTableRow = memo<{
     await downloadInvoice(payment);
   }, [downloadInvoice, payment]);
 
-  const canRefund = payment.status === 'Captured' || payment.status === 'PartiallyRefunded';
+  const canRefund = payment.status === 'Captured';
   const canCancel = payment.status === 'Pending';
   const canDownloadInvoice = true; // Allow invoice download for all payments
 

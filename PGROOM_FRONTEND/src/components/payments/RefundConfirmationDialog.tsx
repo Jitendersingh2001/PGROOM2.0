@@ -85,9 +85,8 @@ export const RefundConfirmationDialog = memo<RefundConfirmationDialogProps>(({
     }).format(amount);
   }, [payment.currency]);
 
-  // Calculate refund details
-  const isFullRefund = refundAmount === payment.amount;
-  const refundPercentage = ((refundAmount / payment.amount) * 100).toFixed(1);
+  // Calculate refund details (always full refund now)
+  const isFullRefund = true;
 
   // Format date
   const formatDate = useCallback((dateString: string) => {
@@ -208,8 +207,8 @@ export const RefundConfirmationDialog = memo<RefundConfirmationDialogProps>(({
                   <Separator />
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <span className="text-xs sm:text-sm text-muted-foreground">Refund Type</span>
-                    <Badge variant={isFullRefund ? "default" : "secondary"} className="text-xs">
-                      {isFullRefund ? 'Full Refund' : `Partial Refund (${refundPercentage}%)`}
+                    <Badge variant="default" className="text-xs">
+                      Full Refund
                     </Badge>
                   </div>
                   {reason && (
