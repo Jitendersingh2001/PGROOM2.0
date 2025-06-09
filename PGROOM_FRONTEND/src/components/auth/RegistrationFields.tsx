@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useCallback, useMemo } from "react";
-import { UseFormRegister, Control, UseFormSetValue } from "react-hook-form";
+import { UseFormRegister, Control, UseFormSetValue, Controller } from "react-hook-form";
 import { User, Phone, MapPin, Mail, Lock } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -9,6 +9,7 @@ import { PasswordInput } from "@/components/forms/PasswordInput";
 import { FormData } from "@/lib/schemas/auth";
 import { useLocation, City } from "@/contexts/LocationContext";
 import { toast } from "sonner";
+import { USER_TYPES } from "@/lib/constants";
 
 interface RegistrationFieldsProps {
   register: UseFormRegister<FormData>;
@@ -233,29 +234,41 @@ const RegistrationFields = memo<RegistrationFieldsProps>(({
     {/* User Type Selection */}
     <div className="space-y-2">
       <Label className="text-sm font-medium">I am a</Label>
-      <RadioGroup
-        defaultValue="tenant"
-        className="flex gap-4"
-      >
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem
-            value="tenant"
-            id="tenant"
-            {...register("userType")}
-            disabled={isFormDisabled}
-          />
-          <Label htmlFor="tenant">Tenant</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem
-            value="owner"
-            id="owner"
-            {...register("userType")}
-            disabled={isFormDisabled}
-          />
-          <Label htmlFor="owner">Owner</Label>
-        </div>
-      </RadioGroup>
+      <Controller
+        name="userType"
+        control={control}
+        render={({ field }) => {
+          console.log('UserType field value:', field.value);
+          return (
+            <RadioGroup
+              value={field.value}
+              onValueChange={(value) => {
+                console.log('UserType changed to:', value);
+                field.onChange(value);
+              }}
+              className="flex gap-4"
+              disabled={isFormDisabled}
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem
+                  value={USER_TYPES.TENANT}
+                  id="tenant"
+                  disabled={isFormDisabled}
+                />
+                <Label htmlFor="tenant">Tenant</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem
+                  value={USER_TYPES.OWNER}
+                  id="owner"
+                  disabled={isFormDisabled}
+                />
+                <Label htmlFor="owner">Owner</Label>
+              </div>
+            </RadioGroup>
+          );
+        }}
+      />
       {getErrorMessage('userType') && (
         <p className="text-sm font-medium text-destructive" role="alert">
           {getErrorMessage('userType')}

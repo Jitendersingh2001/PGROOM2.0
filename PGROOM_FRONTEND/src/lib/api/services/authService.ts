@@ -52,6 +52,12 @@ export const authService = {
       apiPayload.status = data.status;
     }
 
+    // Debug logging to verify the payload
+    console.log('Registration Form Data:', data);
+    console.log('API Payload being sent:', apiPayload);
+    console.log('userType from form:', data.userType);
+    console.log('isAdmin calculated:', data.userType === 'owner');
+
     return apiService.post<UserData>(endpoints.AUTH.REGISTER, apiPayload);
   },
 
