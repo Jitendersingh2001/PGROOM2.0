@@ -101,6 +101,56 @@ class TenantRepository {
       throw new Error(`Error fetching assigned tenants count: ${error.message}`);
     }
   }
+
+  /**
+   * Function to get tenant's room details by user ID
+   */
+  async getTenantRoomByUserId(userId) {
+    try {
+      return await this.dbClient.tenant.findFirst({
+        where: {
+          userId: userId,
+          status: constant.ACTIVE,
+        },
+        include: {
+          Rooms: {
+            include: {
+              userProperties: {
+                select: {
+                  id: true,
+                  propertyName: true,
+                  propertyAddress: true,
+                  status: true,
+                }
+              },
+              Tenant: {
+                where: { status: constant.ACTIVE },
+                select: {
+                  user: {
+                    select: {
+                      id: true,
+                      firstName: true,
+                      lastName: true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true
+            }
+          }
+        }
+      });
+    } catch (error) {
+      throw new Error(`Error fetching tenant room details: ${error.message}`);
+    }
+  }
 }
 
 module.exports = new TenantRepository();

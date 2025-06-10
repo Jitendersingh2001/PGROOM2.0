@@ -82,17 +82,26 @@ router
   .put(
     validateRequest(validators.TenantValidator),
     controller.TenantController.updateTenant
-)
-  .get(
-    controller.TenantController.getTenants
-  );
+  )
+  .get(controller.TenantController.getTenants);
 
+// Add route for tenant's room details
+router.get(
+  "/tenant/room-details",
+  controller.TenantController.getTenantRoomDetails
+);
 
-  /**
-   * DASHBOARD ROUTES
-   */
-router.get("/dashboard-monitoring-cards", controller.DashboardController.getMonitoringCards);
-  router.get("/dashboard-recent-tenants", controller.DashboardController.getRecentTenants);
+/**
+ * DASHBOARD ROUTES
+ */
+router.get(
+  "/dashboard-monitoring-cards",
+  controller.DashboardController.getMonitoringCards
+);
+router.get(
+  "/dashboard-recent-tenants",
+  controller.DashboardController.getRecentTenants
+);
 
 /**
  * PAYMENT ROUTES
@@ -149,11 +158,12 @@ router
 // Specific payment routes (must come before parameterized routes)
 router.get("/payment/stats", controller.PaymentController.getPaymentStats);
 router.get("/payment/recent", controller.PaymentController.getRecentPayments);
-router.get("/payment/analytics/monthly", controller.PaymentController.getMonthlyAnalytics);
+router.get(
+  "/payment/analytics/monthly",
+  controller.PaymentController.getMonthlyAnalytics
+);
 
 // Parameterized payment routes (must come after specific routes)
-router
-  .route("/payment/:id")
-  .get(controller.PaymentController.getPaymentById);
+router.route("/payment/:id").get(controller.PaymentController.getPaymentById);
 
 module.exports = router;

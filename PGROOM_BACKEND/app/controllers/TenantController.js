@@ -43,7 +43,6 @@ class TenantController extends Controller {
     try {
       const requiredFields = ["propertyId", "roomId"];
       const missing = getMissingFields(req.query, requiredFields);
-
       if (missing) {
         const message = constMessage.REQUIRED.replace(":name", missing);
         return sendError(res, message, http.BAD_REQUEST);
@@ -53,6 +52,38 @@ class TenantController extends Controller {
         res,
         result,
         constMessage.FETCH_SUCCESSFUL.replace(":name", "Tenant"),
+        http.OK
+      );
+    } catch (error) {
+      return this.sendErrorResponse(res, error);
+    }
+  };
+
+  /**
+   * Function to get tenant's current room details
+   */
+  getTenantRoomDetails = async (req, res) => {
+    try {
+      const userId = req?.authUser?.userId;
+      if (!userId) {
+        return this.sendErrorResponse(res, "User not authenticated", http.UNAUTHORIZED);
+      }
+
+      const result = await this.tenantService.getTenantRoomDetails(userId);
+      
+      if (!result) {
+        return this.sendResponse(
+          res,
+          null,
+          constMessage.NOT_FOUND.replace(":name", "Room assignment"),
+          http.NOT_FOUND
+        );
+      }
+
+      this.sendResponse(
+        res,
+        result,
+        constMessage.FETCH_SUCCESSFUL.replace(":name", "Room details"),
         http.OK
       );
     } catch (error) {

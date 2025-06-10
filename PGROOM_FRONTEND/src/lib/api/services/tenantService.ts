@@ -57,6 +57,35 @@ export interface TenantPaginationParams {
 }
 
 /**
+ * Tenant room details interface
+ */
+export interface TenantRoomDetails {
+  id: number;
+  roomNo: string;
+  rent: string | number;
+  description?: string;
+  status: string;
+  totalBed: number;
+  roomImage: string[];
+  property: {
+    id: number;
+    name: string;
+    address: string;
+    type: string;
+  };
+  tenants: Array<{
+    id: number;
+    name: string;
+    firstName: string;
+    lastName: string;
+  }>;
+  occupancy: {
+    current: number;
+    total: number;
+  };
+}
+
+/**
  * Tenant service for handling tenant-related API calls
  */
 export const tenantService = {
@@ -129,5 +158,12 @@ export const tenantService = {
     queryParams.append('roomId', String(roomId));
 
     return apiService.get(`${endpoints.TENANT.GET}?${queryParams.toString()}`);
+  },
+
+  /**
+   * Get current tenant's room details
+   */
+  getTenantRoomDetails: async (): Promise<ApiResponse<TenantRoomDetails>> => {
+    return apiService.get(endpoints.TENANT.ROOM_DETAILS);
   }
 };

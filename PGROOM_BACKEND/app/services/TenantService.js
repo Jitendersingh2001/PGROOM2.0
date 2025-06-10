@@ -1,6 +1,7 @@
 const constant = require("../constant/Constant");
 const tenantRepository = require("../repository/TenantRepository");
 const { parseInputData } = require("../utils/DataParseHelper");
+const { getFileFromS3 } = require("../utils/AwsHelper");
 
 class tenantService {
   constructor(repository) {
@@ -143,18 +144,66 @@ class tenantService {
   /**
    * Function to delete tenant
    */
-  async deleteTenant(data, hardDelete = false) {
+  async deleteTenant(id) {
     try {
-      const ids = data.ids.map((id) => parseInt(id, 10));
+      return await this.repository.updateTenant(id, constant.DELETED);
+    } catch (error) {
+      throw error;
+    }
+  }
 
-      if (hardDelete) {
-        return await Promise.all(
-          ids.map((id) => this.repository.deleteTenant(id))
-        );
+  /**
+   * Function to get tenant's current room details by user ID
+   */
+  async getTenantRoomDetails(userId) {
+    try {
+      const tenantRoom = await this.repository.getTenantRoomByUserId(userId);
+
+      if (!tenantRoom) {
+        return null;
       }
-      return await Promise.all(
-        ids.map((id) => this.repository.updateTenant(id, constant.DELETED))
-      );
+
+      // Parse room images if they exist and generate signed URLs
+      let roomImages = [];
+      if (tenantRoom.Rooms.roomImage) {
+        try {
+          const imagePaths = JSON.parse(tenantRoom.Rooms.roomImage);
+          roomImages = await Promise.all(
+            imagePaths.map(async (filePath) => {
+              return await getFileFromS3(filePath, constant.S3_EXPIRY);
+            })
+          );
+        } catch (error) {
+          console.error('Error parsing room images:', error);
+          roomImages = [];
+        }
+      }
+
+      return {
+        id: tenantRoom.Rooms.id,
+        roomNo: tenantRoom.Rooms.roomNo,
+        rent: tenantRoom.Rooms.rent,
+        description: tenantRoom.Rooms.description,
+        status: tenantRoom.Rooms.status,
+        totalBed: tenantRoom.Rooms.totalBed,
+        roomImage: roomImages,
+        property: {
+          id: tenantRoom.Rooms.userProperties.id,
+          name: tenantRoom.Rooms.userProperties.propertyName,
+          address: tenantRoom.Rooms.userProperties.propertyAddress,
+          type: tenantRoom.Rooms.userProperties.status,
+        },
+        tenants: tenantRoom.Rooms.Tenant.map(tenant => ({
+          id: tenant.user.id,
+          name: `${tenant.user.firstName} ${tenant.user.lastName}`,
+          firstName: tenant.user.firstName,
+          lastName: tenant.user.lastName,
+        })),
+        occupancy: {
+          current: tenantRoom.Rooms.Tenant.length,
+          total: tenantRoom.Rooms.totalBed,
+        }
+      };
     } catch (error) {
       throw error;
     }

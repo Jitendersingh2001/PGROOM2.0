@@ -54,6 +54,7 @@ export const TENANT = {
   CREATE: '/pgrooms/v1/tenant',
   UPDATE: '/pgrooms/v1/tenant',
   GET: '/pgrooms/v1/tenant',
+  ROOM_DETAILS: '/pgrooms/v1/tenant/room-details',
 };
 
 // Dashboard endpoints
