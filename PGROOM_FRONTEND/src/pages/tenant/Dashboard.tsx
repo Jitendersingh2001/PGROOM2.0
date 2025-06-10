@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CreditCard, Calendar, Wrench, FileText } from 'lucide-react';
+import { CreditCard, Calendar, Wrench } from 'lucide-react';
 import { dashboardService } from '@/lib/api/services/dashboardService';
 import { paymentService } from '@/lib/api/services/paymentService';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
@@ -16,7 +16,6 @@ interface TenantStatsData {
   lastPaymentAmount: number;
   lastPaymentDate: string;
   maintenanceRequests: number;
-  documentsCount: number;
 }
 
 const TenantDashboard = () => {
@@ -35,8 +34,7 @@ const TenantDashboard = () => {
           rentDueDate: '2024-02-05',
           lastPaymentAmount: 12000,
           lastPaymentDate: '2024-01-05',
-          maintenanceRequests: 2,
-          documentsCount: 5
+          maintenanceRequests: 2
         };
         setStatsData(mockData);
       } catch (error) {
@@ -84,7 +82,7 @@ const TenantDashboard = () => {
         </div>
 
         {/* Stats Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <StatsCard
             title="Next Rent Due"
             value={statsData ? formatDate(statsData.rentDueDate) : '-'}
@@ -106,14 +104,6 @@ const TenantDashboard = () => {
             value={statsData?.maintenanceRequests || 0}
             icon={<Wrench className="w-5 h-5" />}
             description="Active requests"
-            isLoading={isLoading}
-          />
-
-          <StatsCard
-            title="Documents"
-            value={statsData?.documentsCount || 0}
-            icon={<FileText className="w-5 h-5" />}
-            description="Stored documents"
             isLoading={isLoading}
           />
         </div>

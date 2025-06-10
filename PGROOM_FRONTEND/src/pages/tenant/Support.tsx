@@ -6,8 +6,7 @@ import {
   MessageCircle,
   BedDouble,
   CreditCard,
-  Wrench,
-  FileText
+  Wrench
 } from 'lucide-react';
 
 // Layout components
@@ -80,14 +79,6 @@ const TenantSupport = () => {
     },
     {
       id: 4,
-      title: 'Document Upload Guide',
-      excerpt: 'Instructions for uploading and managing your documents.',
-      content: '<h2>Document Management</h2><p>Learn how to manage your documents effectively...</p>',
-      category: 'Documents',
-      lastUpdated: '2025-06-07'
-    },
-    {
-      id: 5,
       title: 'Understanding Your Dashboard',
       excerpt: 'A comprehensive guide to your tenant dashboard features.',
       content: '<h2>Dashboard Guide</h2><p>Get familiar with all dashboard features and how to use them...</p>',
@@ -112,18 +103,12 @@ const TenantSupport = () => {
     },
     {
       id: 3,
-      question: 'What documents do I need to upload?',
-      answer: 'Required documents typically include government ID proof, address proof, and passport-size photographs.',
-      category: 'Documents'
-    },
-    {
-      id: 4,
       question: 'How can I update my profile information?',
       answer: 'Go to the Profile section and click on "Edit Profile" to update your personal information.',
       category: 'Profile'
     },
     {
-      id: 5,
+      id: 4,
       question: 'What if I face issues with the platform?',
       answer: 'Contact our support team through the Help & Support section or email us at support@propertyhub.com',
       category: 'General'
@@ -210,18 +195,6 @@ const TenantSupport = () => {
               <div>
                 <h3 className="text-sm font-medium text-gray-900 dark:text-white">Maintenance</h3>
                 <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Submit and track requests</p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="group hover:shadow-md transition-all duration-200">
-            <CardContent className="p-6 flex items-start gap-3">
-              <div className="p-2 rounded-full bg-primary/10 text-primary transition-colors duration-200 group-hover:bg-primary/20">
-                <FileText className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-900 dark:text-white">Documents</h3>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Document management help</p>
               </div>
             </CardContent>
           </Card>

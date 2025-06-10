@@ -71,9 +71,9 @@ const TenantNavbar: React.FC<TenantNavbarProps> = ({
                 variant="ghost"
                 size="sm"
                 className="flex items-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                title="Profile"
               >
-                <User className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Profile</span>
+                <User className="h-4 w-4" />
               </Button>
             </Link>
 

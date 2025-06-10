@@ -7,7 +7,6 @@ import {
   HelpCircle,
   ChevronRight,
   Wrench,
-  FileText,
   User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -56,11 +55,6 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ collapsed = false }) => {
 
   // Secondary navigation items
   const secondaryNavItems: NavItemProps[] = [
-    {
-      name: 'Documents',
-      path: '/tenant/documents',
-      icon: <FileText className="w-5 h-5" />,
-    },
     {
       name: 'Profile',
       path: '/tenant/profile',

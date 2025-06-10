@@ -22,7 +22,6 @@ import TenantDashboard from "./pages/tenant/Dashboard";
 import TenantRoom from "./pages/tenant/Room";
 import TenantPayments from "./pages/tenant/Payments";
 import TenantMaintenance from "./pages/tenant/Maintenance";
-import TenantDocuments from "./pages/tenant/Documents";
 import TenantProfile from "./pages/tenant/Profile";
 import TenantSupport from "./pages/tenant/Support.tsx";
 
@@ -102,11 +101,6 @@ const App = () => (
                 <Route path="/tenant/maintenance" element={
                   <ProtectedRoute allowedRoles={[3]}>
                     <TenantMaintenance />
-                  </ProtectedRoute>
-                } />
-                <Route path="/tenant/documents" element={
-                  <ProtectedRoute allowedRoles={[3]}>
-                    <TenantDocuments />
                   </ProtectedRoute>
                 } />
                 <Route path="/tenant/profile" element={
