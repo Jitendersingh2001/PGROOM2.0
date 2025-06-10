@@ -31,22 +31,22 @@ class ProfileService {
       });
       
       if (!user) {
-        return helper.sendError(
-          res,
-          constMessage.NOT_FOUND.replace(":name", "User"),
-          http.NOT_FOUND
-        );
+        throw {
+          message: constMessage.NOT_FOUND.replace(":name", "User"),
+          statusCode: http.NOT_FOUND
+        };
       }
   
       const isPasswordValid = await bcrypt.compare(password, user.password);
       const roleId = user.userRoleLink[0].roleId;
+      
       if (!isPasswordValid) {
-        return helper.sendError(
-          res,
-          constMessage.WRONG_PASSWORD,
-          http.UNAUTHORIZED
-        );
+        throw {
+          message: constMessage.WRONG_PASSWORD,
+          statusCode: http.UNAUTHORIZED
+        };
       }
+
       if (user && isPasswordValid) {
         token = helper.generateToken(user.id, roleId);
       }

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +19,12 @@ import OwnerTenants from "./pages/owner/Tenants";
 import OwnerPayments from "./pages/owner/Payments";
 import OwnerSupport from "./pages/owner/Support";
 import TenantDashboard from "./pages/tenant/Dashboard";
+import TenantRoom from "./pages/tenant/Room";
+import TenantPayments from "./pages/tenant/Payments";
+import TenantMaintenance from "./pages/tenant/Maintenance";
+import TenantDocuments from "./pages/tenant/Documents";
+import TenantProfile from "./pages/tenant/Profile";
+import TenantSupport from "./pages/tenant/Support.tsx";
 
 const queryClient = new QueryClient();
 
@@ -39,12 +44,14 @@ const App = () => (
                 <Route path="/register" element={<Login isRegisterRoute={true} />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
 
-                {/* Protected routes */}
+                {/* Protected Admin routes */}
                 <Route path="/admin/dashboard" element={
                   <ProtectedRoute allowedRoles={[1]}>
                     <AdminDashboard />
                   </ProtectedRoute>
                 } />
+
+                {/* Protected Owner routes */}
                 <Route path="/owner/dashboard" element={
                   <ProtectedRoute allowedRoles={[2]}>
                     <OwnerDashboard />
@@ -75,9 +82,41 @@ const App = () => (
                     <OwnerSupport />
                   </ProtectedRoute>
                 } />
+
+                {/* Protected Tenant routes */}
                 <Route path="/tenant/dashboard" element={
                   <ProtectedRoute allowedRoles={[3]}>
                     <TenantDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/tenant/room" element={
+                  <ProtectedRoute allowedRoles={[3]}>
+                    <TenantRoom />
+                  </ProtectedRoute>
+                } />
+                <Route path="/tenant/payments" element={
+                  <ProtectedRoute allowedRoles={[3]}>
+                    <TenantPayments />
+                  </ProtectedRoute>
+                } />
+                <Route path="/tenant/maintenance" element={
+                  <ProtectedRoute allowedRoles={[3]}>
+                    <TenantMaintenance />
+                  </ProtectedRoute>
+                } />
+                <Route path="/tenant/documents" element={
+                  <ProtectedRoute allowedRoles={[3]}>
+                    <TenantDocuments />
+                  </ProtectedRoute>
+                } />
+                <Route path="/tenant/profile" element={
+                  <ProtectedRoute allowedRoles={[3]}>
+                    <TenantProfile />
+                  </ProtectedRoute>
+                } />
+                <Route path="/tenant/support" element={
+                  <ProtectedRoute allowedRoles={[3]}>
+                    <TenantSupport />
                   </ProtectedRoute>
                 } />
 

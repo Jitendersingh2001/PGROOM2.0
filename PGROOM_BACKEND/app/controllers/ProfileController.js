@@ -26,7 +26,11 @@ class ProfileController extends Controller {
           http.OK
         );
       } catch (error) {
-        this.sendErrorResponse(res, error);
+        this.sendErrorResponse(
+          res,
+          error.message || error,
+          error.statusCode || http.INTERNAL_SERVER_ERROR
+        );
       }
     },
   ];
