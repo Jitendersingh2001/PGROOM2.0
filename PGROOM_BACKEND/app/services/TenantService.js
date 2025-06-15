@@ -77,7 +77,9 @@ class tenantService {
       (id) => !updatedTenantIds.includes(id)
     );
     if (idsToDelete.length > 0) {
-      await this.deleteTenant({ ids: idsToDelete }, true);
+      await Promise.all(
+        idsToDelete.map((id) => this.deleteTenant(id))
+      );
     }
   }
 
