@@ -3,6 +3,7 @@ const Controller = require("./Controller");
 const http = require("../constant/StatusCodes");
 const constMessage = require("../constant/Message");
 const { LoginValidator, RegisterValidator } = require("../validators/index");
+const ChangePasswordValidator = require("../validators/ChangePasswordValidator");
 const validateRequest = require("../middleware/ValidationMiddleware");
 
 class ProfileController extends Controller {
@@ -53,6 +54,60 @@ class ProfileController extends Controller {
         this.sendErrorResponse(res, error);
       }
     },
+  ];
+
+  /**
+   * Function to get user profile
+   */
+  getUserProfile = async (req, res) => {
+    try {
+      const result = await this.profileService.getUserProfile(req);
+      this.sendResponse(
+        res,
+        result,
+        constMessage.FETCH_SUCCESSFUL.replace(":name", "Profile"),
+        http.OK
+      );
+    } catch (error) {
+      this.sendErrorResponse(res, error);
+    }
+  };
+
+  /**
+   * Function to update user profile
+   */
+  updateUserProfile = async (req, res) => {
+    try {
+      const result = await this.profileService.updateUserProfile(req);
+      this.sendResponse(
+        res,
+        result,
+        constMessage.UPDATED_SUCCESSFULLY.replace(":name", "Profile"),
+        http.OK
+      );
+    } catch (error) {
+      this.sendErrorResponse(res, error);
+    }
+  };
+
+  /**
+   * Function to change user password
+   */
+  changePassword = [
+    validateRequest(ChangePasswordValidator),
+    async (req, res) => {
+      try {
+        const result = await this.profileService.changePassword(req, res);
+        this.sendResponse(
+          res,
+          result,
+          result.message || "Password changed successfully",
+          result.statusCode || http.OK
+        );
+      } catch (error) {
+        this.sendErrorResponse(res, error);
+      }
+    }
   ];
 }
 

@@ -4,6 +4,7 @@ import { roomService } from './roomService';
 import { tenantService } from './tenantService';
 import { dashboardService } from './dashboardService';
 import { paymentService } from './paymentService';
+import { userService } from './userService';
 
 export {
   authService,
@@ -11,5 +12,6 @@ export {
   roomService,
   tenantService,
   dashboardService,
-  paymentService
+  paymentService,
+  userService
 };

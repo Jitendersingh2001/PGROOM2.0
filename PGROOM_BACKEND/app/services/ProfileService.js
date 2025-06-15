@@ -67,6 +67,147 @@ class ProfileService {
     }
   }
   
+  /**
+   * Function to get user profile details
+   */
+  async getUserProfile(req) {
+    try {
+      const userId = req.authUser.userId;
+      
+      const user = await this.prisma.user.findUnique({
+        where: {
+          id: userId,
+          NOT: { status: "Deleted" }
+        },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          mobileNo: true,
+          address: true,
+          status: true,
+          createdAt: true,
+          stateId: true,
+          cityId: true,
+          state: {
+            select: {
+              id: true,
+              stateName: true
+            }
+          },
+          city: {
+            select: {
+              id: true,
+              cityName: true
+            }
+          }
+        }
+      });
+
+      if (!user) {
+        throw {
+          message: constMessage.NOT_FOUND.replace(":name", "User"),
+          statusCode: http.NOT_FOUND
+        };
+      }
+
+      return {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        fullName: `${user.firstName} ${user.lastName}`,
+        email: user.email,
+        mobileNo: user.mobileNo,
+        address: user.address,
+        status: user.status,
+        state: user.state,
+        city: user.city,
+        memberSince: user.createdAt
+      };
+    } catch (error) {
+      throw new Error(error.message || error);
+    }
+  }
+
+  /**
+   * Function to update user profile
+   */
+  async updateUserProfile(req) {
+    try {
+      const userId = req.authUser.userId;
+      const { firstName, lastName, email, mobileNo, address, stateId, cityId } = req.body;
+
+      // Check if user exists
+      const existingUser = await this.prisma.user.findUnique({
+        where: { id: userId }
+      });
+
+      if (!existingUser) {
+        throw {
+          message: constMessage.NOT_FOUND.replace(":name", "User"),
+          statusCode: http.NOT_FOUND
+        };
+      }
+
+      // If email is being updated, check if it's already taken by another user
+      if (email && email !== existingUser.email) {
+        const emailExists = await this.prisma.user.findUnique({
+          where: { email }
+        });
+
+        if (emailExists) {
+          throw {
+            message: "Email address is already taken",
+            statusCode: http.BAD_REQUEST
+          };
+        }
+      }
+
+      // Update user profile
+      const updatedUser = await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          firstName,
+          lastName,
+          ...(email && { email }),
+          mobileNo,
+          address,
+          ...(stateId && { stateId: parseInt(stateId) }),
+          ...(cityId && { cityId: parseInt(cityId) })
+        },
+        include: {
+          state: {
+            select: {
+              id: true,
+              stateName: true
+            }
+          },
+          city: {
+            select: {
+              id: true,
+              cityName: true
+            }
+          }
+        }
+      });
+
+      return {
+        id: updatedUser.id,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        fullName: `${updatedUser.firstName} ${updatedUser.lastName}`,
+        email: updatedUser.email,
+        mobileNo: updatedUser.mobileNo,
+        address: updatedUser.address,
+        status: updatedUser.status,
+        state: updatedUser.state,
+        city: updatedUser.city
+      };
+    } catch (error) {
+      throw new Error(error.message || error);
+    }
+  }
 
   /**
    * function to create account
@@ -121,6 +262,51 @@ class ProfileService {
       return true;
     } catch (error) {
       throw new Error(error);
+    }
+  }
+
+  /**
+   * Function to change user password
+   */
+  async changePassword(req, res) {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const userId = req.authUser.userId;
+
+      // Get user with current password
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId }
+      });
+
+      if (!user) {
+        throw {
+          message: constMessage.NOT_FOUND.replace(":name", "User"),
+          statusCode: http.NOT_FOUND
+        };
+      }
+
+      // Verify current password
+      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isCurrentPasswordValid) {
+        throw {
+          message: "Current password is incorrect",
+          statusCode: http.BAD_REQUEST
+        };
+      }
+
+      // Hash new password and update
+      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { password: hashedNewPassword }
+      });
+
+      return {
+        message: "Password changed successfully",
+        statusCode: http.OK
+      };
+    } catch (error) {
+      throw error;
     }
   }
 }

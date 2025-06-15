@@ -17,9 +17,9 @@ export const AUTH = {
 
 // User endpoints
 export const USER = {
-  PROFILE: '/user/profile',
-  UPDATE_PROFILE: '/user/profile',
-  CHANGE_PASSWORD: '/user/change-password',
+  PROFILE: '/pgrooms/v1/profile',
+  UPDATE_PROFILE: '/pgrooms/v1/profile',
+  CHANGE_PASSWORD: '/pgrooms/v1/profile/change-password',
 };
 
 // Property endpoints

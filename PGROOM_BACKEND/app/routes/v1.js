@@ -71,6 +71,16 @@ router
 router.post("/getTenants", controller.UserController.getTenants);
 
 /**
+ * PROFILE ROUTES
+ */
+router.get("/profile", controller.ProfileController.getUserProfile);
+router.put("/profile", 
+  validateRequest(validators.UpdateProfileValidator),
+  controller.ProfileController.updateUserProfile
+);
+router.put("/profile/change-password", controller.ProfileController.changePassword);
+
+/**
  * TENANT ROUTES
  */
 router
