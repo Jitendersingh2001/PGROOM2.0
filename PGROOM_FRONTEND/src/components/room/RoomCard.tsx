@@ -180,7 +180,7 @@ const RoomCard: React.FC<RoomCardProps> = ({
       </CardHeader>
 
       {/* Room Details */}
-      <CardContent className="pt-4 pb-0 flex-grow">
+      <CardContent className="pt-4 pb-6 flex-grow">
         <Separator className="mb-4 bg-border/50" />
 
         {/* Room Information List */}
@@ -193,7 +193,7 @@ const RoomCard: React.FC<RoomCardProps> = ({
               </div>
               <span>Rent</span>
             </div>
-            <div className="font-medium">₹{room.rent}/month</div>
+            <div className="font-medium">{room.rent}/month</div>
           </div>
 
           {/* Beds */}
@@ -221,7 +221,7 @@ const RoomCard: React.FC<RoomCardProps> = ({
       </CardContent>
 
       {/* Action Buttons */}
-      <CardFooter className="pt-4 pb-4 flex justify-between gap-2 mt-auto">
+      <CardFooter className="pt-0 pb-4 flex justify-between gap-2 mt-auto">
         <div className="flex gap-2 flex-1">
           {/* Edit button removed as requested */}
 

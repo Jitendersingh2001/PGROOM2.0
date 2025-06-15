@@ -9,16 +9,12 @@ import {
   Bed, 
   Users,
   IndianRupee,
-  Filter,
-  Search,
   Building,
-  Star,
-  Wifi,
-  Car,
-  Home,
   ChevronRight,
-  Settings,
-  Copy
+  Copy,
+  ArrowLeftRight,
+  Home,
+  Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,14 +23,6 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -51,17 +39,17 @@ import TenantSidebar from '@/components/tenant/TenantSidebar';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { toast } from 'sonner';
+import TenantRoomDetailsModal from '@/components/tenant/TenantRoomDetailsModal';
 
 const PropertyRooms: React.FC = () => {
   const { propertyId } = useParams<{ propertyId: string }>();
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('rent');
-  const [filterStatus, setFilterStatus] = useState('Available');
+  const [statusFilter, setStatusFilter] = useState<string>("Available");
   const [imageLoadingStates, setImageLoadingStates] = useState<{ [key: number]: boolean }>({});
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [isRoomDetailsModalOpen, setIsRoomDetailsModalOpen] = useState(false);
 
   // Fetch property details
   const {
@@ -88,16 +76,16 @@ const PropertyRooms: React.FC = () => {
     error: roomsError,
     refetch: refetchRooms
   } = useQuery({
-    queryKey: ['property-rooms', propertyId, currentPage],
+    queryKey: ['property-rooms', propertyId, currentPage, statusFilter],
     queryFn: async () => {
       if (!propertyId) throw new Error('Property ID is required');
+      const filters = statusFilter ? { status: statusFilter } : undefined;
+      
       const response = await roomService.getRooms({
         propertyId: parseInt(propertyId),
         page: currentPage,
         limit: 10,
-        filters: {
-          status: 'Available' // Only show available rooms
-        }
+        filters
       });
       if (response.statusCode && response.statusCode !== 200) {
         throw new Error(response.message || 'Failed to fetch rooms');
@@ -122,6 +110,12 @@ const PropertyRooms: React.FC = () => {
     setIsContactModalOpen(true);
   };
 
+  // Handle view room details
+  const handleViewRoom = (room: Room) => {
+    setSelectedRoom(room);
+    setIsRoomDetailsModalOpen(true);
+  };
+
   // Handle direct contact actions
   const handleCopyPhone = async () => {
     if (propertyData?.propertyContact) {
@@ -134,10 +128,17 @@ const PropertyRooms: React.FC = () => {
     }
   };
 
+  // Handle toggling between Available and Occupied
+  const handleClearFilters = () => {
+    // Toggle between Available and Occupied
+    setStatusFilter(statusFilter === "Available" ? "Occupied" : "Available");
+    setCurrentPage(1);
+  };
+
   // Format rent display
   const formatRent = (rent: string | number) => {
     const rentValue = typeof rent === 'string' ? parseFloat(rent) : rent;
-    return isNaN(rentValue) ? 'N/A' : `₹${rentValue.toLocaleString()}`;
+    return isNaN(rentValue) ? 'N/A' : rentValue.toLocaleString();
   };
 
   // Get room image
@@ -222,7 +223,7 @@ const PropertyRooms: React.FC = () => {
                 <div className="space-y-2">
                   <div>
                     <h1 className="text-4xl font-bold text-white mb-1">
-                      Available Rooms
+                      Rooms
                     </h1>
                     <p className="text-green-100 text-base font-medium">
                       Find your perfect room from available options
@@ -264,8 +265,7 @@ const PropertyRooms: React.FC = () => {
             </div>
             
             {/* Breadcrumb Navigation */}
-            <nav className="flex items-center space-x-2 text-sm text-green-200">
-              <Link 
+            <nav className="flex items-center space-x-2 text-sm text-green-200">              <Link
                 to="/tenant/properties"
                 className="flex items-center hover:text-white transition-colors"
               >
@@ -273,103 +273,39 @@ const PropertyRooms: React.FC = () => {
                 Properties
               </Link>
               <ChevronRight className="h-4 w-4" />
-              <span className="text-white font-medium">Available Rooms</span>
+              <span className="text-white font-medium">Rooms</span>
             </nav>
           </div>
         </div>
 
-        {/* Filters and Search Section */}
-        <Card>
-          <CardHeader className="pb-4">
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="search">Search Rooms</Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="search"
-                    placeholder="Room number, type..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="sort">Sort By</Label>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger id="sort">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="rent">Rent (Low to High)</SelectItem>
-                    <SelectItem value="-rent">Rent (High to Low)</SelectItem>
-                    <SelectItem value="roomNo">Room Number</SelectItem>
-                    <SelectItem value="totalBed">Bed Count</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger id="status">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Available">Available Only</SelectItem>
-                    <SelectItem value="All">All Rooms</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-end">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setSortBy('rent');
-                    setFilterStatus('Available');
-                  }}
-                  className="w-full"
-                >
-                  <Filter className="h-4 w-4 mr-2" />
-                  Reset
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+
 
         {/* Rooms Content */}
         {rooms.length === 0 ? (
-          <Card className="border-dashed">
+          <Card className="border-dashed border-2 border-muted-foreground/20">
             <CardContent className="py-16">
-              <div className="text-center space-y-4">
-                <div className="p-4 rounded-full bg-muted/50 w-fit mx-auto">
-                  <Bed className="h-8 w-8 text-muted-foreground" />
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="bg-primary/10 p-4 rounded-full mb-4">
+                  <Building className="h-10 w-10 text-primary" />
                 </div>
-                <div className="space-y-2">
-                  <h3 className="text-xl font-semibold">No Available Rooms</h3>
-                  <p className="text-muted-foreground max-w-md mx-auto">
-                    There are currently no available rooms in this property. 
-                    Please check back later or contact the property owner for more information.
-                  </p>
-                </div>
-                <div className="flex gap-2 justify-center">
+                <h3 className="text-xl font-semibold mb-2">No {statusFilter} Rooms</h3>
+                <p className="text-muted-foreground mb-6 max-w-md">
+                  No rooms with status "{statusFilter}" found in this property. 
+                  {statusFilter === "Available" ? " Try switching to Occupied status or contact the owner for more information." : " Try switching to Available status."}
+                </p>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={handleClearFilters}
+                    className="transition-colors"
+                  >
+                    <ArrowLeftRight className="mr-2 h-4 w-4" />
+                    Show {statusFilter === "Available" ? "Occupied" : "Available"} Rooms
+                  </Button>
                   <Button variant="outline" onClick={() => navigate('/tenant/properties')}>
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back to Properties
                   </Button>
-                  {property?.propertyContact && (
-                    <Button onClick={() => {
-                      window.open(`tel:${property.propertyContact}`, '_self');
-                      toast.success("Opening phone app to contact owner");
-                    }}>
-                      <Phone className="h-4 w-4 mr-2" />
-                      Contact Owner
-                    </Button>
-                  )}
                 </div>
               </div>
             </CardContent>
@@ -386,7 +322,7 @@ const PropertyRooms: React.FC = () => {
                   className="group overflow-hidden hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/20"
                 >
                   {/* Room Image */}
-                  <div className="relative overflow-hidden w-full">
+                  <div className="relative overflow-hidden w-full group/image cursor-pointer" onClick={() => handleViewRoom(room)}>
                     <AspectRatio ratio={16/9} className="bg-muted">
                       {roomImage ? (
                         <>
@@ -409,6 +345,25 @@ const PropertyRooms: React.FC = () => {
                         </div>
                       )}
                     </AspectRatio>
+
+                    {/* Hover Overlay for Room Details */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center backdrop-blur-[2px]">
+                      <div className="text-center p-4 transform translate-y-4 group-hover/image:translate-y-0 transition-transform duration-300 scale-90 group-hover/image:scale-100">
+                        <p className="text-white text-sm mb-3 font-medium">Room Details</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="bg-primary/80 backdrop-blur-sm border-primary/30 text-white hover:bg-primary hover:text-white shadow-lg hover:shadow-primary/25 transition-all duration-300"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewRoom(room);
+                          }}
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          View Room
+                        </Button>
+                      </div>
+                    </div>
                     
                     {/* Status Badge */}
                     <div className="absolute top-3 right-3">
@@ -498,16 +453,26 @@ const PropertyRooms: React.FC = () => {
 
                       <Separator />
 
-                      {/* Action Button */}
-                      <Button
-                        className="w-full group/btn bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300"
-                        onClick={() => handleContactOwner(room)}
-                        size="lg"
-                      >
-                        <Phone className="h-4 w-4 mr-2 group-hover/btn:animate-pulse" />
-                        Contact Owner
-                        <ChevronRight className="h-4 w-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
-                      </Button>
+                      {/* Action Buttons */}
+                      <div className="flex gap-3">
+                        <Button
+                          variant="outline"
+                          className="flex-1 group/btn hover:bg-primary/5 hover:border-primary/30 transition-all duration-300"
+                          onClick={() => handleViewRoom(room)}
+                          size="lg"
+                        >
+                          <Eye className="h-4 w-4 mr-2 group-hover/btn:text-primary transition-colors" />
+                          View Room
+                        </Button>
+                        <Button
+                          className="flex-1 group/btn bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300"
+                          onClick={() => handleContactOwner(room)}
+                          size="lg"
+                        >
+                          <Phone className="h-4 w-4 mr-2 group-hover/btn:animate-pulse" />
+                          Contact Owner
+                        </Button>
+                      </div>
                     </CardContent>
                   </div>
                 </Card>
@@ -677,6 +642,18 @@ const PropertyRooms: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Room Details Modal */}
+      {selectedRoom && (
+        <TenantRoomDetailsModal
+          room={selectedRoom}
+          isOpen={isRoomDetailsModalOpen}
+          onClose={() => setIsRoomDetailsModalOpen(false)}
+          onContactOwner={handleContactOwner}
+          propertyName={property?.propertyName}
+          propertyAddress={property ? `${property.propertyAddress}, ${property.city}` : undefined}
+        />
+      )}
     </DashboardLayout>
   );
 };

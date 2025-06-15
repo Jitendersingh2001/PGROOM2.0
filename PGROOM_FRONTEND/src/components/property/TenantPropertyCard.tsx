@@ -3,7 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Eye, MapPin, Phone, Building, Calendar, Heart, Star } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Eye, MapPin, Phone, Building, Info } from 'lucide-react';
 import { Property } from '@/lib/types/property';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -32,6 +39,7 @@ const TenantPropertyCard: React.FC<TenantPropertyCardProps> = ({
   // State for image loading
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Handle image load event
   const handleImageLoad = () => {
@@ -53,11 +61,6 @@ const TenantPropertyCard: React.FC<TenantPropertyCardProps> = ({
   // Handle title click to navigate to rooms
   const handleTitleClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent event bubbling
-    navigate(`/tenant/properties/${property.id}/rooms`);
-  };
-
-  // Handle book room action
-  const handleBookRoom = () => {
     navigate(`/tenant/properties/${property.id}/rooms`);
   };
 
@@ -159,7 +162,7 @@ const TenantPropertyCard: React.FC<TenantPropertyCardProps> = ({
       </CardHeader>
 
       {/* Property Details */}
-      <CardContent className="pt-4 pb-0 flex-grow">
+      <CardContent className="pt-4 pb-6 flex-grow">
         <Separator className="mb-4 bg-border/50" />
 
         {/* Property Information List */}
@@ -189,30 +192,126 @@ const TenantPropertyCard: React.FC<TenantPropertyCardProps> = ({
       </CardContent>
 
       {/* Action Buttons */}
-      <CardFooter className="pt-4 pb-4 flex justify-between gap-2 mt-auto">
-        <div className="flex gap-2 flex-1">
-          <Button
-            variant="default"
-            size="sm"
-            className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] font-medium"
-            onClick={handleBookRoom}
-          >
-            <Eye className="w-4 h-4 mr-2" />
-            View Rooms
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2 px-3 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-sm hover:shadow-md border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:border-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30"
-            onClick={handleBookRoom}
-            title="Book a room in this property"
-          >
-            <Calendar className="w-4 h-4" />
-            <span className="text-xs font-medium">Book Room</span>
-          </Button>
-        </div>
+      <CardFooter className="pt-0 pb-4">
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full bg-primary/20 border-primary/40 text-primary hover:bg-primary hover:text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+          onClick={() => setIsModalOpen(true)}
+        >
+          <Info className="w-4 h-4 mr-2" />
+          View Property Details
+        </Button>
       </CardFooter>
+
+      {/* Property Details Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building className="h-5 w-5 text-primary" />
+              {property.propertyName}
+            </DialogTitle>
+            <DialogDescription>
+              Complete property information and details
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Property Image */}
+            {property.propertyImage && (
+              <div className="relative overflow-hidden rounded-lg">
+                <img
+                  src={property.propertyImage}
+                  alt={property.propertyName}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="absolute top-3 right-3">
+                  <Badge 
+                    variant={property.propertyStatus === 'Active' ? 'default' : 'secondary'}
+                    className={cn(
+                      "font-medium shadow-sm",
+                      property.propertyStatus === 'Active' 
+                        ? "bg-green-500 text-white" 
+                        : "bg-gray-500 text-white"
+                    )}
+                  >
+                    {property.propertyStatus}
+                  </Badge>
+                </div>
+              </div>
+            )}
+
+            {/* Property Details */}
+            <div className="space-y-4">
+              {/* Basic Information */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                  Property Information
+                </h4>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Address</span>
+                    </div>
+                    <span className="text-sm text-right">{property.propertyAddress}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Location</span>
+                    </div>
+                    <span className="text-sm">{property.city}, {property.state}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Contact</span>
+                    </div>
+                    <span className="text-sm">{property.propertyContact}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              {property.description && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                    Description
+                  </h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed p-3 bg-muted/20 rounded-lg">
+                    {property.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-2">
+                <Button
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    navigate(`/tenant/properties/${property.id}/rooms`);
+                  }}
+                  className="flex-1"
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  View Available Rooms
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
