@@ -70,16 +70,12 @@ export const useCancelPayment = (): UseCancelPaymentReturn => {
         reason: reason?.trim() || 'Cancelled by user'
       };
 
-      console.log('Cancelling payment:', cancelRequest);
-
       // Call API to cancel payment
       const response = await paymentService.cancelPayment(cancelRequest);
 
       if (!response.success) {
         throw new Error(response.message || 'Failed to cancel payment');
       }
-
-      console.log('Payment cancelled successfully:', response.payment);
 
       // Show success toast
       toast.success('Payment cancelled successfully', {
@@ -94,8 +90,6 @@ export const useCancelPayment = (): UseCancelPaymentReturn => {
 
       return response.payment;
     } catch (err) {
-      console.error('Failed to cancel payment:', err);
-      
       // Create error object
       const paymentError: PaymentError = {
         code: 'CANCEL_PAYMENT_ERROR',

@@ -194,14 +194,12 @@ class PropertyService {
       
       // Update or create a new property image
       if (!useExistingImage) {
-        console.log(req);
         imageName = await this.createOrUpdateImage(
           image[0],
           id,
           propertyImage.propertyImage
         );
       } else {
-        console.log("use existing image");
         imageName = propertyImage.propertyImage;
       }
 

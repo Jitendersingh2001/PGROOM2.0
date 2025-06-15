@@ -3,14 +3,17 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   Home,
+  Building2,
   CreditCard,
   HelpCircle,
   ChevronRight,
   Wrench,
-  User
+  User,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { useTenantRoomStatus } from '@/hooks/useTenantRoomStatus';
 
 interface NavItemProps {
   name: string;
@@ -29,18 +32,46 @@ interface TenantSidebarProps {
  * @param collapsed - Whether the sidebar is in collapsed state (icons only)
  */
 const TenantSidebar: React.FC<TenantSidebarProps> = ({ collapsed = false }) => {
-  // Main navigation items
-  const mainNavItems: NavItemProps[] = [
+  // Get tenant room status for conditional navigation
+  const { hasRoom, isLoading } = useTenantRoomStatus();
+
+  // Base navigation items (always shown)
+  const baseNavItems: NavItemProps[] = [
     {
       name: 'Dashboard',
       path: '/tenant/dashboard',
       icon: <LayoutDashboard className="w-5 h-5" />,
     },
-    {
+  ];
+
+  // Conditional navigation items based on room assignment
+  const conditionalNavItems: NavItemProps[] = [];
+  
+  if (isLoading) {
+    // Show loading state
+    conditionalNavItems.push({
+      name: 'Loading...',
+      path: '#',
+      icon: <Loader2 className="w-5 h-5 animate-spin" />,
+    });
+  } else if (hasRoom) {
+    // Tenant has room assigned - show Room option
+    conditionalNavItems.push({
       name: 'My Room',
       path: '/tenant/room',
       icon: <Home className="w-5 h-5" />,
-    },
+    });
+  } else {
+    // Tenant has no room assigned - show Properties option
+    conditionalNavItems.push({
+      name: 'Properties',
+      path: '/tenant/properties',
+      icon: <Building2 className="w-5 h-5" />,
+    });
+  }
+
+  // Other main navigation items
+  const otherMainNavItems: NavItemProps[] = [
     {
       name: 'Payments',
       path: '/tenant/payments',
@@ -52,6 +83,9 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ collapsed = false }) => {
       icon: <Wrench className="w-5 h-5" />,
     }
   ];
+
+  // Combine all main navigation items
+  const mainNavItems = [...baseNavItems, ...conditionalNavItems, ...otherMainNavItems];
 
   // Secondary navigation items
   const secondaryNavItems: NavItemProps[] = [
@@ -68,45 +102,52 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ collapsed = false }) => {
   ];
 
   // Render individual nav item
-  const renderNavItem = (item: NavItemProps) => (
-    <NavLink
-      key={item.path}
-      to={item.path}
-      title={item.name}
-      className={({ isActive }) =>
-        cn(
-          'flex items-center text-sm font-medium rounded-md transition-colors',
-          'group hover:bg-gray-100 dark:hover:bg-gray-800',
-          collapsed ? 'justify-center h-10 w-10 mx-auto my-1' : 'justify-between px-3 py-2',
-          isActive
-            ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary'
-            : 'text-gray-700 dark:text-gray-300'
-        )
-      }
-    >
-      <div className={cn("flex items-center", collapsed ? "justify-center" : "")}>
-        <span className={cn(
-          "text-gray-500 dark:text-gray-400 group-hover:text-primary dark:group-hover:text-primary",
-          collapsed ? "" : "mr-3"
-        )}>
-          {item.icon}
-        </span>
-        {!collapsed && (
-          <span>{item.name}</span>
-        )}
-        {!collapsed && item.isNew && (
-          <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/20 text-xs">
-            New
+  const renderNavItem = (item: NavItemProps) => {
+    // Disable loading item
+    const isDisabled = item.path === '#';
+    
+    return (
+      <NavLink
+        key={item.path}
+        to={item.path}
+        title={item.name}
+        className={({ isActive }) =>
+          cn(
+            'flex items-center text-sm font-medium rounded-md transition-colors',
+            'group hover:bg-gray-100 dark:hover:bg-gray-800',
+            collapsed ? 'justify-center h-10 w-10 mx-auto my-1' : 'justify-between px-3 py-2',
+            isDisabled && 'pointer-events-none cursor-not-allowed opacity-50',
+            isActive && !isDisabled
+              ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary'
+              : 'text-gray-700 dark:text-gray-300'
+          )
+        }
+        onClick={isDisabled ? (e) => e.preventDefault() : undefined}
+      >
+        <div className={cn("flex items-center", collapsed ? "justify-center" : "")}>
+          <span className={cn(
+            "text-gray-500 dark:text-gray-400 group-hover:text-primary dark:group-hover:text-primary",
+            collapsed ? "" : "mr-3"
+          )}>
+            {item.icon}
+          </span>
+          {!collapsed && (
+            <span>{item.name}</span>
+          )}
+          {!collapsed && item.isNew && (
+            <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/20 text-xs">
+              New
+            </Badge>
+          )}
+        </div>
+        {!collapsed && item.badge && (
+          <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-0">
+            {item.badge}
           </Badge>
         )}
-      </div>
-      {!collapsed && item.badge && (
-        <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-0">
-          {item.badge}
-        </Badge>
-      )}
-    </NavLink>
-  );
+      </NavLink>
+    );
+  };
 
   return (
     <div className={cn(

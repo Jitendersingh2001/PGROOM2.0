@@ -68,10 +68,16 @@ axiosInstance.interceptors.response.use(
           toast.error(apiResponse.message || 'Server error. Please try again later');
           return Promise.reject(apiResponse);
 
-        default:
+        default: {
           // Unknown status code - show toast and reject
-          toast.error(apiResponse.message || 'An error occurred');
+          // Don't show toaster for room assignment not found during implementation phase
+          const message = (apiResponse as { message?: string }).message || 'An error occurred';
+          if (!message.toLowerCase().includes('room assignment not found') && 
+              !message.toLowerCase().includes('room assignment')) {
+            toast.error(message);
+          }
           return Promise.reject(apiResponse);
+        }
       }
     }
 
@@ -123,6 +129,11 @@ axiosInstance.interceptors.response.use(
           toast.error('You do not have permission to perform this action');
           break;
         case 404:
+          // Don't show toaster for room assignment not found during implementation phase
+          if (errorMessage && errorMessage.toLowerCase().includes('room assignment not found')) {
+            // Skip toaster notification for room assignment errors
+            break;
+          }
           toast.error('Resource not found');
           break;
         case 500:
@@ -131,7 +142,11 @@ axiosInstance.interceptors.response.use(
         default: {
           // Get error message from response if available
           const errorMessage = ((response.data as ApiErrorResponse)?.message) || 'Something went wrong';
-          toast.error(errorMessage);
+          // Don't show toaster for room assignment not found during implementation phase
+          if (!errorMessage.toLowerCase().includes('room assignment not found') && 
+              !errorMessage.toLowerCase().includes('room assignment')) {
+            toast.error(errorMessage);
+          }
         }
       }
     } else {

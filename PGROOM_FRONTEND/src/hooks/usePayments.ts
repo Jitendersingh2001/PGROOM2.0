@@ -321,7 +321,6 @@ export function usePaymentList(params: PaymentListParams = {}) {
       const statsResponse = await paymentService.getPaymentStats();
       setStats(statsResponse);
     } catch (err: any) {
-      console.error('Failed to fetch payment stats:', err);
       setStatsError(err.message || 'Failed to load payment statistics');
     }
   }, []);

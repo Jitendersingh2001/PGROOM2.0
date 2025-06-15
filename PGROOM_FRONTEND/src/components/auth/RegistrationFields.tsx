@@ -238,12 +238,10 @@ const RegistrationFields = memo<RegistrationFieldsProps>(({
         name="userType"
         control={control}
         render={({ field }) => {
-          console.log('UserType field value:', field.value);
           return (
             <RadioGroup
               value={field.value}
               onValueChange={(value) => {
-                console.log('UserType changed to:', value);
                 field.onChange(value);
               }}
               className="flex gap-4"

@@ -195,10 +195,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
         images: values.images,
       };
 
-      console.log('Submitting property data:', formattedData);
       onSubmit(formattedData);
     } catch (error) {
-      console.error('Error in form submission:', error);
       toast.error('Error submitting form. Please check all fields and try again.');
     }
   };

@@ -123,7 +123,6 @@ export const useInvoiceDownload = (): UseInvoiceDownloadReturn => {
         duration: 5000
       });
 
-      console.error('Invoice download error:', err);
     } finally {
       setIsGenerating(false);
     }
@@ -185,7 +184,6 @@ export const useInvoiceDownload = (): UseInvoiceDownloadReturn => {
         duration: 5000
       });
 
-      console.error('Invoice preview error:', err);
       return null;
     } finally {
       setIsGenerating(false);

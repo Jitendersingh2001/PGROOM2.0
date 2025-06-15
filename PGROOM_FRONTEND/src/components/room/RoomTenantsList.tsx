@@ -138,10 +138,15 @@ const RoomTenantsList = React.forwardRef<
     setIsUnassigning(true);
 
     try {
-      // Call the tenant update API with an empty userIds array to unassign the tenant
+      // Get all tenant IDs except the one being unassigned (keep the others)
+      const tenantsToKeep = tenants
+        .filter(t => t.id !== selectedTenant.id)
+        .map(t => t.id);
+      
+      // Call the tenant update API
       const response = await tenantService.updateTenant({
-        ids: [selectedTenant.id],
-        userIds: [], // Empty array to remove all tenants
+        ids: tenantsToKeep, // IDs of tenants to keep
+        userIds: [], // Empty array - no new tenants to add
         propertyId,
         roomId,
       });
@@ -233,16 +238,15 @@ const RoomTenantsList = React.forwardRef<
     setIsSaving(true);
 
     try {
-      // Get the tenant IDs from the selected tenants
-      const selectedTenantIds = selectedTenants.map(id => {
-        const tenant = tenants.find(t => t.id === id);
-        return tenant ? tenant.userId : null;
-      }).filter(Boolean);
+      // Get the tenant IDs that should be KEPT (not selected for removal)
+      const tenantsToKeep = tenants
+        .filter(tenant => !selectedTenants.includes(tenant.id))
+        .map(tenant => tenant.id);
 
-      // Call the bulk update API with the selected tenant IDs
+      // Call the bulk update API
       const response = await tenantService.bulkUpdateTenants({
-        userIds: [], // Empty array as per the new API requirement
-        ids: selectedTenantIds as number[], // Selected tenant user IDs
+        userIds: [], // Empty array - no new tenants to add
+        ids: tenantsToKeep, // IDs of tenants to keep (not remove)
         propertyId,
         roomId,
       });

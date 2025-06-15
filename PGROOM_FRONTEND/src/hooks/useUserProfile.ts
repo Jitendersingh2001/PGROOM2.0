@@ -24,7 +24,6 @@ export const useUserProfile = () => {
         toast.error('Failed to load profile');
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
       toast.error('Failed to load profile');
     } finally {
       setIsLoading(false);

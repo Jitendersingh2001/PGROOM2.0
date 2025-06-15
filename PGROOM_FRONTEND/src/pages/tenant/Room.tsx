@@ -47,22 +47,33 @@ const TenantRoom = () => {
         if (response.statusCode === 200 && response.data) {
           setRoomDetails(response.data);
         } else {
+          // Check if the response message contains "Room assignment not found"
+          const responseMessage = response.message || 'No room assignment found';
           setError('No room assignment found');
-          toast({
-            title: "No Room Assignment",
-            description: "You are not currently assigned to any room.",
-            variant: "destructive",
-          });
+          
+          // Don't show toaster for room assignment not found since functionality is being implemented
+          if (!responseMessage.toLowerCase().includes('room assignment not found')) {
+            toast({
+              title: "Error",
+              description: responseMessage,
+              variant: "destructive",
+            });
+          }
         }
       } catch (error) {
         console.error('Error fetching room details:', error);
         const errorMessage = error instanceof Error ? error.message : 'Failed to fetch room details';
         setError(errorMessage);
-        toast({
-          title: "Error",
-          description: errorMessage,
-          variant: "destructive",
-        });
+        
+        // Only show toaster for actual errors, not for "Room assignment not found"
+        if (!errorMessage.toLowerCase().includes('room assignment not found') && 
+            !errorMessage.toLowerCase().includes('room assignment')) {
+          toast({
+            title: "Error",
+            description: errorMessage,
+            variant: "destructive",
+          });
+        }
       } finally {
         setIsLoading(false);
       }

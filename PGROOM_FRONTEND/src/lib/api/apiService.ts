@@ -36,7 +36,6 @@ export const apiService = {
         if (axios.isAxiosError(error) && !error.response && retries < MAX_RETRIES) {
           retries++;
           const delay = getRetryDelay(retries);
-          console.warn(`API call to ${url} failed, retrying (${retries}/${MAX_RETRIES}) after ${delay}ms`);
           await new Promise(resolve => setTimeout(resolve, delay));
         } else {
           // Handle and rethrow other errors
@@ -66,7 +65,6 @@ export const apiService = {
         if (axios.isAxiosError(error) && !error.response && retries < MAX_RETRIES) {
           retries++;
           const delay = getRetryDelay(retries);
-          console.warn(`API call to ${url} failed, retrying (${retries}/${MAX_RETRIES}) after ${delay}ms`);
           await new Promise(resolve => setTimeout(resolve, delay));
         } else {
           // Handle and rethrow other errors
@@ -96,7 +94,6 @@ export const apiService = {
         if (axios.isAxiosError(error) && !error.response && retries < MAX_RETRIES) {
           retries++;
           const delay = getRetryDelay(retries);
-          console.warn(`API call to ${url} failed, retrying (${retries}/${MAX_RETRIES}) after ${delay}ms`);
           await new Promise(resolve => setTimeout(resolve, delay));
         } else {
           // Handle and rethrow other errors
@@ -126,7 +123,6 @@ export const apiService = {
         if (axios.isAxiosError(error) && !error.response && retries < MAX_RETRIES) {
           retries++;
           const delay = getRetryDelay(retries);
-          console.warn(`API call to ${url} failed, retrying (${retries}/${MAX_RETRIES}) after ${delay}ms`);
           await new Promise(resolve => setTimeout(resolve, delay));
         } else {
           // Handle and rethrow other errors
@@ -155,7 +151,6 @@ export const apiService = {
         if (axios.isAxiosError(error) && !error.response && retries < MAX_RETRIES) {
           retries++;
           const delay = getRetryDelay(retries);
-          console.warn(`API call to ${url} failed, retrying (${retries}/${MAX_RETRIES}) after ${delay}ms`);
           await new Promise(resolve => setTimeout(resolve, delay));
         } else {
           // Handle and rethrow other errors
@@ -177,11 +172,24 @@ export const apiService = {
       return response.data;
     }
 
+    // Check if this is a room assignment related error - skip toaster for these
+    const isRoomAssignmentError = (message: string) => {
+      const lowerMessage = message.toLowerCase();
+      return lowerMessage.includes('room assignment not found') || 
+             lowerMessage.includes('room assignment');
+    };
+
+    const errorMessage = response.message || '';
+
     // Handle validation errors
     if (isApiValidationErrorResponse(response)) {
-      toast.error(response.message || 'Validation error');
+      if (!isRoomAssignmentError(errorMessage)) {
+        toast.error(response.message || 'Validation error');
+      }
     } else {
-      toast.error(response.message || 'Server error');
+      if (!isRoomAssignmentError(errorMessage)) {
+        toast.error(response.message || 'Server error');
+      }
     }
 
     throw new Error(response.message || 'Error processing response');
@@ -194,26 +202,65 @@ export const apiService = {
  * @param url - The API endpoint URL
  */
 const handleApiError = (error: unknown, url: string) => {
+  // Check if this is a room assignment related error - skip toaster for these
+  const isRoomAssignmentError = (message: string) => {
+    const lowerMessage = message.toLowerCase();
+    return lowerMessage.includes('room assignment not found') || 
+           lowerMessage.includes('room assignment') ||
+           (url.includes('/tenant/room-details') && lowerMessage.includes('not found'));
+  };
+
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError;
-
-    // Log the error for debugging
-    console.error(`API Error (${url}):`, axiosError);
 
     // Handle different error scenarios
     if (!axiosError.response) {
       // Network error
-      toast.error('Network error. Please check your connection.');
+      if (url.includes('/tenant/room-details')) {
+        console.log('Suppressing network error toaster for room details endpoint');
+        return;
+      }
+      if (!isRoomAssignmentError(axiosError.message)) {
+        toast.error('Network error. Please check your connection.');
+      }
     } else if (axiosError.response.status === 401) {
       // Unauthorized - handled by axios interceptor
     } else if (axiosError.response.status === 404) {
-      toast.error(`Resource not found: ${url}`);
+      // Special handling for room details endpoint - don't show toaster for any 404s
+      if (url.includes('/tenant/room-details')) {
+        console.log('Suppressing 404 error toaster for room details endpoint');
+        return;
+      }
+      // Don't show toaster for room assignment not found during implementation phase
+      const errorData = axiosError.response.data as { message?: string };
+      const errorMessage = errorData?.message || 'Resource not found';
+      if (!isRoomAssignmentError(errorMessage)) {
+        toast.error(`Resource not found: ${url}`);
+      }
     } else if (axiosError.response.status >= 500) {
-      toast.error('Server error. Please try again later.');
+      // Special handling for room details endpoint - don't show toaster for any 500s
+      if (url.includes('/tenant/room-details')) {
+        console.log('Suppressing server error toaster for room details endpoint');
+        return;
+      }
+      const errorData = axiosError.response.data as { message?: string };
+      const errorMessage = errorData?.message || 'Server error';
+      if (!isRoomAssignmentError(errorMessage)) {
+        toast.error('Server error. Please try again later.');
+      }
     }
   } else {
     // Unknown error
-    console.error(`Unknown API Error (${url}):`, error);
-    toast.error('An unexpected error occurred.');
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+    
+    // Special handling for room details endpoint - don't show toaster for any errors
+    if (url.includes('/tenant/room-details')) {
+      return;
+    }
+    
+    // Don't show toaster for room assignment not found during implementation phase
+    if (!isRoomAssignmentError(errorMessage)) {
+      toast.error(errorMessage);
+    }
   }
 };

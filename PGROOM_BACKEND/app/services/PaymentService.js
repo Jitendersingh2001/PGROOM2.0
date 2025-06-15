@@ -151,7 +151,6 @@ class PaymentService {
           return await this.handleOrderPaid(payload.order.entity);
 
         default:
-          console.log(`Unhandled webhook event: ${event}`);
           return { success: true, message: 'Event not handled' };
       }
     } catch (error) {
@@ -236,15 +235,11 @@ class PaymentService {
         throw new Error('Payment ID is required');
       }
 
-      console.log(`Initiating refund for payment ID: ${paymentId}, amount: ${amount}, reason: ${reason}`);
-
       // Get payment record
       const payment = await this.paymentRepository.getPaymentById(paymentId);
       if (!payment) {
         throw new Error(`Payment with ID ${paymentId} not found`);
       }
-
-      console.log(`Payment found: ${JSON.stringify(payment, null, 2)}`);
 
       // Validate payment status
       if (payment.status !== 'Captured') {
@@ -256,8 +251,6 @@ class PaymentService {
         throw new Error('Payment does not have a valid Razorpay payment ID');
       }
 
-      console.log(`Initiating Razorpay refund for payment ID: ${payment.razorpayPaymentId}`);
-
       // Prepare refund data for Razorpay (full refund only)
       const refundOptions = {
         notes: {
@@ -266,20 +259,13 @@ class PaymentService {
           originalAmount: payment.amount.toString()
         }
       };
-
-      console.log('Full refund requested');
-
       // Create refund in Razorpay
       const refund = await razorpay.payments.refund(payment.razorpayPaymentId, refundOptions);
-
-      console.log(`Razorpay refund created: ${JSON.stringify(refund, null, 2)}`);
 
       // Update payment status to Refunded (full refund only)
       const updatedPayment = await this.paymentRepository.updatePayment(paymentId, {
         status: 'Refunded'
       });
-
-      console.log(`Payment status updated to: Refunded`);
 
       return {
         success: true,
@@ -423,19 +409,6 @@ class PaymentService {
       // Validate payment status - only pending payments can be cancelled
       if (payment.status !== 'Pending') {
         throw new Error(`Cannot cancel payment with status: ${payment.status}. Only pending payments can be cancelled.`);
-      }
-
-      // If payment has a Razorpay order ID, we should cancel it on Razorpay side too
-      if (payment.razorpayOrderId) {
-        try {
-          // Note: Razorpay doesn't have a direct cancel order API
-          // Orders automatically expire after a certain time
-          // We'll just update our local status
-          console.log(`Cancelling payment order: ${payment.razorpayOrderId}`);
-        } catch (razorpayError) {
-          console.warn(`Failed to cancel Razorpay order ${payment.razorpayOrderId}:`, razorpayError.message);
-          // Continue with local cancellation even if Razorpay fails
-        }
       }
 
       // Update payment status to Failed (representing cancelled state)

@@ -12,7 +12,6 @@ class TenantRepository {
    */
   async createOrUpdateTenant(userId, propertyId, roomId, id = null) {
     try {
-
       const tenantData = {
         userId,
         propertyId,
@@ -21,8 +20,8 @@ class TenantRepository {
       };
 
       return id === null
-      ? this.baseRepository.create(tenantData)
-      : this.baseRepository.upsert({ id }, tenantData, tenantData);
+        ? this.baseRepository.create(tenantData)
+        : this.baseRepository.upsert({ id }, tenantData, tenantData);
     } catch (error) {
       throw error;
     }
@@ -34,6 +33,9 @@ class TenantRepository {
   async getTenantUserIds() {
     try {
       const tenants = await this.dbClient.tenant.findMany({
+        where: {
+          status: constant.ACTIVE,
+        },
         select: {
           userId: true,
         },
@@ -48,8 +50,8 @@ class TenantRepository {
     try {
       return await this.dbClient.tenant.findMany({
         where: {
-          propertyId :propertyId,
-          roomId : roomId,
+          propertyId: propertyId,
+          roomId: roomId,
           status: status,
         },
         select: {
@@ -59,9 +61,9 @@ class TenantRepository {
             select: {
               firstName: true,
               lastName: true,
-            }
-          }
-        }
+            },
+          },
+        },
       });
     } catch (error) {
       throw error;
@@ -78,7 +80,7 @@ class TenantRepository {
       throw error;
     }
   }
-  
+
   async deleteTenant(id) {
     try {
       return await this.baseRepository.delete(id);
@@ -98,7 +100,9 @@ class TenantRepository {
         },
       });
     } catch (error) {
-      throw new Error(`Error fetching assigned tenants count: ${error.message}`);
+      throw new Error(
+        `Error fetching assigned tenants count: ${error.message}`
+      );
     }
   }
 
@@ -121,7 +125,7 @@ class TenantRepository {
                   propertyName: true,
                   propertyAddress: true,
                   status: true,
-                }
+                },
               },
               Tenant: {
                 where: { status: constant.ACTIVE },
@@ -130,22 +134,22 @@ class TenantRepository {
                     select: {
                       id: true,
                       firstName: true,
-                      lastName: true
-                    }
-                  }
-                }
-              }
-            }
+                      lastName: true,
+                    },
+                  },
+                },
+              },
+            },
           },
           user: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
-              email: true
-            }
-          }
-        }
+              email: true,
+            },
+          },
+        },
       });
     } catch (error) {
       throw new Error(`Error fetching tenant room details: ${error.message}`);
