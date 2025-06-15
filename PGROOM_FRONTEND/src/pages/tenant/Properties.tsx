@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { useQuery } from '@tanstack/react-query';
-import { Search, Loader2, MapPin, Filter } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Search, Loader2, MapPin, Filter, RefreshCw } from 'lucide-react';
 import { useLocation, State, City } from '@/contexts/LocationContext';
 
 // Layout components
@@ -10,6 +10,7 @@ import TenantSidebar from '@/components/tenant/TenantSidebar';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 
 // UI components
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -26,6 +27,12 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 // Property components
 import TenantPropertyCard from '@/components/property/TenantPropertyCard';
@@ -40,11 +47,12 @@ import { isApiSuccessResponse } from '@/lib/types/api';
  * TenantProperties - Tenant's property browsing page
  *
  * This page allows tenants to browse available properties and rooms for potential rental.
+ * Enhanced with same UI design as owner properties module.
  */
 const TenantProperties: React.FC = () => {
   // State for pagination
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(12);
+  const [limit, setLimit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
 
   // State for search
@@ -60,6 +68,9 @@ const TenantProperties: React.FC = () => {
   // Get location data
   const { states, getCitiesByStateId, loadCities } = useLocation();
 
+  // Query client for cache invalidation
+  const queryClient = useQueryClient();
+
   // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -70,6 +81,11 @@ const TenantProperties: React.FC = () => {
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  // Invalidate query when limit changes
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['tenant-properties'] });
+  }, [limit, queryClient]);
 
   // Load cities when state changes
   useEffect(() => {
@@ -102,15 +118,6 @@ const TenantProperties: React.FC = () => {
     }
   }, [selectedStateId, getCitiesByStateId, loadCities]);
 
-  // Reset page when filters change
-  const resetPageWhenFiltersChange = useCallback(() => {
-    setPage(1);
-  }, []);
-
-  useEffect(() => {
-    resetPageWhenFiltersChange();
-  }, [selectedStateId, selectedCityId, resetPageWhenFiltersChange]);
-
   // Build filters object
   const buildFilters = useCallback(() => {
     const filters: Record<string, string | number> = {};
@@ -133,9 +140,9 @@ const TenantProperties: React.FC = () => {
     return filters;
   }, [debouncedSearchQuery, selectedStateId, selectedCityId]);
 
-  // Fetch properties for tenants
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['tenant-properties', page, limit, buildFilters()],
+  // Fetch properties for tenants - using same query structure as owner module
+  const { data: propertiesData, isLoading, error, refetch } = useQuery({
+    queryKey: ['tenant-properties', page, limit, debouncedSearchQuery, selectedStateId, selectedCityId],
     queryFn: async () => {
       const filters = buildFilters();
 
@@ -154,112 +161,164 @@ const TenantProperties: React.FC = () => {
     }
   });
 
-  // Handle filter changes
+  // Handle state change
   const handleStateChange = (value: string) => {
-    if (value === 'all') {
-      setSelectedStateId(null);
-    } else {
-      setSelectedStateId(parseInt(value));
-    }
+    const stateId = value === "0" ? null : Number(value);
+    setSelectedStateId(stateId);
+    setPage(1); // Reset to first page when changing state
   };
 
+  // Handle city change
   const handleCityChange = (value: string) => {
-    if (value === 'all') {
-      setSelectedCityId(null);
-    } else {
-      setSelectedCityId(parseInt(value));
-    }
+    const cityId = value === "0" ? null : Number(value);
+    setSelectedCityId(cityId);
+    setPage(1); // Reset to first page when changing city
   };
 
-  const handleLimitChange = (value: string) => {
-    setLimit(parseInt(value));
-    setPage(1); // Reset to first page when changing limit
-  };
-
-  // Pagination handlers
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setPage(newPage);
-    }
-  };
-
-  // Clear all filters
-  const clearFilters = () => {
-    setSearchQuery('');
+  // Handle filter reset
+  const handleResetFilters = () => {
     setSelectedStateId(null);
     setSelectedCityId(null);
+    setSearchQuery('');
+    setDebouncedSearchQuery(''); // Also reset the debounced search query for immediate effect
     setPage(1);
   };
 
   // Generate pagination items
-  const generatePaginationItems = () => {
+  const renderPaginationItems = useCallback(() => {
     const items = [];
     const maxVisiblePages = 5;
-    const startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
-    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
-    for (let i = startPage; i <= endPage; i++) {
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if total pages is less than or equal to max visible
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              onClick={() => setPage(i)}
+              isActive={page === i}
+              className="cursor-pointer"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      // Complex pagination with ellipsis
+      const showLeftEllipsis = page > 3;
+      const showRightEllipsis = page < totalPages - 2;
+
+      // Always show first page
       items.push(
-        <PaginationItem key={i}>
+        <PaginationItem key={1}>
           <PaginationLink
-            onClick={() => handlePageChange(i)}
-            isActive={page === i}
+            onClick={() => setPage(1)}
+            isActive={page === 1}
             className="cursor-pointer"
           >
-            {i}
+            1
           </PaginationLink>
         </PaginationItem>
       );
+
+      // Show left ellipsis
+      if (showLeftEllipsis) {
+        items.push(
+          <PaginationItem key="left-ellipsis">
+            <span className="flex h-9 w-9 items-center justify-center">
+              <span className="text-gray-400">...</span>
+            </span>
+          </PaginationItem>
+        );
+      }
+
+      // Show pages around current page
+      const startPage = Math.max(2, page - 1);
+      const endPage = Math.min(totalPages - 1, page + 1);
+
+      for (let i = startPage; i <= endPage; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              onClick={() => setPage(i)}
+              isActive={page === i}
+              className="cursor-pointer"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+
+      // Show right ellipsis
+      if (showRightEllipsis) {
+        items.push(
+          <PaginationItem key="right-ellipsis">
+            <span className="flex h-9 w-9 items-center justify-center">
+              <span className="text-gray-400">...</span>
+            </span>
+          </PaginationItem>
+        );
+      }
+
+      // Always show last page
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages}>
+            <PaginationLink
+              onClick={() => setPage(totalPages)}
+              isActive={page === totalPages}
+              className="cursor-pointer"
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
     }
 
     return items;
-  };
+  }, [page, totalPages]);
 
   return (
-    <ErrorBoundary>
-      <DashboardLayout
-        navbar={<TenantNavbar />}
-        sidebar={<TenantSidebar />}
-      >
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Browse Properties
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Discover available properties and rooms for rent
-              </p>
+    <DashboardLayout
+      navbar={<TenantNavbar />}
+      sidebar={<TenantSidebar />}
+    >
+      <div className="w-full max-w-[98%] mx-auto">
+        {/* Header Section - Matching owner properties style */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Browse Properties
+          </h1>
+
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search by property name, address, or location"
+                className="pl-10 w-full sm:w-[300px]"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-          </div>
 
-          {/* Search and Filters */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg border p-6 space-y-4">
-            <div className="flex flex-col lg:flex-row gap-4">
-              {/* Search Input */}
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search properties by name, location..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-
+            <div className="flex flex-wrap gap-2">
               {/* State Filter */}
-              <div className="min-w-[200px]">
-                <Select value={selectedStateId?.toString() || 'all'} onValueChange={handleStateChange}>
-                  <SelectTrigger>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 h-4 w-4" />
+                <Select
+                  value={selectedStateId ? String(selectedStateId) : "0"}
+                  onValueChange={handleStateChange}
+                >
+                  <SelectTrigger className="pl-10 w-[200px]">
                     <SelectValue placeholder="Select State" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All States</SelectItem>
+                    <SelectItem value="0">All States</SelectItem>
                     {states.map((state: State) => (
-                      <SelectItem key={state.id} value={state.id.toString()}>
+                      <SelectItem key={state.id} value={String(state.id)}>
                         {state.stateName}
                       </SelectItem>
                     ))}
@@ -268,25 +327,26 @@ const TenantProperties: React.FC = () => {
               </div>
 
               {/* City Filter */}
-              <div className="min-w-[200px]">
-                <Select 
-                  value={selectedCityId?.toString() || 'all'} 
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 h-4 w-4" />
+                <Select
+                  value={selectedCityId ? String(selectedCityId) : "0"}
                   onValueChange={handleCityChange}
                   disabled={!selectedStateId || isLoadingCities}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="pl-10 w-[200px]">
                     <SelectValue placeholder={
                       !selectedStateId 
                         ? "Select State First" 
                         : isLoadingCities 
-                          ? "Loading Cities..." 
+                          ? "Loading..." 
                           : "Select City"
                     } />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Cities</SelectItem>
+                    <SelectItem value="0">All Cities</SelectItem>
                     {stateCities.map((city: City) => (
-                      <SelectItem key={city.id} value={city.id.toString()}>
+                      <SelectItem key={city.id} value={String(city.id)}>
                         {city.cityName}
                       </SelectItem>
                     ))}
@@ -294,132 +354,157 @@ const TenantProperties: React.FC = () => {
                 </Select>
               </div>
 
-              {/* Results per page */}
-              <div className="min-w-[120px]">
-                <Select value={limit.toString()} onValueChange={handleLimitChange}>
-                  <SelectTrigger>
-                    <SelectValue />
+              {/* Reset Filters Button - Only show when filters are applied */}
+              {(selectedStateId || selectedCityId || searchQuery) && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handleResetFilters}
+                        className="h-10 w-10"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Reset all filters</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+
+              {/* Items per page */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Show:</span>
+                <Select
+                  value={String(limit)}
+                  onValueChange={(value) => {
+                    setLimit(Number(value));
+                    setPage(1); // Reset to first page when changing limit
+                  }}
+                >
+                  <SelectTrigger className="w-[80px] h-10">
+                    <SelectValue placeholder={String(limit)} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="6">6 per page</SelectItem>
-                    <SelectItem value="12">12 per page</SelectItem>
-                    <SelectItem value="24">24 per page</SelectItem>
+                    {[10, 20, 30, 40, 50, 60].filter(value => {
+                      const totalCount = propertiesData?.meta.total || 10;
+                      // Always show at least the 10 option
+                      if (value === 10) return true;
+                      // Show options up to the next increment above the total count
+                      // For example, if total is 25, show options up to 30
+                      return value <= Math.ceil(totalCount / 10) * 10;
+                    }).map(value => (
+                      <SelectItem key={value} value={String(value)}>
+                        {value}{value === 10 ? ' (Default)' : ''}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
-
-            {/* Active Filters and Clear Button */}
-            {(searchQuery || selectedStateId || selectedCityId) && (
-              <div className="flex items-center justify-between pt-2 border-t">
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                  <Filter className="w-4 h-4" />
-                  <span>Active filters:</span>
-                  {searchQuery && <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">Search: "{searchQuery}"</span>}
-                  {selectedStateId && <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">State: {states.find(s => s.id === selectedStateId)?.stateName}</span>}
-                  {selectedCityId && <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">City: {stateCities.find(c => c.id === selectedCityId)?.cityName}</span>}
-                </div>
-                <button
-                  onClick={clearFilters}
-                  className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                >
-                  Clear all filters
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Content */}
-          <div className="space-y-6">
-            {/* Results Info */}
-            {data && (
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, data.meta.total)} of {data.meta.total} properties
-                </p>
-              </div>
-            )}
-
-            {/* Properties Grid */}
-            {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {Array.from({ length: limit }).map((_, index) => (
-                  <PropertyCardSkeleton key={index} />
-                ))}
-              </div>
-            ) : error ? (
-              <div className="text-center py-12">
-                <div className="text-red-500 mb-4">
-                  <MapPin className="w-12 h-12 mx-auto mb-2" />
-                  <p className="text-lg font-medium">Error loading properties</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {error instanceof Error ? error.message : 'An unexpected error occurred'}
-                  </p>
-                </div>
-                <button
-                  onClick={() => refetch()}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  Try Again
-                </button>
-              </div>
-            ) : !data || data.data.length === 0 ? (
-              <div className="text-center py-12">
-                <MapPin className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  No properties found
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  {searchQuery || selectedStateId || selectedCityId
-                    ? "Try adjusting your search criteria or filters."
-                    : "There are no properties available at the moment."}
-                </p>
-                {(searchQuery || selectedStateId || selectedCityId) && (
-                  <button
-                    onClick={clearFilters}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    Clear Filters
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {data.data.map((property: Property) => (
-                  <TenantPropertyCard
-                    key={property.id}
-                    property={property}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Pagination */}
-            {data && data.data.length > 0 && totalPages > 1 && (
-              <div className="flex justify-center">
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        onClick={() => handlePageChange(page - 1)}
-                        className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                      />
-                    </PaginationItem>
-                    {generatePaginationItems()}
-                    <PaginationItem>
-                      <PaginationNext
-                        onClick={() => handlePageChange(page + 1)}
-                        className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
-            )}
           </div>
         </div>
-      </DashboardLayout>
-    </ErrorBoundary>
+
+        {/* Content */}
+        {isLoading ? (
+          <>
+            {/* Skeleton Loading State */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+              {Array(8).fill(0).map((_, index) => (
+                <PropertyCardSkeleton key={index} />
+              ))}
+            </div>
+          </>
+        ) : error ? (
+          <div className="flex justify-center items-center h-64 text-center">
+            <div>
+              <p className="text-red-500 mb-2">Failed to load properties</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {error instanceof Error ? error.message : 'An unknown error occurred'}
+              </p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => queryClient.invalidateQueries({ queryKey: ['tenant-properties'] })}
+              >
+                Try Again
+              </Button>
+            </div>
+          </div>
+        ) : propertiesData?.data.length === 0 ? (
+          <div className="flex flex-col justify-center items-center h-64 text-center">
+            <h3 className="text-xl font-semibold mb-2">No properties found</h3>
+            {debouncedSearchQuery || selectedStateId || selectedCityId ? (
+              <p className="text-gray-500 dark:text-gray-400 mb-4">
+                No properties match your filter criteria
+              </p>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400 mb-4">
+                There are no properties available at the moment
+              </p>
+            )}
+            {(debouncedSearchQuery || selectedStateId || selectedCityId) && (
+              <Button 
+                variant="outline" 
+                onClick={handleResetFilters}
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Clear Filters
+              </Button>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Property Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+              {propertiesData?.data.map((property) => (
+                <TenantPropertyCard
+                  key={property.id}
+                  property={property}
+                />
+              ))}
+            </div>
+
+            {/* Pagination Info */}
+            <div className="flex justify-between items-center mt-4 mb-2">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Total Records: {propertiesData?.meta.total || 0}
+              </p>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <Pagination className="my-8">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      aria-disabled={page === 1}
+                      tabIndex={page === 1 ? -1 : 0}
+                      className={page === 1 ? 'pointer-events-none opacity-50' : ''}
+                    />
+                  </PaginationItem>
+
+                  {renderPaginationItems()}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                      aria-disabled={page === totalPages}
+                      tabIndex={page === totalPages ? -1 : 0}
+                      className={page === totalPages ? 'pointer-events-none opacity-50' : ''}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
+          </>
+        )}
+      </div>
+    </DashboardLayout>
   );
 };
 

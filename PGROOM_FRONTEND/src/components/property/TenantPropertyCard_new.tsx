@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Eye, MapPin, Phone, Building, Calendar, Heart, Star } from 'lucide-react';
+import { MapPin, Phone, Building, Eye, Info } from 'lucide-react';
 import { Property } from '@/lib/types/property';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -16,19 +16,17 @@ interface TenantPropertyCardProps {
 }
 
 /**
- * TenantPropertyCard - A card component for displaying property information for tenants
+ * TenantPropertyCard - A card component for displaying property information to tenants
  *
- * This component displays key information about a property and provides
- * tenant-specific actions like viewing rooms and booking.
- *
- * Enhanced with modern UI matching the owner PropertyCard design.
+ * This component displays key information about a property for tenant browsing
+ * with the same UI design as owner PropertyCard but without owner-specific actions.
  */
 const TenantPropertyCard: React.FC<TenantPropertyCardProps> = ({
   property,
   className
 }) => {
   const navigate = useNavigate();
-
+  
   // State for image loading
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
@@ -56,8 +54,8 @@ const TenantPropertyCard: React.FC<TenantPropertyCardProps> = ({
     navigate(`/tenant/properties/${property.id}/rooms`);
   };
 
-  // Handle book room action
-  const handleBookRoom = () => {
+  // Handle view available rooms - navigate to property rooms page
+  const handleViewDetails = () => {
     navigate(`/tenant/properties/${property.id}/rooms`);
   };
 
@@ -105,35 +103,32 @@ const TenantPropertyCard: React.FC<TenantPropertyCardProps> = ({
         </AspectRatio>
 
         {/* Property Status Badge */}
-        <div className="absolute top-3 left-3">
+        <div className="absolute top-3 right-3">
           <Badge 
             variant={property.propertyStatus === 'Active' ? 'default' : 'secondary'}
             className={cn(
-              "font-medium shadow-sm",
+              "shadow-sm",
               property.propertyStatus === 'Active' 
-                ? "bg-green-500 hover:bg-green-600 text-white" 
-                : "bg-gray-500 hover:bg-gray-600 text-white"
+                ? "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
+                : "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800"
             )}
           >
             {property.propertyStatus}
           </Badge>
         </div>
 
-        {/* Hover Overlay for Rooms - Only on the image */}
+        {/* Hover Overlay for Details */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center backdrop-blur-[2px]">
           <div className="text-center p-4 transform translate-y-4 group-hover/image:translate-y-0 transition-transform duration-300 scale-90 group-hover/image:scale-100">
-            <p className="text-white text-sm mb-3 font-medium">Available Rooms</p>
+            <p className="text-white text-sm mb-3 font-medium">Property Details</p>
             <Button
               variant="outline"
               size="sm"
               className="bg-primary/80 backdrop-blur-sm border-primary/30 text-white hover:bg-primary hover:text-white shadow-lg hover:shadow-primary/25 transition-all duration-300"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/tenant/properties/${property.id}/rooms`);
-              }}
+              onClick={handleViewDetails}
             >
-              <Eye className="mr-2 h-4 w-4" />
-              View Rooms
+              <Info className="mr-2 h-4 w-4" />
+              View Details
             </Button>
           </div>
         </div>
@@ -143,12 +138,11 @@ const TenantPropertyCard: React.FC<TenantPropertyCardProps> = ({
       <CardHeader className="pb-0 pt-4">
         <div className="flex justify-between items-start">
           <div className="space-y-1 w-full">
-            <CardTitle
-              className="text-xl font-semibold line-clamp-1 group-hover:text-primary transition-colors duration-300 cursor-pointer flex items-center gap-1"
+            <CardTitle 
+              className="text-xl font-semibold line-clamp-1 group-hover:text-primary transition-colors duration-300 cursor-pointer"
               onClick={handleTitleClick}
             >
               {property.propertyName}
-              <Eye className="w-3.5 h-3.5 text-muted-foreground/50 group-hover:text-primary transition-colors duration-300" />
             </CardTitle>
             <CardDescription className="flex items-center text-sm text-muted-foreground">
               <MapPin className="w-3.5 h-3.5 mr-1 inline flex-shrink-0" />
@@ -159,11 +153,22 @@ const TenantPropertyCard: React.FC<TenantPropertyCardProps> = ({
       </CardHeader>
 
       {/* Property Details */}
-      <CardContent className="pt-4 pb-0 flex-grow">
+      <CardContent className="pt-4 pb-6 flex-grow">
         <Separator className="mb-4 bg-border/50" />
 
         {/* Property Information List */}
         <div className="space-y-3">
+          {/* Property Type */}
+          <div className="flex items-center justify-between text-sm group/item hover:bg-muted/40 p-1.5 rounded-md transition-colors duration-300">
+            <div className="text-muted-foreground flex items-center gap-2">
+              <div className="bg-primary/10 p-1.5 rounded-md group-hover/item:bg-primary/20 transition-colors duration-300">
+                <Building className="w-3.5 h-3.5 text-primary" />
+              </div>
+              <span>Type</span>
+            </div>
+            <div className="font-medium">{property.type}</div>
+          </div>
+
           {/* Location */}
           <div className="flex items-center justify-between text-sm group/item hover:bg-muted/40 p-1.5 rounded-md transition-colors duration-300">
             <div className="text-muted-foreground flex items-center gap-2">
@@ -195,21 +200,10 @@ const TenantPropertyCard: React.FC<TenantPropertyCardProps> = ({
             variant="default"
             size="sm"
             className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] font-medium"
-            onClick={handleBookRoom}
+            onClick={handleViewDetails}
           >
             <Eye className="w-4 h-4 mr-2" />
-            View Rooms
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2 px-3 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-sm hover:shadow-md border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:border-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30"
-            onClick={handleBookRoom}
-            title="Book a room in this property"
-          >
-            <Calendar className="w-4 h-4" />
-            <span className="text-xs font-medium">Book Room</span>
+            View Available Rooms
           </Button>
         </div>
       </CardFooter>

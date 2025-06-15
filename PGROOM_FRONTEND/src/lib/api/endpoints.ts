@@ -25,7 +25,7 @@ export const USER = {
 // Property endpoints
 export const PROPERTY = {
   LIST: '/pgrooms/v1/properties',
-  DETAILS: (id: string | number) => `/pgrooms/v1/properties/${id}`,
+  DETAILS: (id: string | number) => `/pgrooms/v1/property/${id}`,
   CREATE: '/pgrooms/v1/property',
   UPDATE: '/pgrooms/v1/property', // PUT endpoint for property update
   DELETE: (id: string | number) => `/pgrooms/v1/property/${id}`,

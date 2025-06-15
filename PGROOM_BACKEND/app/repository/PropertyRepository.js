@@ -44,10 +44,10 @@ class PropertyRepository {
   /**
    * Function to get all properties with pagination
    */
-  async getAllProperties(userId, page, limit, cityId = null , stateId = null, search = null, status = constant.ACTIVE) {
+  async getAllProperties(userId = null, page, limit, cityId = null , stateId = null, search = null, status = constant.ACTIVE) {
     try {
       const whereClause = {
-        userId,
+        ...(userId && { userId }), // Only add userId filter if provided
         status,
         ...(cityId && { cityId }),
         ...(stateId && { stateId }),

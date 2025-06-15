@@ -21,6 +21,7 @@ import OwnerSupport from "./pages/owner/Support";
 import TenantDashboard from "./pages/tenant/Dashboard";
 import TenantRoom from "./pages/tenant/Room";
 import TenantProperties from "./pages/tenant/Properties";
+import TenantPropertyRooms from "./pages/tenant/PropertyRooms";
 import TenantPayments from "./pages/tenant/Payments";
 import TenantMaintenance from "./pages/tenant/Maintenance";
 import TenantProfile from "./pages/tenant/Profile";
@@ -97,6 +98,11 @@ const App = () => (
                 <Route path="/tenant/properties" element={
                   <ProtectedRoute allowedRoles={[3]}>
                     <TenantProperties />
+                  </ProtectedRoute>
+                } />
+                <Route path="/tenant/properties/:propertyId/rooms" element={
+                  <ProtectedRoute allowedRoles={[3]}>
+                    <TenantPropertyRooms />
                   </ProtectedRoute>
                 } />
                 <Route path="/tenant/payments" element={

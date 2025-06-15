@@ -224,8 +224,9 @@ class PropertyService {
    */
   async getAllProperties(req) {
     try {
-      // Get authenticated user ID
+      // Get authenticated user ID and role
       const userId = req?.authUser?.userId;
+      const userRole = req?.authUser?.roleId;
 
       const page = parseInt(req?.body?.page, 10) || 1;
       const limit = parseInt(req?.body?.limit, 10) || 10;
@@ -234,8 +235,17 @@ class PropertyService {
       const searchInput = req?.body?.search || null;
       const propertyStatus = req?.body?.status;
   
-      // Fetch all active properties from the repository with pagination
-      const paginatedResult = await this.propertyRepository.getAllProperties(userId, page, limit, cityId, stateId, searchInput, propertyStatus);
+      // Determine if we should filter by userId based on user role
+      // For tenants (roleId = 3), show all available properties
+      // For owners (roleId = 2), show only their own properties
+      let filterUserId = null;
+      if (userRole === constant.ADMIN_ROLE_ID) { // Owner role
+        filterUserId = userId;
+      }
+      // For tenants, filterUserId remains null, so all properties are fetched
+
+      // Fetch all properties from the repository with pagination
+      const paginatedResult = await this.propertyRepository.getAllProperties(filterUserId, page, limit, cityId, stateId, searchInput, propertyStatus);
   
       // Extract the paginated properties data
       const properties = paginatedResult.data;
