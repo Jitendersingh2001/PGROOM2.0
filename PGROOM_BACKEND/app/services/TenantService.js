@@ -156,6 +156,17 @@ class tenantService {
   }
 
   /**
+   * Function to get tenant ID by user ID
+   */
+  async getTenantIdByUserId(userId) {
+    try {
+      return await this.repository.getTenantIdByUserId(userId);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
    * Function to get tenant's current room details by user ID
    */
   async getTenantRoomDetails(userId) {

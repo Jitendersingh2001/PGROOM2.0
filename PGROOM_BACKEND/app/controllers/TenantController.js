@@ -60,6 +60,38 @@ class TenantController extends Controller {
   };
 
   /**
+   * Function to get current tenant ID for authenticated user
+   */
+  getTenantId = async (req, res) => {
+    try {
+      const userId = req?.authUser?.userId;
+      if (!userId) {
+        return this.sendErrorResponse(res, "User not authenticated", http.UNAUTHORIZED);
+      }
+
+      const tenantId = await this.tenantService.getTenantIdByUserId(userId);
+      
+      if (!tenantId) {
+        return this.sendResponse(
+          res,
+          null,
+          constMessage.NOT_FOUND.replace(":name", "Tenant assignment"),
+          http.NOT_FOUND
+        );
+      }
+
+      this.sendResponse(
+        res,
+        { tenantId },
+        constMessage.FETCH_SUCCESSFUL.replace(":name", "Tenant ID"),
+        http.OK
+      );
+    } catch (error) {
+      return this.sendErrorResponse(res, error);
+    }
+  };
+
+  /**
    * Function to get tenant's current room details
    */
   getTenantRoomDetails = async (req, res) => {

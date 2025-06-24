@@ -107,6 +107,26 @@ class TenantRepository {
   }
 
   /**
+   * Function to get tenant ID by user ID
+   */
+  async getTenantIdByUserId(userId) {
+    try {
+      const tenant = await this.dbClient.tenant.findFirst({
+        where: {
+          userId: userId,
+          status: constant.ACTIVE,
+        },
+        select: {
+          id: true,
+        },
+      });
+      return tenant ? tenant.id : null;
+    } catch (error) {
+      throw new Error(`Error fetching tenant ID: ${error.message}`);
+    }
+  }
+
+  /**
    * Function to get tenant's room details by user ID
    */
   async getTenantRoomByUserId(userId) {

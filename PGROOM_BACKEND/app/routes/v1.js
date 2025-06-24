@@ -95,6 +95,12 @@ router
   )
   .get(controller.TenantController.getTenants);
 
+// Add route for tenant ID
+router.get(
+  "/tenant/id",
+  controller.TenantController.getTenantId
+);
+
 // Add route for tenant's room details
 router.get(
   "/tenant/room-details",
