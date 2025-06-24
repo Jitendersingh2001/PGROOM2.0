@@ -13,7 +13,7 @@ const Index = () => {
     switch (userRole) {
       case 1: return '/admin/dashboard';
       case 2: return '/owner/dashboard';
-      case 3: return '/tenant/dashboard';
+      case 3: return '/tenant/properties'; // Default to properties for tenants
       default: return '/';
     }
   };

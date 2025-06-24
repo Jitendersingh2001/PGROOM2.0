@@ -5,6 +5,7 @@ import { ApiResponse, UserData, isApiSuccessResponse, isApiValidationErrorRespon
 import { storeEncryptedToken } from "@/lib/utils/crypto";
 import { useApiResponse } from "./useApiResponse";
 import { useAuth as useAuthContext } from "@/contexts/AuthContext";
+import { tenantService } from "@/lib/api/services";
 
 // Define a more specific type for axios errors
 export type AxiosErrorType = {
@@ -27,14 +28,33 @@ export const useAuth = () => {
   const { updateAuthState } = useAuthContext();
 
   // Handle redirection based on user role
-  const handleRedirectByRole = useCallback((roleId: number) => {
+  const handleRedirectByRole = useCallback(async (roleId: number) => {
     const dashboards = {
       1: '/admin/dashboard',
       2: '/owner/dashboard',
-      3: '/tenant/dashboard',
+      3: '/tenant/properties', // Default to properties for tenants
       default: '/'
     };
 
+    // For tenants, check if they have a room assigned
+    if (roleId === 3) {
+      try {
+        const roomResponse = await tenantService.getTenantRoomDetails();
+        // If tenant has a room, redirect to dashboard
+        if (roomResponse.statusCode === 200 && roomResponse.data) {
+          navigate('/tenant/dashboard');
+          return;
+        }
+      } catch (error) {
+        // If error checking room status, still redirect to properties
+        console.warn('Error checking tenant room status:', error);
+      }
+      // If no room or error, redirect to properties
+      navigate('/tenant/properties');
+      return;
+    }
+
+    // For other roles, use default redirection
     navigate(dashboards[roleId] || dashboards.default);
   }, [navigate]);
 
@@ -79,7 +99,7 @@ export const useAuth = () => {
       // Handle other errors
       toast.error(response.message || "An error occurred");
     }
-  }, [handleRedirectByRole, navigate]);
+  }, [handleRedirectByRole, navigate, updateAuthState]);
 
   // Handle authentication errors
   const handleAuthError = useCallback((error: Error | unknown, setError?: (name: string, error: { message: string }) => void) => {

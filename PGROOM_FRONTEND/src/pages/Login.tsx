@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { tenantService } from "@/lib/api/services";
 
 // Import custom hooks
 import { useAuthForm } from "@/hooks/useAuthForm";
@@ -56,14 +57,38 @@ const Login = ({ isRegisterRoute = false }: LoginProps) => {
 
   // Redirect to dashboard if already authenticated
   useEffect(() => {
-    if (isAuthenticated && userRole) {
-      const dashboardRoutes = {
-        1: '/admin/dashboard',
-        2: '/owner/dashboard',
-        3: '/tenant/dashboard'
-      };
-      navigate(dashboardRoutes[userRole] || '/');
-    }
+    const handleRedirect = async () => {
+      if (isAuthenticated && userRole) {
+        const dashboardRoutes = {
+          1: '/admin/dashboard',
+          2: '/owner/dashboard',
+          3: '/tenant/properties' // Default for tenants
+        };
+
+        // For tenants, check if they have a room assigned
+        if (userRole === 3) {
+          try {
+            const roomResponse = await tenantService.getTenantRoomDetails();
+            // If tenant has a room, redirect to dashboard
+            if (roomResponse.statusCode === 200 && roomResponse.data) {
+              navigate('/tenant/dashboard');
+              return;
+            }
+          } catch (error) {
+            // If error checking room status, still redirect to properties
+            console.warn('Error checking tenant room status:', error);
+          }
+          // If no room or error, redirect to properties
+          navigate('/tenant/properties');
+          return;
+        }
+
+        // For other roles, use default redirection
+        navigate(dashboardRoutes[userRole] || '/');
+      }
+    };
+
+    handleRedirect();
   }, [isAuthenticated, userRole, navigate]);
 
   // Use the custom auth form hook

@@ -35,14 +35,16 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ collapsed = false }) => {
   // Get tenant room status for conditional navigation
   const { hasRoom, isLoading } = useTenantRoomStatus();
 
-  // Base navigation items (always shown)
-  const baseNavItems: NavItemProps[] = [
-    {
+  // Base navigation items - only show dashboard if tenant has a room
+  const baseNavItems: NavItemProps[] = [];
+  
+  if (!isLoading && hasRoom) {
+    baseNavItems.push({
       name: 'Dashboard',
       path: '/tenant/dashboard',
       icon: <LayoutDashboard className="w-5 h-5" />,
-    },
-  ];
+    });
+  }
 
   // Conditional navigation items based on room assignment
   const conditionalNavItems: NavItemProps[] = [];
@@ -70,24 +72,29 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ collapsed = false }) => {
     });
   }
 
-  // Other main navigation items
-  const otherMainNavItems: NavItemProps[] = [
-    {
-      name: 'Payments',
-      path: '/tenant/payments',
-      icon: <CreditCard className="w-5 h-5" />,
-    },
-    {
-      name: 'Maintenance',
-      path: '/tenant/maintenance',
-      icon: <Wrench className="w-5 h-5" />,
-    }
-  ];
+  // Other main navigation items - only show if tenant has a room
+  const otherMainNavItems: NavItemProps[] = [];
+  
+  if (!isLoading && hasRoom) {
+    // Only show these items if tenant has a room assigned
+    otherMainNavItems.push(
+      {
+        name: 'Payments',
+        path: '/tenant/payments',
+        icon: <CreditCard className="w-5 h-5" />,
+      },
+      {
+        name: 'Maintenance',
+        path: '/tenant/maintenance',
+        icon: <Wrench className="w-5 h-5" />,
+      }
+    );
+  }
 
-  // Combine all main navigation items
+  // Combine main navigation items
   const mainNavItems = [...baseNavItems, ...conditionalNavItems, ...otherMainNavItems];
 
-  // Secondary navigation items
+  // Secondary navigation items - always available
   const secondaryNavItems: NavItemProps[] = [
     {
       name: 'Profile',

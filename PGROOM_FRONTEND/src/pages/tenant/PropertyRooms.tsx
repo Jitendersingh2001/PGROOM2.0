@@ -315,14 +315,23 @@ const PropertyRooms: React.FC = () => {
             {rooms.map((room) => {
               const roomImage = getRoomImage(room);
               const isImageLoading = imageLoadingStates[room.id] !== false;
+              
+              // Check if room is fully occupied
+              const isFullyOccupied = room.Tenant && room.totalBed && room.Tenant.length >= room.totalBed;
 
               return (
                 <Card 
                   key={room.id} 
-                  className="group overflow-hidden hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/20"
+                  className={`group overflow-hidden transition-all duration-300 border-2 ${
+                    isFullyOccupied 
+                      ? 'opacity-60 cursor-not-allowed border-gray-300 bg-gray-50/50 dark:bg-gray-900/30 dark:border-gray-700' 
+                      : 'hover:shadow-lg hover:border-primary/20'
+                  }`}
                 >
                   {/* Room Image */}
-                  <div className="relative overflow-hidden w-full group/image cursor-pointer" onClick={() => handleViewRoom(room)}>
+                  <div className={`relative overflow-hidden w-full group/image ${
+                    isFullyOccupied ? 'cursor-not-allowed' : 'cursor-pointer'
+                  }`} onClick={() => !isFullyOccupied && handleViewRoom(room)}>
                     <AspectRatio ratio={16/9} className="bg-muted">
                       {roomImage ? (
                         <>
@@ -347,28 +356,47 @@ const PropertyRooms: React.FC = () => {
                     </AspectRatio>
 
                     {/* Hover Overlay for Room Details */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center backdrop-blur-[2px]">
-                      <div className="text-center p-4 transform translate-y-4 group-hover/image:translate-y-0 transition-transform duration-300 scale-90 group-hover/image:scale-100">
-                        <p className="text-white text-sm mb-3 font-medium">Room Details</p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="bg-primary/80 backdrop-blur-sm border-primary/30 text-white hover:bg-primary hover:text-white shadow-lg hover:shadow-primary/25 transition-all duration-300"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewRoom(room);
-                          }}
-                        >
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Room
-                        </Button>
+                    {!isFullyOccupied && (
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center backdrop-blur-[2px]">
+                        <div className="text-center p-4 transform translate-y-4 group-hover/image:translate-y-0 transition-transform duration-300 scale-90 group-hover/image:scale-100">
+                          <p className="text-white text-sm mb-3 font-medium">Room Details</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="bg-primary/80 backdrop-blur-sm border-primary/30 text-white hover:bg-primary hover:text-white shadow-lg hover:shadow-primary/25 transition-all duration-300"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewRoom(room);
+                            }}
+                          >
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Room
+                          </Button>
+                        </div>
                       </div>
-                    </div>
+                    )}
+
+                    {/* Fully Occupied Overlay */}
+                    {isFullyOccupied && (
+                      <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center backdrop-blur-sm">
+                        <div className="text-center p-4">
+                          <div className="bg-red-500/90 text-white px-4 py-2 rounded-full text-sm font-medium mb-2 shadow-lg">
+                            FULLY OCCUPIED
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     
                     {/* Status Badge */}
                     <div className="absolute top-3 right-3">
-                      <Badge className="bg-green-500/90 text-white border-0 shadow-lg backdrop-blur-sm">
-                        {room.status}
+                      <Badge className={`border-0 shadow-lg backdrop-blur-sm ${
+                        isFullyOccupied 
+                          ? 'bg-red-500/90 text-white' 
+                          : room.status === 'Available' 
+                            ? 'bg-green-500/90 text-white'
+                            : 'bg-orange-500/90 text-white'
+                      }`}>
+                        {isFullyOccupied ? 'FULL' : room.status}
                       </Badge>
                     </div>
 
@@ -386,7 +414,11 @@ const PropertyRooms: React.FC = () => {
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div className="space-y-1">
-                          <CardTitle className="text-xl group-hover:text-primary transition-colors">
+                          <CardTitle className={`text-xl transition-colors ${
+                            isFullyOccupied 
+                              ? 'text-gray-500 line-through opacity-75' 
+                              : 'group-hover:text-primary'
+                          }`}>
                             Room {room.roomNo}
                           </CardTitle>
                           {room.roomType && (
@@ -394,11 +426,17 @@ const PropertyRooms: React.FC = () => {
                           )}
                         </div>
                         <div className="text-right">
-                          <div className="text-2xl font-bold text-primary flex items-center">
+                          <div className={`text-2xl font-bold flex items-center ${
+                            isFullyOccupied ? 'text-gray-400 line-through' : 'text-primary'
+                          }`}>
                             <IndianRupee className="h-5 w-5" />
                             {formatRent(room.rent)}
                           </div>
-                          <div className="text-sm text-muted-foreground">per month</div>
+                          <div className={`text-sm ${
+                            isFullyOccupied ? 'text-gray-400' : 'text-muted-foreground'
+                          }`}>
+                            {isFullyOccupied ? 'Not Available' : 'per month'}
+                          </div>
                         </div>
                       </div>
                     </CardHeader>
@@ -413,9 +451,18 @@ const PropertyRooms: React.FC = () => {
                           </div>
                         )}
                         {room.Tenant && (
-                          <div className="flex items-center gap-1">
-                            <Users className="h-4 w-4 text-muted-foreground" />
+                          <div className={`flex items-center gap-1 ${
+                            isFullyOccupied ? 'text-red-600 font-semibold' : ''
+                          }`}>
+                            <Users className={`h-4 w-4 ${
+                              isFullyOccupied ? 'text-red-600' : 'text-muted-foreground'
+                            }`} />
                             <span>{room.Tenant.length}/{room.totalBed || 1} Occupied</span>
+                            {isFullyOccupied && (
+                              <Badge variant="destructive" className="ml-2 text-xs">
+                                FULL
+                              </Badge>
+                            )}
                           </div>
                         )}
                       </div>
@@ -457,20 +504,34 @@ const PropertyRooms: React.FC = () => {
                       <div className="flex gap-3">
                         <Button
                           variant="outline"
-                          className="flex-1 group/btn hover:bg-primary/5 hover:border-primary/30 transition-all duration-300"
-                          onClick={() => handleViewRoom(room)}
+                          className={`flex-1 group/btn transition-all duration-300 ${
+                            isFullyOccupied 
+                              ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-300 text-gray-500' 
+                              : 'hover:bg-primary/5 hover:border-primary/30'
+                          }`}
+                          onClick={() => !isFullyOccupied && handleViewRoom(room)}
                           size="lg"
+                          disabled={isFullyOccupied}
                         >
-                          <Eye className="h-4 w-4 mr-2 group-hover/btn:text-primary transition-colors" />
+                          <Eye className={`h-4 w-4 mr-2 transition-colors ${
+                            isFullyOccupied ? 'text-gray-400' : 'group-hover/btn:text-primary'
+                          }`} />
                           View Room
                         </Button>
                         <Button
-                          className="flex-1 group/btn bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300"
-                          onClick={() => handleContactOwner(room)}
+                          className={`flex-1 group/btn transition-all duration-300 ${
+                            isFullyOccupied 
+                              ? 'opacity-50 cursor-not-allowed bg-gray-400 hover:bg-gray-400' 
+                              : 'bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl'
+                          }`}
+                          onClick={() => !isFullyOccupied && handleContactOwner(room)}
                           size="lg"
+                          disabled={isFullyOccupied}
                         >
-                          <Phone className="h-4 w-4 mr-2 group-hover/btn:animate-pulse" />
-                          Contact Owner
+                          <Phone className={`h-4 w-4 mr-2 ${
+                            isFullyOccupied ? 'text-gray-300' : 'group-hover/btn:animate-pulse'
+                          }`} />
+                          {isFullyOccupied ? 'Room Full' : 'Contact Owner'}
                         </Button>
                       </div>
                     </CardContent>

@@ -49,6 +49,20 @@ class roomRepository {
           propertyId: propertyId,
           status: status,
         },
+        include: {
+          Tenant: {
+            where: { status: constant.ACTIVE },
+            select: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true
+                }
+              }
+            }
+          }
+        },
         orderBy: {
           id: "asc",
         },
