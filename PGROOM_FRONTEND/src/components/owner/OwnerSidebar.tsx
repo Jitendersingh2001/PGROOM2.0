@@ -6,7 +6,8 @@ import {
   Users,
   CreditCard,
   HelpCircle,
-  ChevronRight
+  ChevronRight,
+  User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -53,6 +54,11 @@ const OwnerSidebar: React.FC<OwnerSidebarProps> = ({ collapsed = false }) => {
       name: 'Payments',
       path: '/owner/payments',
       icon: <CreditCard className="w-5 h-5" />,
+    },
+    {
+      name: 'Profile',
+      path: '/owner/profile',
+      icon: <User className="w-5 h-5" />,
     },
     {
       name: 'Help & Support',

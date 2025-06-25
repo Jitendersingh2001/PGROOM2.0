@@ -17,6 +17,7 @@ import OwnerProperties from "./pages/owner/Properties";
 import OwnerRooms from "./pages/owner/Rooms";
 import OwnerTenants from "./pages/owner/Tenants";
 import OwnerPayments from "./pages/owner/Payments";
+import OwnerProfile from "./pages/owner/Profile";
 import OwnerSupport from "./pages/owner/Support";
 import TenantDashboard from "./pages/tenant/Dashboard";
 import TenantRoom from "./pages/tenant/Room";
@@ -75,6 +76,11 @@ const App = () => (
                 <Route path="/owner/payments" element={
                   <ProtectedRoute allowedRoles={[2]}>
                     <OwnerPayments />
+                  </ProtectedRoute>
+                } />
+                <Route path="/owner/profile" element={
+                  <ProtectedRoute allowedRoles={[2]}>
+                    <OwnerProfile />
                   </ProtectedRoute>
                 } />
                 <Route path="/owner/support" element={
