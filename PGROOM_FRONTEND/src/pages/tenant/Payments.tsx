@@ -39,12 +39,44 @@ const TenantPayments = () => {
 
   const [currentOrderData, setCurrentOrderData] = useState<CreatePaymentOrderResponse | null>(null);
 
+  // Debug effect for currentOrderData changes
+  useEffect(() => {
+    console.log('currentOrderData changed:', currentOrderData);
+    if (currentOrderData) {
+      console.log('Razorpay payment should now be visible');
+    }
+  }, [currentOrderData]);
+
+  // Load Razorpay script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+
+    // Check if script is already loaded
+    if (!document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]')) {
+      document.head.appendChild(script);
+    }
+
+    return () => {
+      // Cleanup script on unmount
+      const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+      if (existingScript) {
+        document.head.removeChild(existingScript);
+      }
+    };
+  }, []);
+
   // Handle payment initiation
   const handlePayRent = async () => {
     try {
+      console.log('handlePayRent called');
       const orderData = await createPaymentOrder();
+      console.log('Order data received:', orderData);
       if (orderData) {
         setCurrentOrderData(orderData);
+        console.log('Current order data set:', orderData);
+        // Payment modal will auto-open due to autoTrigger prop
       }
     } catch (error) {
       console.error('Error creating payment order:', error);
@@ -320,56 +352,56 @@ const TenantPayments = () => {
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/15 transition-all duration-200">
                   <div className="text-center">
-                    {currentOrderData ? (
-                      <div className="w-full">
-                        <RazorpayPayment
-                          orderData={currentOrderData}
-                          userDetails={{
-                            name: roomDetails?.tenants?.[0]?.name || 'Tenant',
-                            email: '',
-                            contact: ''
-                          }}
-                          onSuccess={handlePaymentSuccess}
-                          onFailure={handlePaymentFailure}
-                          isLoading={isVerifying}
-                        />
-                      </div>
-                    ) : (
-                      <>
-                        <IndianRupee className="h-6 w-6 text-blue-200 mx-auto mb-2" />
-                        <p className="text-green-100 text-xs mb-2">Quick Pay</p>
-                        <Button 
-                          onClick={handlePayRent}
-                          disabled={isCreatingOrder || !roomDetails || stats?.currentMonthPaid}
-                          className="w-full bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm text-xs py-2 h-8"
-                          variant="outline"
-                          size="sm"
-                        >
-                          {isCreatingOrder ? (
-                            <>
-                              <Clock className="mr-1 h-3 w-3 animate-spin" />
-                              Processing...
-                            </>
-                          ) : stats?.currentMonthPaid ? (
-                            <>
-                              <CheckCircle className="mr-1 h-3 w-3" />
-                              Paid
-                            </>
-                          ) : (
-                            <>
-                              <IndianRupee className="mr-1 h-3 w-3" />
-                              Pay Now
-                            </>
-                          )}
-                        </Button>
-                      </>
-                    )}
+                    <IndianRupee className="h-6 w-6 text-blue-200 mx-auto mb-2" />
+                    <p className="text-green-100 text-xs mb-2">Quick Pay</p>
+                    <Button 
+                      onClick={handlePayRent}
+                      disabled={isCreatingOrder || !roomDetails || stats?.currentMonthPaid}
+                      className="w-full bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm text-xs py-2 h-8"
+                      variant="outline"
+                      size="sm"
+                    >
+                      {isCreatingOrder ? (
+                        <>
+                          <Clock className="mr-1 h-3 w-3 animate-spin" />
+                          Processing...
+                        </>
+                      ) : stats?.currentMonthPaid ? (
+                        <>
+                          <CheckCircle className="mr-1 h-3 w-3" />
+                          Paid
+                        </>
+                      ) : (
+                        <>
+                          <IndianRupee className="mr-1 h-3 w-3" />
+                          Pay Now
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </div>
               </div>
             )}
           </div>
         </div>
+
+        {/* Hidden Razorpay Payment Component - Auto-triggers when currentOrderData is set */}
+        {currentOrderData && (
+          <div className="hidden">
+            <RazorpayPayment
+              orderData={currentOrderData}
+              userDetails={{
+                name: roomDetails?.tenants?.[0]?.name || 'Tenant',
+                email: '',
+                contact: ''
+              }}
+              onSuccess={handlePaymentSuccess}
+              onFailure={handlePaymentFailure}
+              isLoading={isVerifying}
+              autoTrigger={true}
+            />
+          </div>
+        )}
 
         {/* Payment History - Full Screen Width */}
         <div className="mx-6 lg:mx-8">
