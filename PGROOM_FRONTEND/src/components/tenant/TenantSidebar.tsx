@@ -7,7 +7,6 @@ import {
   CreditCard,
   HelpCircle,
   ChevronRight,
-  Wrench,
   User,
   Loader2
 } from 'lucide-react';
@@ -82,11 +81,6 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ collapsed = false }) => {
         name: 'Payments',
         path: '/tenant/payments',
         icon: <CreditCard className="w-5 h-5" />,
-      },
-      {
-        name: 'Maintenance',
-        path: '/tenant/maintenance',
-        icon: <Wrench className="w-5 h-5" />,
       }
     );
   }

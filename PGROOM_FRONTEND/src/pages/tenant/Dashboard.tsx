@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CreditCard, Calendar, Wrench, Building2, Search, User, HelpCircle } from 'lucide-react';
+import { CreditCard, Calendar, Building2, Search, User, HelpCircle } from 'lucide-react';
 import { dashboardService } from '@/lib/api/services/dashboardService';
 import { paymentService } from '@/lib/api/services/paymentService';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
@@ -16,7 +16,6 @@ interface TenantStatsData {
   rentDueDate: string;
   lastPaymentAmount: number;
   lastPaymentDate: string;
-  maintenanceRequests: number;
 }
 
 const TenantDashboard = () => {
@@ -35,8 +34,7 @@ const TenantDashboard = () => {
         const mockData: TenantStatsData = {
           rentDueDate: '2024-02-05',
           lastPaymentAmount: 12000,
-          lastPaymentDate: '2024-01-05',
-          maintenanceRequests: 2
+          lastPaymentDate: '2024-01-05'
         };
         setStatsData(mockData);
       } catch (error) {
@@ -144,14 +142,6 @@ const TenantDashboard = () => {
                 description={`Paid on ${statsData ? formatDate(statsData.lastPaymentDate) : '-'}`}
                 isLoading={isLoading}
               />
-
-              <StatsCard
-                title="Maintenance Requests"
-                value={statsData?.maintenanceRequests || 0}
-                icon={<Wrench className="w-5 h-5" />}
-                description="Active requests"
-                isLoading={isLoading}
-              />
             </>
           ) : (
             <>
@@ -206,17 +196,6 @@ const TenantDashboard = () => {
                 </p>
                 <Button variant="outline" onClick={() => window.location.href = '/tenant/payments'}>
                   Manage Payments
-                </Button>
-              </Card>
-
-              {/* Maintenance Card - Only show if tenant has room */}
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Maintenance</h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  Submit and track maintenance requests for your room.
-                </p>
-                <Button variant="outline" onClick={() => window.location.href = '/tenant/maintenance'}>
-                  Submit Request
                 </Button>
               </Card>
             </>

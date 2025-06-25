@@ -5,8 +5,7 @@ import {
   X,
   MessageCircle,
   BedDouble,
-  CreditCard,
-  Wrench
+  CreditCard
 } from 'lucide-react';
 
 // Layout components
@@ -70,14 +69,6 @@ const TenantSupport = () => {
       lastUpdated: '2025-06-09'
     },
     {
-      id: 3,
-      title: 'Maintenance Request Process',
-      excerpt: 'How to submit and track maintenance requests for your room.',
-      content: '<h2>Maintenance Request Process</h2><p>Learn how to submit and track maintenance requests...</p>',
-      category: 'Maintenance',
-      lastUpdated: '2025-06-08'
-    },
-    {
       id: 4,
       title: 'Understanding Your Dashboard',
       excerpt: 'A comprehensive guide to your tenant dashboard features.',
@@ -97,18 +88,12 @@ const TenantSupport = () => {
     },
     {
       id: 2,
-      question: 'How do I report maintenance issues?',
-      answer: 'Navigate to the Maintenance section and click on "Submit Request". Fill in the details of the issue and submit the form.',
-      category: 'Maintenance'
-    },
-    {
-      id: 3,
       question: 'How can I update my profile information?',
       answer: 'Go to the Profile section and click on "Edit Profile" to update your personal information.',
       category: 'Profile'
     },
     {
-      id: 4,
+      id: 3,
       question: 'What if I face issues with the platform?',
       answer: 'Contact our support team through the Help & Support section or email us at support@propertyhub.com',
       category: 'General'
@@ -183,18 +168,6 @@ const TenantSupport = () => {
               <div>
                 <h3 className="text-sm font-medium text-gray-900 dark:text-white">Payment Help</h3>
                 <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Guidance on rent payments</p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="group hover:shadow-md transition-all duration-200">
-            <CardContent className="p-6 flex items-start gap-3">
-              <div className="p-2 rounded-full bg-primary/10 text-primary transition-colors duration-200 group-hover:bg-primary/20">
-                <Wrench className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-900 dark:text-white">Maintenance</h3>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Submit and track requests</p>
               </div>
             </CardContent>
           </Card>
