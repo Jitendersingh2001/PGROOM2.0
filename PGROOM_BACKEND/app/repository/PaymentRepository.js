@@ -285,7 +285,7 @@ class PaymentRepository extends BaseRepository {
         }
       };
     } catch (error) {
-      throw new Error(`Failed to get payments by tenant: ${error.message}`);
+      throw error;
     }
   }
 

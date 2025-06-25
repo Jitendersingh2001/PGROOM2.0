@@ -46,14 +46,8 @@ export const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
   children,
   autoTrigger = false
 }) => {
-  console.log('RazorpayPayment component rendered with orderData:', orderData);
-  
   const handlePayment = () => {
-    console.log('RazorpayPayment handlePayment called');
-    console.log('Razorpay SDK available:', !!window.Razorpay);
-    
     if (!window.Razorpay) {
-      console.error('Razorpay SDK not loaded');
       onFailure?.({ error: 'Payment gateway not available' });
       return;
     }
@@ -82,7 +76,6 @@ export const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
       },
       modal: {
         ondismiss: () => {
-          console.log('Payment modal dismissed');
           // If user dismisses the modal, call onFailure to reset the state
           onFailure?.(new Error('Payment cancelled by user'));
         }
@@ -90,92 +83,72 @@ export const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
     };
 
     try {
-      console.log('Creating Razorpay instance with options:', options);
       const rzp = new window.Razorpay(options);
       
       rzp.on('payment.failed', (response: { error: Error }) => {
-        console.error('Payment failed:', response.error);
         onFailure?.(response.error);
       });
 
-      console.log('Opening Razorpay modal');
       rzp.open();
     } catch (error) {
-      console.error('Error opening Razorpay:', error);
       onFailure?.(error);
     }
   };
 
-  // Auto-trigger payment when component mounts if autoTrigger is true
+  // Auto-trigger payment when component mounts (if autoTrigger is true)
   useEffect(() => {
-    if (autoTrigger && orderData && !isLoading && !disabled) {
-      console.log('Auto-triggering payment on component mount');
-      
-      const triggerPayment = () => {
-        console.log('Auto-triggered payment execution');
-        console.log('Razorpay SDK available:', !!window.Razorpay);
-        
-        if (!window.Razorpay) {
-          console.error('Razorpay SDK not loaded');
-          onFailure?.({ error: 'Payment gateway not available' });
-          return;
-        }
-
-        const options: RazorpayCheckoutOptions = {
-          key: orderData.razorpayKeyId,
-          amount: orderData.amount,
-          currency: orderData.currency,
-          name: 'PGROOM',
-          description: 'Monthly Rent Payment',
-          order_id: orderData.orderId,
-          handler: (response: RazorpayPaymentResponse) => {
-            onSuccess({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature
-            });
-          },
-          prefill: {
-            name: userDetails?.name || '',
-            email: userDetails?.email || '',
-            contact: userDetails?.contact || ''
-          },
-          theme: {
-            color: '#3399cc'
-          },
-          modal: {
-            ondismiss: () => {
-              console.log('Payment modal dismissed');
-              onFailure?.(new Error('Payment cancelled by user'));
-            }
-          }
-        };
-
-        try {
-          console.log('Creating Razorpay instance with options:', options);
-          const rzp = new window.Razorpay(options);
-          
-          rzp.on('payment.failed', (response: { error: Error }) => {
-            console.error('Payment failed:', response.error);
-            onFailure?.(response.error);
-          });
-
-          console.log('Opening Razorpay modal');
-          rzp.open();
-        } catch (error) {
-          console.error('Error opening Razorpay:', error);
-          onFailure?.(error);
-        }
-      };
-
-      // Add a small delay to ensure DOM is ready
+    if (autoTrigger && orderData) {
+      // Small delay to ensure Razorpay script is loaded
       const timer = setTimeout(() => {
-        triggerPayment();
+        if (window.Razorpay) {
+          const options: RazorpayCheckoutOptions = {
+            key: orderData.razorpayKeyId,
+            amount: orderData.amount,
+            currency: orderData.currency,
+            name: 'PGROOM',
+            description: 'Monthly Rent Payment',
+            order_id: orderData.orderId,
+            handler: (response: RazorpayPaymentResponse) => {
+              onSuccess({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              });
+            },
+            prefill: {
+              name: userDetails?.name || '',
+              email: userDetails?.email || '',
+              contact: userDetails?.contact || ''
+            },
+            theme: {
+              color: '#3399cc'
+            },
+            modal: {
+              ondismiss: () => {
+                onFailure?.(new Error('Payment cancelled by user'));
+              }
+            }
+          };
+
+          try {
+            const rzp = new window.Razorpay(options);
+            
+            rzp.on('payment.failed', (response: { error: Error }) => {
+              onFailure?.(response.error);
+            });
+
+            rzp.open();
+          } catch (error) {
+            onFailure?.(error);
+          }
+        } else {
+          onFailure?.(new Error('Razorpay SDK not loaded'));
+        }
       }, 100);
-      
+
       return () => clearTimeout(timer);
     }
-  }, [autoTrigger, orderData, isLoading, disabled, onSuccess, onFailure, userDetails]);
+  }, [autoTrigger, orderData, onSuccess, onFailure, userDetails]);
 
   // If autoTrigger is enabled, return a simple loading/status component
   if (autoTrigger) {

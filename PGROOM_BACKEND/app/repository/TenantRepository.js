@@ -108,6 +108,7 @@ class TenantRepository {
 
   /**
    * Function to get tenant ID by user ID
+   * Returns the User ID (not Tenant table ID) to match Payment schema
    */
   async getTenantIdByUserId(userId) {
     try {
@@ -118,9 +119,12 @@ class TenantRepository {
         },
         select: {
           id: true,
+          userId: true, // Add userId to select
         },
       });
-      return tenant ? tenant.id : null;
+      // Return userId (User ID) instead of tenant.id (Tenant table ID)
+      // This matches the Payment schema which expects tenantId to be User ID
+      return tenant ? tenant.userId : null;
     } catch (error) {
       throw new Error(`Error fetching tenant ID: ${error.message}`);
     }

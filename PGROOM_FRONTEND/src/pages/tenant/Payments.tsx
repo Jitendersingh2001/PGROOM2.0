@@ -39,14 +39,6 @@ const TenantPayments = () => {
 
   const [currentOrderData, setCurrentOrderData] = useState<CreatePaymentOrderResponse | null>(null);
 
-  // Debug effect for currentOrderData changes
-  useEffect(() => {
-    console.log('currentOrderData changed:', currentOrderData);
-    if (currentOrderData) {
-      console.log('Razorpay payment should now be visible');
-    }
-  }, [currentOrderData]);
-
   // Load Razorpay script
   useEffect(() => {
     const script = document.createElement('script');
@@ -70,12 +62,9 @@ const TenantPayments = () => {
   // Handle payment initiation
   const handlePayRent = async () => {
     try {
-      console.log('handlePayRent called');
       const orderData = await createPaymentOrder();
-      console.log('Order data received:', orderData);
       if (orderData) {
         setCurrentOrderData(orderData);
-        console.log('Current order data set:', orderData);
         // Payment modal will auto-open due to autoTrigger prop
       }
     } catch (error) {
@@ -92,6 +81,10 @@ const TenantPayments = () => {
     try {
       await verifyPayment(response);
       setCurrentOrderData(null);
+      
+      // Force refresh the data
+      await refresh();
+      
       toast.success('Payment completed successfully!');
     } catch (error) {
       console.error('Error verifying payment:', error);
@@ -353,7 +346,7 @@ const TenantPayments = () => {
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/15 transition-all duration-200">
                   <div className="text-center">
                     <IndianRupee className="h-6 w-6 text-blue-200 mx-auto mb-2" />
-                    <p className="text-green-100 text-xs mb-2">Quick Pay</p>
+                    <p className="text-green-100 text-xs mb-2">Monthly Rent</p>
                     <Button 
                       onClick={handlePayRent}
                       disabled={isCreatingOrder || !roomDetails || stats?.currentMonthPaid}
@@ -426,16 +419,25 @@ const TenantPayments = () => {
                   <div className="bg-muted/50 rounded-full p-6 w-24 h-24 mx-auto mb-6 flex items-center justify-center">
                     <Receipt className="h-10 w-10 text-muted-foreground" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-3">No payments yet</h3>
+                  <h3 className="text-xl font-semibold mb-3">No payment history yet</h3>
                   <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-                    Your payment history will appear here once you make your first payment.
+                    Your payment history will appear here once you start making payments.
                   </p>
-                  {roomDetails && !stats?.currentMonthPaid && (
-                    <Button onClick={handlePayRent} disabled={isCreatingOrder}>
-                      <IndianRupee className="mr-2 h-4 w-4" />
-                      Make Your First Payment
+                  <div className="space-y-3">
+                    {roomDetails && !stats?.currentMonthPaid && (
+                      <Button onClick={handlePayRent} disabled={isCreatingOrder}>
+                        <IndianRupee className="mr-2 h-4 w-4" />
+                        Pay This Month's Rent
+                      </Button>
+                    )}
+                    <Button 
+                      variant="outline" 
+                      onClick={refresh}
+                    >
+                      <Receipt className="mr-2 h-4 w-4" />
+                      Refresh Payment Data
                     </Button>
-                  )}
+                  </div>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -613,7 +615,7 @@ const TenantPayments = () => {
                             ) : (
                               <>
                                 <IndianRupee className="mr-2 h-4 w-4" />
-                                Pay This Month
+                                Pay This Month's Rent
                               </>
                             )}
                           </Button>
