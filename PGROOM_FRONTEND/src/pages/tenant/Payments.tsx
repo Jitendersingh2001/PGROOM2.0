@@ -684,16 +684,9 @@ const TenantPayments = () => {
                     {roomDetails && !stats?.currentMonthPaid && (
                       <Button onClick={handlePayRent} disabled={isCreatingOrder}>
                         <IndianRupee className="mr-2 h-4 w-4" />
-                        Pay This Month's Rent
+                        Pay Your First Rent
                       </Button>
                     )}
-                    <Button 
-                      variant="outline" 
-                      onClick={refresh}
-                    >
-                      <Receipt className="mr-2 h-4 w-4" />
-                      Refresh Payment Data
-                    </Button>
                   </div>
                 </div>
               ) : filteredPayments().length === 0 ? (
@@ -751,7 +744,7 @@ const TenantPayments = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => handleViewDetails(payment)}
-                              className="flex-1"
+                              className="flex-1 hover:bg-green-50 hover:border-green-200 hover:text-green-700 transition-all duration-200"
                             >
                               <Eye className="h-3 w-3 mr-1" />
                               Details
@@ -761,7 +754,7 @@ const TenantPayments = () => {
                               size="sm"
                               onClick={() => handleDownloadInvoice(payment)}
                               disabled={isDownloading[payment.id] || isGenerating}
-                              className="flex-1"
+                              className="flex-1 hover:bg-green-50 hover:border-green-200 hover:text-green-700 transition-all duration-200 disabled:hover:bg-muted disabled:hover:border-border disabled:hover:text-muted-foreground"
                             >
                               {(isDownloading[payment.id] || isGenerating) ? (
                                 <Clock className="h-3 w-3 mr-1 animate-spin" />
@@ -776,106 +769,127 @@ const TenantPayments = () => {
                     </div>
                   </div>
 
-                  {/* Desktop table layout - Enhanced */}
+                  {/* Desktop table layout - Modern Design */}
                   <div className="hidden sm:block w-full mb-6">
-                    <Table className="w-full">
-                      <TableHeader>
-                        <TableRow className="hover:bg-transparent border-border/50">
-                          <TableHead className="font-semibold text-xs uppercase tracking-wider w-[100px]">Payment ID</TableHead>
-                          <TableHead className="font-semibold text-xs uppercase tracking-wider w-[150px]">Date</TableHead>
-                          <TableHead className="font-semibold text-xs uppercase tracking-wider w-[120px]">Amount</TableHead>
-                          <TableHead className="font-semibold text-xs uppercase tracking-wider w-[100px]">Status</TableHead>
-                          <TableHead className="font-semibold text-xs uppercase tracking-wider hidden md:table-cell w-[140px]">Method</TableHead>
-                          <TableHead className="font-semibold text-xs uppercase tracking-wider hidden lg:table-cell w-[180px]">Transaction ID</TableHead>
-                          <TableHead className="font-semibold text-xs uppercase tracking-wider w-[100px]">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedPayments().map((payment) => (
-                          <TableRow key={payment.id} className="hover:bg-muted/30 transition-colors border-border/30">
-                            <TableCell className="font-medium py-4">
-                              <span className="font-mono text-sm">
-                                #{payment.id.toString().padStart(6, '0')}
-                              </span>
-                            </TableCell>
-                            <TableCell className="font-medium py-4">
-                              <div className="flex items-center gap-2">
-                                <Calendar className="h-4 w-4 text-muted-foreground" />
-                                <div className="font-semibold whitespace-nowrap">
+                    <div className="bg-card rounded-xl border border-border/40 overflow-hidden shadow-sm">
+                      <Table className="w-full">
+                        <TableHeader>
+                          <TableRow className="hover:bg-transparent border-0 bg-gradient-to-r from-muted/60 to-muted/40">
+                            <TableHead className="font-bold text-xs uppercase tracking-wider text-foreground/90 py-5 px-6 w-[120px] border-r border-border/30">
+                              Payment ID
+                            </TableHead>
+                            <TableHead className="font-bold text-xs uppercase tracking-wider text-foreground/90 py-5 px-6 w-[160px] border-r border-border/30">
+                              Date
+                            </TableHead>
+                            <TableHead className="font-bold text-xs uppercase tracking-wider text-foreground/90 py-5 px-6 w-[140px] border-r border-border/30 text-right">
+                              Amount
+                            </TableHead>
+                            <TableHead className="font-bold text-xs uppercase tracking-wider text-foreground/90 py-5 px-6 w-[120px] border-r border-border/30">
+                              Status
+                            </TableHead>
+                            <TableHead className="font-bold text-xs uppercase tracking-wider text-foreground/90 py-5 px-6 hidden md:table-cell w-[160px] border-r border-border/30">
+                              Payment Method
+                            </TableHead>
+                            <TableHead className="font-bold text-xs uppercase tracking-wider text-foreground/90 py-5 px-6 hidden lg:table-cell w-[200px] border-r border-border/30">
+                              Transaction ID
+                            </TableHead>
+                            <TableHead className="font-bold text-xs uppercase tracking-wider text-foreground/90 py-5 px-6 w-[100px] text-center">
+                              Actions
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedPayments().map((payment, index) => (
+                            <TableRow 
+                              key={payment.id} 
+                              className={`
+                                hover:bg-muted/60 transition-all duration-200 border-0 group
+                                ${index !== paginatedPayments().length - 1 ? 'border-b border-border/20' : ''}
+                              `}
+                            >
+                              <TableCell className="py-6 px-6 border-r border-border/20 group-hover:border-border/40">
+                                <span className="font-mono text-sm font-bold text-foreground">
+                                  #{payment.id.toString().padStart(6, '0')}
+                                </span>
+                              </TableCell>
+                              <TableCell className="py-6 px-6 border-r border-border/20 group-hover:border-border/40">
+                                <div className="font-semibold text-sm">
                                   {new Date(payment.createdAt).toLocaleDateString('en-IN', {
                                     day: '2-digit',
                                     month: 'short',
                                     year: 'numeric'
                                   })}
                                 </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="py-4">
-                              <div className="flex items-center gap-1 font-semibold text-lg">
-                                <IndianRupee className="h-4 w-4 text-green-600" />
-                                <span className="font-bold">
-                                  {new Intl.NumberFormat('en-IN', {
+                              </TableCell>
+                              <TableCell className="py-6 px-6 border-r border-border/20 group-hover:border-border/40 text-right">
+                                <div className="font-bold text-lg text-foreground">
+                                  ₹{new Intl.NumberFormat('en-IN', {
                                     style: 'decimal',
                                     maximumFractionDigits: 0
                                   }).format(payment.amount)}
+                                </div>
+                              </TableCell>
+                              <TableCell className="py-6 px-6 border-r border-border/20 group-hover:border-border/40">
+                                {getStatusBadge(payment.status)}
+                              </TableCell>
+                              <TableCell className="py-6 px-6 border-r border-border/20 group-hover:border-border/40 hidden md:table-cell">
+                                <span className="text-sm font-medium capitalize">
+                                  {payment.paymentMethod || payment.paymentMethodDetails || 'Not Available'}
                                 </span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="py-4">{getStatusBadge(payment.status)}</TableCell>
-                            <TableCell className="capitalize py-4 hidden md:table-cell">
-                              <div className="flex items-center gap-2">
-                                <CreditCard className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm">
-                                  {payment.paymentMethod || payment.paymentMethodDetails || '-'}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="font-mono text-sm py-4 hidden lg:table-cell">
-                              {payment.razorpayPaymentId ? (
-                                <div className="flex items-center gap-2">
-                                  <span className="bg-muted px-3 py-1.5 rounded-md text-xs font-medium border">
+                              </TableCell>
+                              <TableCell className="py-6 px-6 border-r border-border/20 group-hover:border-border/40 hidden lg:table-cell">
+                                {payment.razorpayPaymentId ? (
+                                  <span className="font-mono text-xs font-medium text-foreground bg-muted px-2 py-1 rounded">
                                     {payment.razorpayPaymentId.slice(-8)}
                                   </span>
-                                </div>
-                              ) : (
-                                <span className="text-muted-foreground">-</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="py-4">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => handleViewDetails(payment)}>
-                                    <Eye className="mr-2 h-4 w-4" />
-                                    View Details
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem 
-                                    onClick={() => handleDownloadInvoice(payment)}
-                                    disabled={isDownloading[payment.id] || isGenerating}
-                                  >
-                                    {(isDownloading[payment.id] || isGenerating) ? (
-                                      <>
-                                        <Clock className="mr-2 h-4 w-4 animate-spin" />
-                                        Generating...
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Download className="mr-2 h-4 w-4" />
-                                        Download Invoice
-                                      </>
-                                    )}
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                                ) : (
+                                  <span className="text-muted-foreground text-sm">-</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="py-6 px-6 text-center">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-10 w-10 p-0 rounded-lg hover:bg-green-50 hover:border-green-200 border border-transparent transition-all duration-200 hover:text-green-700"
+                                    >
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuItem 
+                                      onClick={() => handleViewDetails(payment)}
+                                      className="cursor-pointer hover:bg-green-50 hover:text-green-700 transition-colors duration-200"
+                                    >
+                                      <Eye className="mr-2 h-4 w-4" />
+                                      View Details
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                      onClick={() => handleDownloadInvoice(payment)}
+                                      disabled={isDownloading[payment.id] || isGenerating}
+                                      className="cursor-pointer hover:bg-green-50 hover:text-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+                                    >
+                                      {(isDownloading[payment.id] || isGenerating) ? (
+                                        <>
+                                          <Clock className="mr-2 h-4 w-4 animate-spin" />
+                                          Generating...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Download className="mr-2 h-4 w-4" />
+                                          Download Invoice
+                                        </>
+                                      )}
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
 
                   {/* Pagination Section */}
