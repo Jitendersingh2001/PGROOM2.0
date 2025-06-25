@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, CreditCard, IndianRupee, Clock, CheckCircle, AlertCircle, Home, Users, Receipt, Building2, Star, TrendingUp } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Calendar, CreditCard, IndianRupee, Clock, CheckCircle, AlertCircle, Home, Users, Receipt, Building2, Star, TrendingUp, Eye, Download, MoreHorizontal, Search, Filter, FilterX } from 'lucide-react';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import TenantNavbar from '@/components/tenant/TenantNavbar';
 import TenantSidebar from '@/components/tenant/TenantSidebar';
@@ -7,6 +7,29 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from '@/components/ui/pagination';
 import {
   Table,
   TableBody,
@@ -17,8 +40,10 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RazorpayPayment } from '@/components/payments/RazorpayPayment';
+import { PaymentDetailsModal } from '@/components/payments';
 import { useTenantPayments } from '@/hooks/useTenantPayments';
-import { Payment, CreatePaymentOrderResponse } from '@/lib/types/payment';
+import { useInvoiceDownload } from '@/hooks/useInvoiceDownload';
+import { Payment, CreatePaymentOrderResponse, PaymentStatus } from '@/lib/types/payment';
 import { toast } from 'sonner';
 
 const TenantPayments = () => {
@@ -37,7 +62,21 @@ const TenantPayments = () => {
     refresh
   } = useTenantPayments();
 
+  // Invoice download hook
+  const { downloadInvoice, isGenerating, error: invoiceError, clearError } = useInvoiceDownload();
+
   const [currentOrderData, setCurrentOrderData] = useState<CreatePaymentOrderResponse | null>(null);
+  
+  // Filter and pagination states
+  const [statusFilter, setStatusFilter] = useState<PaymentStatus | 'all'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [isDownloading, setIsDownloading] = useState<{ [key: number]: boolean }>({});
+  
+  // Modal states
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [showPaymentDetails, setShowPaymentDetails] = useState(false);
 
   // Load Razorpay script
   useEffect(() => {
@@ -127,6 +166,177 @@ const TenantPayments = () => {
       Refunded: <Badge className="bg-gray-100 text-gray-800">Refunded</Badge>,
     };
     return badges[status] || <Badge variant="outline">{status}</Badge>;
+  };
+
+  // Filter payments based on search and status
+  const filteredPayments = useCallback(() => {
+    let filtered = payments;
+    
+    // Filter by status
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(payment => payment.status === statusFilter);
+    }
+    
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(payment => 
+        payment.id.toString().includes(query) ||
+        payment.amount.toString().includes(query) ||
+        payment.razorpayPaymentId?.toLowerCase().includes(query) ||
+        payment.paymentMethod?.toLowerCase().includes(query) ||
+        formatDate(payment.createdAt).toLowerCase().includes(query)
+      );
+    }
+    
+    return filtered;
+  }, [payments, statusFilter, searchQuery]);
+
+  // Paginate filtered payments
+  const paginatedPayments = useCallback(() => {
+    const filtered = filteredPayments();
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filtered.slice(startIndex, endIndex);
+  }, [filteredPayments, currentPage, itemsPerPage]);
+
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredPayments().length / itemsPerPage);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, searchQuery]);
+
+  // Handle payment details view
+  const handleViewDetails = (payment: Payment) => {
+    setSelectedPayment(payment);
+    setShowPaymentDetails(true);
+  };
+
+  // Handle invoice download
+  const handleDownloadInvoice = async (payment: Payment) => {
+    // Clear any previous invoice errors
+    if (invoiceError) {
+      clearError();
+    }
+    
+    // Set individual payment downloading state
+    setIsDownloading(prev => ({ ...prev, [payment.id]: true }));
+    
+    try {
+      await downloadInvoice(payment);
+      // Success toast is handled by the hook
+    } catch (error) {
+      // Error toast is handled by the hook
+      console.error('Failed to download invoice:', error);
+    } finally {
+      // Clear individual payment downloading state
+      setIsDownloading(prev => ({ ...prev, [payment.id]: false }));
+    }
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setStatusFilter('all');
+    setSearchQuery('');
+    setCurrentPage(1);
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = statusFilter !== 'all' || searchQuery.trim() !== '';
+
+  // Generate pagination items
+  const renderPaginationItems = () => {
+    const items = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if total pages is less than or equal to max visible
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              onClick={() => setCurrentPage(i)}
+              isActive={currentPage === i}
+              className="cursor-pointer"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      // Complex pagination with ellipsis
+      const showLeftEllipsis = currentPage > 3;
+      const showRightEllipsis = currentPage < totalPages - 2;
+
+      // Always show first page
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink
+            onClick={() => setCurrentPage(1)}
+            isActive={currentPage === 1}
+            className="cursor-pointer"
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      // Show left ellipsis
+      if (showLeftEllipsis) {
+        items.push(
+          <PaginationItem key="left-ellipsis">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+
+      // Show pages around current page
+      const startPage = Math.max(2, currentPage - 1);
+      const endPage = Math.min(totalPages - 1, currentPage + 1);
+
+      for (let i = startPage; i <= endPage; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              onClick={() => setCurrentPage(i)}
+              isActive={currentPage === i}
+              className="cursor-pointer"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+
+      // Show right ellipsis
+      if (showRightEllipsis) {
+        items.push(
+          <PaginationItem key="right-ellipsis">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+
+      // Always show last page
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages}>
+            <PaginationLink
+              onClick={() => setCurrentPage(totalPages)}
+              isActive={currentPage === totalPages}
+              className="cursor-pointer"
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
   };
 
   // Loading skeleton
@@ -408,10 +618,57 @@ const TenantPayments = () => {
                     <CardDescription className="text-sm">Your complete rent payment history</CardDescription>
                   </div>
                 </div>
-                <Badge variant="secondary" className="text-xs w-fit">
-                  {payments.length} Payment{payments.length !== 1 ? 's' : ''}
-                </Badge>
               </div>
+
+              {/* Filters Section */}
+              {payments.length > 0 && (
+                <div className="border-t border-border/50 pt-4 mt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                    {/* Search - Takes 4 columns on md screens */}
+                    <div className="relative md:col-span-4">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search by amount, payment ID, or method..."
+                        className="pl-10 h-10"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+
+                    {/* Status Filter - Takes 3 columns on md screens */}
+                    <div className="md:col-span-3">
+                      <Select value={statusFilter} onValueChange={(value: PaymentStatus | 'all') => setStatusFilter(value)}>
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="Filter by status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Payments</SelectItem>
+                          <SelectItem value="Captured">Completed</SelectItem>
+                          <SelectItem value="Pending">Pending</SelectItem>
+                          <SelectItem value="Failed">Failed</SelectItem>
+                          <SelectItem value="Refunded">Refunded</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Actions - Takes 5 columns on md screens */}
+                    <div className="flex items-center justify-end gap-3 md:col-span-5">
+                      {/* Clear Filters Button */}
+                      {hasActiveFilters && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={clearFilters}
+                          className="h-10"
+                        >
+                          <FilterX className="h-4 w-4 mr-2" />
+                          Clear Filters
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardHeader>
             <CardContent className="p-0">
               {payments.length === 0 ? (
@@ -439,13 +696,30 @@ const TenantPayments = () => {
                     </Button>
                   </div>
                 </div>
+              ) : filteredPayments().length === 0 ? (
+                <div className="text-center py-16 px-6">
+                  <div className="bg-muted/50 rounded-full p-6 w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                    <Search className="h-10 w-10 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3">No payments found</h3>
+                  <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                    No payments match your current filter criteria. Try adjusting your filters.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={clearFilters}
+                  >
+                    <FilterX className="mr-2 h-4 w-4" />
+                    Clear Filters
+                  </Button>
+                </div>
               ) : (
                 <div className="overflow-x-auto">
                   {/* Mobile-first responsive design */}
-                  <div className="block sm:hidden">
+                  <div className="block sm:hidden mb-6">
                     {/* Mobile card layout */}
                     <div className="space-y-4 p-6">
-                      {payments.map((payment) => (
+                      {paginatedPayments().map((payment) => (
                         <div key={payment.id} className="bg-muted/30 rounded-lg p-4 space-y-3 border border-border/50">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 text-sm font-medium">
@@ -471,39 +745,68 @@ const TenantPayments = () => {
                               </span>
                             </div>
                           )}
+                          {/* Mobile Actions */}
+                          <div className="flex gap-2 pt-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewDetails(payment)}
+                              className="flex-1"
+                            >
+                              <Eye className="h-3 w-3 mr-1" />
+                              Details
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDownloadInvoice(payment)}
+                              disabled={isDownloading[payment.id] || isGenerating}
+                              className="flex-1"
+                            >
+                              {(isDownloading[payment.id] || isGenerating) ? (
+                                <Clock className="h-3 w-3 mr-1 animate-spin" />
+                              ) : (
+                                <Download className="h-3 w-3 mr-1" />
+                              )}
+                              Invoice
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Desktop table layout - Full Width */}
-                  <div className="hidden sm:block w-full">
+                  {/* Desktop table layout - Enhanced */}
+                  <div className="hidden sm:block w-full mb-6">
                     <Table className="w-full">
                       <TableHeader>
                         <TableRow className="hover:bg-transparent border-border/50">
+                          <TableHead className="font-semibold text-xs uppercase tracking-wider w-[100px]">Payment ID</TableHead>
                           <TableHead className="font-semibold text-xs uppercase tracking-wider w-[150px]">Date</TableHead>
                           <TableHead className="font-semibold text-xs uppercase tracking-wider w-[120px]">Amount</TableHead>
                           <TableHead className="font-semibold text-xs uppercase tracking-wider w-[100px]">Status</TableHead>
                           <TableHead className="font-semibold text-xs uppercase tracking-wider hidden md:table-cell w-[140px]">Method</TableHead>
-                          <TableHead className="font-semibold text-xs uppercase tracking-wider hidden lg:table-cell">Transaction ID</TableHead>
+                          <TableHead className="font-semibold text-xs uppercase tracking-wider hidden lg:table-cell w-[180px]">Transaction ID</TableHead>
+                          <TableHead className="font-semibold text-xs uppercase tracking-wider w-[100px]">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {payments.map((payment) => (
+                        {paginatedPayments().map((payment) => (
                           <TableRow key={payment.id} className="hover:bg-muted/30 transition-colors border-border/30">
+                            <TableCell className="font-medium py-4">
+                              <span className="font-mono text-sm">
+                                #{payment.id.toString().padStart(6, '0')}
+                              </span>
+                            </TableCell>
                             <TableCell className="font-medium py-4">
                               <div className="flex items-center gap-2">
                                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                  <div className="font-semibold">
-                                    {new Date(payment.createdAt).toLocaleDateString('en-IN', {
-                                      day: '2-digit',
-                                      month: 'short'
-                                    })}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {new Date(payment.createdAt).getFullYear()}
-                                  </div>
+                                <div className="font-semibold whitespace-nowrap">
+                                  {new Date(payment.createdAt).toLocaleDateString('en-IN', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric'
+                                  })}
                                 </div>
                               </div>
                             </TableCell>
@@ -538,24 +841,68 @@ const TenantPayments = () => {
                                 <span className="text-muted-foreground">-</span>
                               )}
                             </TableCell>
+                            <TableCell className="py-4">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleViewDetails(payment)}>
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleDownloadInvoice(payment)}
+                                    disabled={isDownloading[payment.id] || isGenerating}
+                                  >
+                                    {(isDownloading[payment.id] || isGenerating) ? (
+                                      <>
+                                        <Clock className="mr-2 h-4 w-4 animate-spin" />
+                                        Generating...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Download Invoice
+                                      </>
+                                    )}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   </div>
 
-                  {/* Show more payments option if there are many */}
-                  {payments.length > 5 && (
-                    <div className="p-6 border-t border-border/50 bg-muted/20">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-muted-foreground">
-                          Showing {Math.min(payments.length, 10)} of {payments.length} payments
-                        </p>
-                        {payments.length > 10 && (
-                          <Button variant="outline" size="sm">
-                            View All Payments
-                          </Button>
-                        )}
+                  {/* Pagination Section */}
+                  {totalPages > 1 && (
+                    <div className="border-t border-border/50 p-6 bg-muted/20">
+                      <div className="flex items-center justify-end">
+                        <Pagination className="mx-0 w-auto justify-end">
+                          <PaginationContent>
+                            <PaginationItem>
+                              <PaginationPrevious
+                                onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
+                                aria-disabled={currentPage === 1}
+                                className={currentPage === 1 ? "opacity-50 pointer-events-none" : "cursor-pointer"}
+                              />
+                            </PaginationItem>
+
+                            {renderPaginationItems()}
+
+                            <PaginationItem>
+                              <PaginationNext
+                                onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
+                                aria-disabled={currentPage === totalPages}
+                                className={currentPage === totalPages ? "opacity-50 pointer-events-none" : "cursor-pointer"}
+                              />
+                            </PaginationItem>
+                          </PaginationContent>
+                        </Pagination>
                       </div>
                     </div>
                   )}
@@ -563,101 +910,20 @@ const TenantPayments = () => {
               )}
             </CardContent>
           </Card>
-
-          {/* Payment Summary Sidebar - Compact right side (25% on large screens) */}
-          <div className="xl:col-span-1 space-y-6">
-            {/* Payment Summary Card */}
-            {stats && (
-              <Card className="shadow-lg">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-3">
-                    <TrendingUp className="h-6 w-6 text-primary" />
-                    Summary
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="text-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                      <div className="text-xl xl:text-2xl font-bold text-green-700 dark:text-green-300">
-                        {formatCurrency(stats.totalPaid)}
-                      </div>
-                      <p className="text-xs xl:text-sm text-green-600 dark:text-green-400">Total Paid This Year</p>
-                    </div>
-                    
-                    {stats.pendingAmount > 0 && (
-                      <div className="text-center p-4 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
-                        <div className="text-lg xl:text-xl font-bold text-orange-700 dark:text-orange-300">
-                          {formatCurrency(stats.pendingAmount)}
-                        </div>
-                        <p className="text-xs xl:text-sm text-orange-600 dark:text-orange-400">Pending Payment</p>
-                      </div>
-                    )}
-
-                    {/* Quick Actions */}
-                    <div className="pt-4 border-t border-border/50">
-                      <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                        <Star className="h-4 w-4" />
-                        Quick Actions
-                      </h4>
-                      <div className="space-y-2">
-                        {!stats.currentMonthPaid && roomDetails && (
-                          <Button 
-                            onClick={handlePayRent}
-                            disabled={isCreatingOrder}
-                            className="w-full"
-                            size="sm"
-                          >
-                            {isCreatingOrder ? (
-                              <>
-                                <Clock className="mr-2 h-4 w-4 animate-spin" />
-                                Processing...
-                              </>
-                            ) : (
-                              <>
-                                <IndianRupee className="mr-2 h-4 w-4" />
-                                Pay This Month's Rent
-                              </>
-                            )}
-                          </Button>
-                        )}
-                        {stats.currentMonthPaid && (
-                          <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                            <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mx-auto mb-1" />
-                            <p className="text-sm text-green-700 dark:text-green-300 font-medium">
-                              This month's rent is paid
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Payment Stats Card for smaller screens */}
-            <Card className="shadow-lg xl:hidden">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Payment Stats</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-muted/50 rounded-lg">
-                    <div className="text-lg font-bold">{payments.length}</div>
-                    <p className="text-xs text-muted-foreground">Total Payments</p>
-                  </div>
-                  <div className="text-center p-3 bg-muted/50 rounded-lg">
-                    <div className="text-lg font-bold">
-                      {payments.filter(p => p.status === 'Captured').length}
-                    </div>
-                    <p className="text-xs text-muted-foreground">Successful</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </div>
+
+      {/* Payment Details Modal */}
+      {selectedPayment && (
+        <PaymentDetailsModal
+          payment={selectedPayment}
+          isOpen={showPaymentDetails}
+          onClose={() => {
+            setShowPaymentDetails(false);
+            setSelectedPayment(null);
+          }}
+        />
+      )}
     </DashboardLayout>
   );
 };
