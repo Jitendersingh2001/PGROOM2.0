@@ -281,10 +281,6 @@ const TenantPaymentAnalytics: React.FC<TenantPaymentAnalyticsProps> = ({
               Detailed payment history and financial trends
             </p>
           </div>
-          <Badge variant="outline" className="flex items-center gap-2">
-            <Activity className="h-4 w-4" />
-            Live Data
-          </Badge>
         </div>
       </motion.div>
 
