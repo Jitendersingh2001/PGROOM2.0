@@ -12,6 +12,15 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 import AdminDashboard from "./pages/admin/Dashboard";
+import AdminSystemOverview from "./pages/admin/SystemOverview";
+import AdminUsers from "./pages/admin/Users";
+import AdminProperties from "./pages/admin/Properties";
+import AdminOwners from "./pages/admin/Owners";
+import AdminTenants from "./pages/admin/Tenants";
+import AdminPayments from "./pages/admin/Payments";
+import AdminSettings from "./pages/admin/Settings";
+import AdminDatabase from "./pages/admin/Database";
+import AdminSupport from "./pages/admin/Support";
 import OwnerDashboard from "./pages/owner/Dashboard";
 import OwnerProperties from "./pages/owner/Properties";
 import OwnerRooms from "./pages/owner/Rooms";
@@ -49,6 +58,51 @@ const App = () => (
                 <Route path="/admin/dashboard" element={
                   <ProtectedRoute allowedRoles={[1]}>
                     <AdminDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/overview" element={
+                  <ProtectedRoute allowedRoles={[1]}>
+                    <AdminSystemOverview />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/users" element={
+                  <ProtectedRoute allowedRoles={[1]}>
+                    <AdminUsers />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/properties" element={
+                  <ProtectedRoute allowedRoles={[1]}>
+                    <AdminProperties />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/owners" element={
+                  <ProtectedRoute allowedRoles={[1]}>
+                    <AdminOwners />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/tenants" element={
+                  <ProtectedRoute allowedRoles={[1]}>
+                    <AdminTenants />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/payments" element={
+                  <ProtectedRoute allowedRoles={[1]}>
+                    <AdminPayments />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/settings" element={
+                  <ProtectedRoute allowedRoles={[1]}>
+                    <AdminSettings />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/database" element={
+                  <ProtectedRoute allowedRoles={[1]}>
+                    <AdminDatabase />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/support" element={
+                  <ProtectedRoute allowedRoles={[1]}>
+                    <AdminSupport />
                   </ProtectedRoute>
                 } />
 
