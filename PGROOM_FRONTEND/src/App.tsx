@@ -12,7 +12,6 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 import AdminDashboard from "./pages/admin/Dashboard";
-import AdminSystemOverview from "./pages/admin/SystemOverview";
 import AdminUsers from "./pages/admin/Users";
 import AdminProperties from "./pages/admin/Properties";
 import AdminOwners from "./pages/admin/Owners";
@@ -58,11 +57,6 @@ const App = () => (
                 <Route path="/admin/dashboard" element={
                   <ProtectedRoute allowedRoles={[1]}>
                     <AdminDashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/overview" element={
-                  <ProtectedRoute allowedRoles={[1]}>
-                    <AdminSystemOverview />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/users" element={

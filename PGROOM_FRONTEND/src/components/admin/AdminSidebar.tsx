@@ -6,7 +6,6 @@ import {
   Users,
   Settings,
   CreditCard,
-  BarChart3,
   Shield,
   User,
   HelpCircle,
@@ -39,11 +38,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed = false }) => {
       name: 'Dashboard',
       path: '/admin/dashboard',
       icon: <LayoutDashboard className="w-5 h-5" />,
-    },
-    {
-      name: 'System Overview',
-      path: '/admin/overview',
-      icon: <BarChart3 className="w-5 h-5" />,
     },
     {
       name: 'Properties',
@@ -99,7 +93,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed = false }) => {
       title={item.name}
       className={({ isActive }) =>
         cn(
-          'flex items-center text-sm font-medium rounded-md transition-colors',
+          'flex items-center text-sm font-medium rounded-md transition-colors duration-200',
           'group hover:bg-gray-100 dark:hover:bg-gray-800',
           collapsed ? 'justify-center p-3' : 'px-3 py-2',
           isActive

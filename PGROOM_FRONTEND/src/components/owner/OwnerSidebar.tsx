@@ -7,7 +7,8 @@ import {
   CreditCard,
   HelpCircle,
   ChevronRight,
-  User
+  User,
+  Building
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -75,48 +76,60 @@ const OwnerSidebar: React.FC<OwnerSidebarProps> = ({ collapsed = false }) => {
       title={item.name}
       className={({ isActive }) =>
         cn(
-          'flex items-center text-sm font-medium rounded-md transition-colors',
+          'flex items-center text-sm font-medium rounded-md transition-colors duration-200',
           'group hover:bg-gray-100 dark:hover:bg-gray-800',
-          collapsed ? 'justify-center h-10 w-10 mx-auto my-1' : 'justify-between px-3 py-2',
+          collapsed ? 'justify-center p-3' : 'px-3 py-2',
           isActive
-            ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary'
+            ? 'bg-primary/10 text-primary border-r-2 border-primary'
             : 'text-gray-700 dark:text-gray-300'
         )
       }
     >
-      <div className={cn("flex items-center", collapsed ? "justify-center" : "")}>
-        <span className={cn(
-          "text-gray-500 dark:text-gray-400 group-hover:text-primary dark:group-hover:text-primary",
-          collapsed ? "" : "mr-3"
-        )}>
-          {item.icon}
-        </span>
-        {!collapsed && (
-          <span>{item.name}</span>
-        )}
-        {!collapsed && item.isNew && (
-          <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/20 text-xs">
-            New
-          </Badge>
-        )}
+      <div className={cn("flex-shrink-0", !collapsed && "mr-3")}>
+        {item.icon}
       </div>
-      {!collapsed && item.badge && (
-        <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-0">
-          {item.badge}
-        </Badge>
+      {!collapsed && (
+        <div className="flex items-center justify-between w-full">
+          <span className="truncate">{item.name}</span>
+          {item.badge && (
+            <Badge variant="secondary" className="ml-2 text-xs">
+              {item.badge}
+            </Badge>
+          )}
+          {item.isNew && (
+            <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/20 text-xs">
+              New
+            </Badge>
+          )}
+        </div>
       )}
     </NavLink>
   );
 
   return (
-    <div className={cn(
-      "h-full flex flex-col overflow-y-auto",
-      collapsed ? "py-4" : "py-6"
-    )}>
+    <div className="h-full flex flex-col bg-white dark:bg-[hsl(var(--background-light-dark))] border-r border-gray-200 dark:border-gray-800">
+      {/* Header */}
+      {!collapsed && (
+        <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Building className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                Owner Panel
+              </h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Property Management
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Navigation */}
       {!collapsed && (
-        <div className="px-3 mb-2">
+        <div className="px-3 mb-2 mt-6">
           <h3 className="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
             Main
           </h3>
@@ -144,6 +157,23 @@ const OwnerSidebar: React.FC<OwnerSidebarProps> = ({ collapsed = false }) => {
       )}>
         {secondaryNavItems.map(renderNavItem)}
       </nav>
+
+      {/* Footer - Owner Badge */}
+      {!collapsed && (
+        <div className="mt-auto p-4 border-t border-gray-200 dark:border-gray-800">
+          <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 rounded-lg">
+            <Building className="h-4 w-4 text-primary" />
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                Property Owner
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Manage Properties
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
