@@ -103,6 +103,30 @@ class PropertyController extends Controller {
       this.sendErrorResponse(res, error);
     }
   }
+
+  /**
+   * function to get all properties for admin (includes owner info, room counts, revenue)
+   */
+  getAllPropertiesForAdmin = async (req, res) => {
+    try {
+      const result = await this.propertyService.getAllPropertiesForAdmin(req);
+      this.sendResponse(res, result, constMessage.FETCH_SUCCESSFUL.replace(":name", "Properties"), http.OK);
+    } catch (error) {
+      this.sendErrorResponse(res, error);
+    }
+  };
+
+  /**
+   * function to get property statistics for admin dashboard
+   */
+  getPropertyStatistics = async (req, res) => {
+    try {
+      const result = await this.propertyService.getPropertyStatistics(req);
+      this.sendResponse(res, result, constMessage.FETCH_SUCCESSFUL.replace(":name", "Property Statistics"), http.OK);
+    } catch (error) {
+      this.sendErrorResponse(res, error);
+    }
+  };
 }
 
 module.exports = new PropertyController(new propertyService());

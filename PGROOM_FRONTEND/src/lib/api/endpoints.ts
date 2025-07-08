@@ -30,6 +30,10 @@ export const PROPERTY = {
   UPDATE: '/pgrooms/v1/property', // PUT endpoint for property update
   DELETE: (id: string | number) => `/pgrooms/v1/property/${id}`,
   UPDATE_STATUS: '/pgrooms/v1/propertyStatus', // PUT endpoint for property status update
+
+  // Admin endpoints
+  ADMIN_LIST: '/pgrooms/v1/admin/properties',
+  ADMIN_STATISTICS: '/pgrooms/v1/admin/property-statistics',
 };
 
 // Location endpoints

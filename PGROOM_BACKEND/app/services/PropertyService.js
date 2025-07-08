@@ -305,6 +305,91 @@ class PropertyService {
       throw error;
     }
   }
+
+  /**
+   * Function to get all properties for admin with enhanced data
+   */
+  async getAllPropertiesForAdmin(req) {
+    try {
+      const page = parseInt(req?.body?.page, 10) || 1;
+      const limit = parseInt(req?.body?.limit, 10) || 12;
+      const cityId = parseInt(req?.body?.city, 10) || null;
+      const stateId = parseInt(req?.body?.state, 10) || null;
+      const searchInput = req?.body?.search || null;
+      const propertyStatus = req?.body?.status || null;
+
+      // Fetch all properties with enhanced admin data
+      const paginatedResult = await this.propertyRepository.getAllPropertiesForAdmin(
+        page, limit, cityId, stateId, searchInput, propertyStatus
+      );
+
+      // Extract the paginated properties data
+      const properties = paginatedResult.data;
+
+      // Extract all property images that need signed URLs
+      const propertyImages = properties
+        .filter((property) => property.propertyImage)
+        .map((property) => property.propertyImage);
+
+      // Batch generate signed URLs for all property images
+      const signedUrls = await Promise.all(
+        propertyImages.map((image) => getFileFromS3(image, constant.S3_EXPIRY))
+      );
+
+      // Create a map of propertyImage to signed URL for quick lookup
+      const imageSignedUrlMap = new Map(
+        propertyImages.map((image, index) => [image, signedUrls[index]])
+      );
+
+      // Transform the properties array into the desired admin response format
+      const responseData = properties.map((property) => {
+        // Calculate monthly revenue based on rooms with active tenants
+        const monthlyRevenue = property.rooms?.reduce((total, room) => {
+          return total + (room._count?.Tenant > 0 ? (parseFloat(room.rent) || 0) : 0);
+        }, 0) || 0;
+
+        return {
+          id: property.id,
+          name: property.propertyName,
+          address: property.propertyAddress,
+          city: property.city.cityName,
+          state: property.state.stateName,
+          ownerName: `${property.user.firstName} ${property.user.lastName}`,
+          ownerEmail: property.user.email,
+          ownerContact: property.user.mobileNo,
+          totalRooms: property._count?.rooms || 0,
+          status: property.status,
+          monthlyRevenue: monthlyRevenue,
+          createdDate: property.createdAt,
+          lastUpdated: property.updatedAt,
+          propertyImage: property.propertyImage
+            ? imageSignedUrlMap.get(property.propertyImage)
+            : null,
+          propertyContact: property.propertyContact,
+        };
+      });
+
+      // Return the transformed data along with pagination metadata
+      return {
+        data: responseData,
+        meta: paginatedResult.meta,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Function to get property statistics for admin dashboard
+   */
+  async getPropertyStatistics(req) {
+    try {
+      const stats = await this.propertyRepository.getPropertyStatistics();
+      return stats;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = PropertyService;

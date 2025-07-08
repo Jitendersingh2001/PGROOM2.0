@@ -18,7 +18,7 @@ class tenantService {
         integerArrayFields: ["userIds"],
       });
 
-      return await Promise.all(
+      const result = await Promise.all(
         parsedData.userIds.map((userId) =>
           this.repository.createOrUpdateTenant(
             userId,
@@ -27,6 +27,11 @@ class tenantService {
           )
         )
       );
+
+      // Update room status after creating tenants
+      await this.#updateRoomStatus(parsedData.roomId);
+      
+      return result;
     } catch (error) {
       throw error;
     }
@@ -61,6 +66,9 @@ class tenantService {
 
       // Handle creations and restorations of tenants
       await this.#handleCreationsAndRestorations(propertyId, roomId, userIds);
+
+      // Update room status based on current tenant assignments
+      await this.#updateRoomStatus(roomId);
 
       return true;
     } catch (error) {
@@ -149,7 +157,20 @@ class tenantService {
    */
   async deleteTenant(id) {
     try {
-      return await this.repository.updateTenant(id, constant.DELETED);
+      // Get tenant details before deletion to update room status
+      const tenant = await this.repository.dbClient.tenant.findUnique({
+        where: { id },
+        select: { roomId: true }
+      });
+
+      const result = await this.repository.updateTenant(id, constant.DELETED);
+      
+      // Update room status after tenant deletion
+      if (tenant?.roomId) {
+        await this.#updateRoomStatus(tenant.roomId);
+      }
+      
+      return result;
     } catch (error) {
       throw error;
     }
@@ -220,6 +241,46 @@ class tenantService {
       };
     } catch (error) {
       throw error;
+    }
+  }
+
+  /*
+   * Update room status based on current tenant assignments
+   */
+  async #updateRoomStatus(roomId) {
+    try {
+      // Get the room details including current active tenants
+      const room = await this.repository.dbClient.rooms.findUnique({
+        where: { id: roomId },
+        include: {
+          _count: {
+            select: {
+              Tenant: {
+                where: {
+                  status: constant.ACTIVE
+                }
+              }
+            }
+          }
+        }
+      });
+
+      if (!room) return;
+
+      // Determine new status based on tenant assignments
+      const hasActiveTenants = room._count.Tenant > 0;
+      const newStatus = hasActiveTenants ? constant.ROOM_OCCUPIED : constant.ROOM_AVAILABLE;
+
+      // Only update if status has changed
+      if (room.status !== newStatus) {
+        await this.repository.dbClient.rooms.update({
+          where: { id: roomId },
+          data: { status: newStatus }
+        });
+      }
+    } catch (error) {
+      // Log error but don't throw to avoid breaking tenant operations
+      console.error('Error updating room status:', error);
     }
   }
 }

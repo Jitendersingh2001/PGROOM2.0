@@ -7,7 +7,9 @@ import {
   PropertyUpdateData,
   PropertyStatusUpdateData,
   PropertyPaginationParams,
-  PropertyListResponse
+  PropertyListResponse,
+  AdminPropertyListResponse,
+  PropertyStatistics
 } from '@/lib/types/property';
 import { ApiResponse } from '@/lib/types/api';
 
@@ -60,7 +62,7 @@ export const propertyService = {
       formData.append('city', String(data.city));
 
       // Append image file if it exists
-      if (data.images) {
+      if (data.images && typeof data.images !== 'string') {
         console.log('Appending image file:', data.images.name);
         formData.append('images', data.images);
       }
@@ -239,5 +241,32 @@ export const propertyService = {
         statusCode: 500
       } as ApiResponse<Property>;
     }
+  },
+
+  /**
+   * Admin: Get a paginated list of properties with enhanced data
+   * @param params - Pagination and filter parameters
+   */
+  getAdminProperties: async (params: PropertyPaginationParams): Promise<ApiResponse<AdminPropertyListResponse>> => {
+    const { page, limit, filters } = params;
+
+    // Create payload for POST request
+    const payload = {
+      page,
+      limit,
+      ...(filters?.state && { state: filters.state }),
+      ...(filters?.city && { city: filters.city }),
+      ...(filters?.status && { status: filters.status }),
+      ...(filters?.search && { search: filters.search }),
+    };
+
+    return apiService.post(endpoints.PROPERTY.ADMIN_LIST, payload);
+  },
+
+  /**
+   * Admin: Get property statistics for dashboard
+   */
+  getPropertyStatistics: async (): Promise<ApiResponse<PropertyStatistics>> => {
+    return apiService.get(endpoints.PROPERTY.ADMIN_STATISTICS);
   }
 };

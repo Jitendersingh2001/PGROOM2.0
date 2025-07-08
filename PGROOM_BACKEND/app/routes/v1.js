@@ -40,6 +40,12 @@ router.put(
 );
 
 /**
+ * Admin Property Routes
+ */
+router.post("/admin/properties", controller.PropertyController.getAllPropertiesForAdmin);
+router.get("/admin/property-statistics", controller.PropertyController.getPropertyStatistics);
+
+/**
  * ROOM ROUTES
  */
 

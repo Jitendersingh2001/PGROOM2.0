@@ -82,3 +82,48 @@ export interface PropertyListResponse {
     totalPages: number;
   };
 }
+
+/**
+ * Admin Property interface
+ * Represents a property with additional admin data (owner info, room counts, revenue)
+ */
+export interface AdminProperty {
+  id: number;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  ownerName: string;
+  ownerEmail: string;
+  ownerContact?: string;
+  totalRooms: number;
+  status: 'Active' | 'Inactive' | 'Maintenance' | 'Deleted';
+  monthlyRevenue: number;
+  createdDate: string;
+  lastUpdated: string;
+  propertyImage?: string;
+  propertyContact?: string;
+}
+
+/**
+ * Admin Property list response
+ */
+export interface AdminPropertyListResponse {
+  data: AdminProperty[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+/**
+ * Property statistics for admin dashboard
+ */
+export interface PropertyStatistics {
+  totalProperties: number;
+  activeProperties: number;
+  totalRooms: number;
+  monthlyRevenue: number;
+}
