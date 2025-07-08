@@ -27,6 +27,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { AdminProperty } from '@/lib/types/property';
+import ContactOwnerModal from '@/components/admin/ContactOwnerModal';
 
 interface AdminPropertyCardProps {
   property: AdminProperty;
@@ -57,6 +58,7 @@ const AdminPropertyCard: React.FC<AdminPropertyCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
+  const [isContactOwnerModalOpen, setIsContactOwnerModalOpen] = useState(false);
 
   // Handle image error event
   const handleImageError = () => {
@@ -74,11 +76,14 @@ const AdminPropertyCard: React.FC<AdminPropertyCardProps> = ({
     navigate(`/admin/properties/${property.id}`);
   };
 
-  // Handle owner details click
-  const handleOwnerDetails = (e: React.MouseEvent) => {
+  // Handle contact owner click
+  const handleContactOwner = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/admin/owners/${property.ownerEmail}`);
+    setIsContactOwnerModalOpen(true);
   };
+
+  // Check if contact information is available
+  const hasContactInfo = property.ownerContact || property.ownerEmail;
 
   // Mock property image (since admin properties may not have images)
   const defaultImageUrl = "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80";
@@ -190,8 +195,13 @@ const AdminPropertyCard: React.FC<AdminPropertyCardProps> = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <div 
-                  className="flex items-center justify-between text-sm group/item hover:bg-muted/40 p-1.5 rounded-md transition-colors duration-300 cursor-pointer"
-                  onClick={handleOwnerDetails}
+                  className={cn(
+                    "flex items-center justify-between text-sm group/item p-1.5 rounded-md transition-colors duration-300",
+                    hasContactInfo 
+                      ? "hover:bg-muted/40 cursor-pointer" 
+                      : "cursor-default opacity-75"
+                  )}
+                  onClick={hasContactInfo ? handleContactOwner : undefined}
                 >
                   <div className="text-muted-foreground flex items-center gap-2">
                     <div className="bg-primary/10 p-1.5 rounded-md group-hover/item:bg-primary/20 transition-colors duration-300">
@@ -203,7 +213,7 @@ const AdminPropertyCard: React.FC<AdminPropertyCardProps> = ({
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Click to view owner details</p>
+                <p>{hasContactInfo ? "Click to contact owner" : "Owner information (no contact details)"}</p>
                 <p className="text-xs text-muted-foreground">{property.ownerEmail}</p>
               </TooltipContent>
             </Tooltip>
@@ -254,19 +264,34 @@ const AdminPropertyCard: React.FC<AdminPropertyCardProps> = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="px-3 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20"
-                  onClick={handleOwnerDetails}
+                  className={cn(
+                    "px-3 transition-all duration-300",
+                    hasContactInfo 
+                      ? "border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20" 
+                      : "border-gray-200 text-gray-400 cursor-not-allowed dark:border-gray-800 dark:text-gray-600"
+                  )}
+                  onClick={hasContactInfo ? handleContactOwner : undefined}
+                  disabled={!hasContactInfo}
                 >
-                  <Mail className="w-4 h-4" />
+                  <Phone className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Contact Owner</p>
+                <p>{hasContactInfo ? "Contact Owner" : "No contact information available"}</p>
               </TooltipContent>
             </Tooltip>
           </div>
         </CardFooter>
       </Card>
+
+      {/* Contact Owner Modal */}
+      {isContactOwnerModalOpen && (
+        <ContactOwnerModal
+          property={property}
+          isOpen={isContactOwnerModalOpen}
+          onClose={() => setIsContactOwnerModalOpen(false)}
+        />
+      )}
     </TooltipProvider>
   );
 };
