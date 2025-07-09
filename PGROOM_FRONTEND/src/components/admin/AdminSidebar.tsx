@@ -3,7 +3,6 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   Home,
-  Users,
   Settings,
   CreditCard,
   Shield,
@@ -43,11 +42,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed = false }) => {
       name: 'Properties',
       path: '/admin/properties',
       icon: <Building2 className="w-5 h-5" />,
-    },
-    {
-      name: 'Users',
-      path: '/admin/users',
-      icon: <Users className="w-5 h-5" />,
     },
     {
       name: 'Owners',
