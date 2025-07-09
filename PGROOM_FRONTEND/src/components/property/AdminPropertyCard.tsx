@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/tooltip';
 import { AdminProperty } from '@/lib/types/property';
 import ContactOwnerModal from '@/components/admin/ContactOwnerModal';
+import AdminPropertyDetailsModal from '@/components/admin/AdminPropertyDetailsModal';
 
 interface AdminPropertyCardProps {
   property: AdminProperty;
@@ -59,6 +60,7 @@ const AdminPropertyCard: React.FC<AdminPropertyCardProps> = ({
   const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
   const [isContactOwnerModalOpen, setIsContactOwnerModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   // Handle image error event
   const handleImageError = () => {
@@ -73,7 +75,7 @@ const AdminPropertyCard: React.FC<AdminPropertyCardProps> = ({
 
   // Handle view details click
   const handleViewDetails = () => {
-    navigate(`/admin/properties/${property.id}`);
+    setIsDetailsModalOpen(true);
   };
 
   // Handle contact owner click
@@ -273,6 +275,15 @@ const AdminPropertyCard: React.FC<AdminPropertyCardProps> = ({
           property={property}
           isOpen={isContactOwnerModalOpen}
           onClose={() => setIsContactOwnerModalOpen(false)}
+        />
+      )}
+
+      {/* Property Details Modal */}
+      {isDetailsModalOpen && (
+        <AdminPropertyDetailsModal
+          property={property}
+          isOpen={isDetailsModalOpen}
+          onClose={() => setIsDetailsModalOpen(false)}
         />
       )}
     </TooltipProvider>
