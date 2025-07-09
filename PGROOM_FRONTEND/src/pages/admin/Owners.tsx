@@ -1,6 +1,27 @@
 // filepath: /src/pages/admin/Owners.tsx
-import React, { useState, useMemo } from 'react';
-import { Search, Filter, Plus, Building2, DollarSign, Users, Eye, Edit, Trash2, MoreHorizontal, Phone, Mail, MapPin } from 'lucide-react';
+import React, { useState } from 'react';
+import { 
+  Search, 
+  Filter, 
+  Plus, 
+  Building2, 
+  DollarSign, 
+  Users, 
+  Eye, 
+  Edit, 
+  Trash2, 
+  MoreHorizontal, 
+  Phone, 
+  Mail, 
+  MapPin,
+  TrendingUp,
+  Calendar,
+  Star,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Activity
+} from 'lucide-react';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import AdminNavbar from '@/components/admin/AdminNavbar';
 import AdminSidebar from '@/components/admin/AdminSidebar';
@@ -23,120 +44,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { useOwners } from '@/hooks/useOwners';
+import { Owner } from '@/types/admin';
 
-// Mock data for owners
-const mockOwners = [
-  {
-    id: 1,
-    name: 'Rajesh Kumar',
-    email: 'rajesh.kumar@email.com',
-    phone: '+91 9876543210',
-    location: 'Mumbai, Maharashtra',
-    joinDate: '2023-01-15',
-    status: 'active',
-    propertiesCount: 3,
-    totalRooms: 45,
-    occupiedRooms: 38,
-    monthlyRevenue: 125000,
-    avatar: null,
-    verified: true,
-    rating: 4.8,
-    properties: [
-      { name: 'Krishna PG', location: 'Andheri West', rooms: 20 },
-      { name: 'Shree PG', location: 'Bandra East', rooms: 15 },
-      { name: 'Modern PG', location: 'Powai', rooms: 10 }
-    ]
-  },
-  {
-    id: 2,
-    name: 'Priya Sharma',
-    email: 'priya.sharma@email.com',
-    phone: '+91 9876543211',
-    location: 'Pune, Maharashtra',
-    joinDate: '2023-02-20',
-    status: 'active',
-    propertiesCount: 2,
-    totalRooms: 30,
-    occupiedRooms: 28,
-    monthlyRevenue: 95000,
-    avatar: null,
-    verified: true,
-    rating: 4.9,
-    properties: [
-      { name: 'Comfort PG', location: 'Kothrud', rooms: 18 },
-      { name: 'Elite PG', location: 'Hinjewadi', rooms: 12 }
-    ]
-  },
-  {
-    id: 3,
-    name: 'Amit Patel',
-    email: 'amit.patel@email.com',
-    phone: '+91 9876543212',
-    location: 'Ahmedabad, Gujarat',
-    joinDate: '2023-03-10',
-    status: 'pending',
-    propertiesCount: 1,
-    totalRooms: 25,
-    occupiedRooms: 15,
-    monthlyRevenue: 42000,
-    avatar: null,
-    verified: false,
-    rating: 4.2,
-    properties: [
-      { name: 'Budget PG', location: 'Satellite', rooms: 25 }
-    ]
-  },
-  {
-    id: 4,
-    name: 'Sunita Reddy',
-    email: 'sunita.reddy@email.com',
-    phone: '+91 9876543213',
-    location: 'Hyderabad, Telangana',
-    joinDate: '2023-04-05',
-    status: 'suspended',
-    propertiesCount: 2,
-    totalRooms: 35,
-    occupiedRooms: 20,
-    monthlyRevenue: 68000,
-    avatar: null,
-    verified: true,
-    rating: 3.8,
-    properties: [
-      { name: 'Tech PG', location: 'Gachibowli', rooms: 20 },
-      { name: 'Metro PG', location: 'Kukatpally', rooms: 15 }
-    ]
-  }
-];
+// View toggle options
+type ViewMode = 'grid' | 'table';
 
 /**
- * AdminOwners - Comprehensive owners management page for administrators
- * Features: Owner listing, filtering, status management, detailed view
+ * AdminOwners - Enhanced owners management page for administrators
+ * Features: Owner listing, table/grid view toggle, advanced filtering, status management
  */
 const AdminOwners: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [locationFilter, setLocationFilter] = useState<string>('all');
-
-  // Filter owners based on search and filters
-  const filteredOwners = useMemo(() => {
-    return mockOwners.filter(owner => {
-      const matchesSearch = owner.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           owner.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           owner.phone.includes(searchTerm);
-      
-      const matchesStatus = statusFilter === 'all' || owner.status === statusFilter;
-      
-      const matchesLocation = locationFilter === 'all' || 
-                             owner.location.toLowerCase().includes(locationFilter.toLowerCase());
-
-      return matchesSearch && matchesStatus && matchesLocation;
-    });
-  }, [searchTerm, statusFilter, locationFilter]);
-
-  // Get unique locations for filter
-  const uniqueLocations = Array.from(new Set(mockOwners.map(owner => 
-    owner.location.split(',')[1]?.trim() || owner.location
-  )));
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
+  
+  const {
+    owners,
+    stats,
+    uniqueLocations,
+    filters,
+    loading,
+    error,
+    updateFilters,
+    clearFilters,
+    suspendOwner,
+    activateOwner,
+    deleteOwner
+  } = useOwners();
 
   // Status badge styling
   const getStatusBadge = (status: string) => {
@@ -159,15 +100,39 @@ const AdminOwners: React.FC = () => {
   };
 
   // Generate initials for avatar
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName[0]}${lastName[0]}`.toUpperCase();
   };
 
-  // Summary stats
-  const totalOwners = mockOwners.length;
-  const activeOwners = mockOwners.filter(o => o.status === 'active').length;
-  const totalProperties = mockOwners.reduce((sum, owner) => sum + owner.propertiesCount, 0);
-  const totalRevenue = mockOwners.reduce((sum, owner) => sum + owner.monthlyRevenue, 0);
+  // Get verification status
+  const getVerificationStatus = (documents: { aadhar: boolean; pan: boolean; agreement: boolean }) => {
+    const total = Object.keys(documents).length;
+    const verified = Object.values(documents).filter(Boolean).length;
+    return { verified, total, percentage: Math.round((verified / total) * 100) };
+  };
+
+  const handleSort = (column: string) => {
+    const newSortOrder = filters.sortBy === column && filters.sortOrder === 'asc' ? 'desc' : 'asc';
+    updateFilters({ sortBy: column, sortOrder: newSortOrder });
+  };
+
+  const handleOwnerAction = async (action: 'suspend' | 'activate' | 'delete', ownerId: number) => {
+    try {
+      switch (action) {
+        case 'suspend':
+          await suspendOwner(ownerId);
+          break;
+        case 'activate':
+          await activateOwner(ownerId);
+          break;
+        case 'delete':
+          await deleteOwner(ownerId);
+          break;
+      }
+    } catch (error) {
+      console.error(`Failed to ${action} owner:`, error);
+    }
+  };
 
   return (
     <DashboardLayout navbar={<AdminNavbar />} sidebar={<AdminSidebar />}>
@@ -176,29 +141,45 @@ const AdminOwners: React.FC = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Owners Management
+              Owner Management
             </h1>
             <p className="text-muted-foreground mt-1">
-              Manage property owners and their portfolios
+              Manage property owners, track performance, and monitor portfolios
             </p>
           </div>
-          <Button className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Add New Owner
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={viewMode === 'table' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('table')}
+            >
+              Table View
+            </Button>
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+            >
+              Grid View
+            </Button>
+            <Button className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Add Owner
+            </Button>
+          </div>
         </div>
 
-        {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Enhanced Summary Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Owners</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalOwners}</div>
+              <div className="text-2xl font-bold">{stats.totalOwners}</div>
               <p className="text-xs text-muted-foreground">
-                <span className="text-green-600">{activeOwners}</span> active
+                <span className="text-green-600">{stats.activeOwners}</span> active
               </p>
             </CardContent>
           </Card>
@@ -209,7 +190,7 @@ const AdminOwners: React.FC = () => {
               <Building2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalProperties}</div>
+              <div className="text-2xl font-bold">{stats.totalProperties}</div>
               <p className="text-xs text-muted-foreground">
                 Across all owners
               </p>
@@ -222,7 +203,7 @@ const AdminOwners: React.FC = () => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₹{(totalRevenue / 100000).toFixed(1)}L</div>
+              <div className="text-2xl font-bold">₹{(stats.totalRevenue / 100000).toFixed(1)}L</div>
               <p className="text-xs text-muted-foreground">
                 Total platform revenue
               </p>
@@ -232,39 +213,48 @@ const AdminOwners: React.FC = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Avg Occupancy</CardTitle>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {Math.round(
-                  mockOwners.reduce((sum, owner) => sum + getOccupancyRate(owner.occupiedRooms, owner.totalRooms), 0) / mockOwners.length
-                )}%
-              </div>
+              <div className="text-2xl font-bold">{stats.averageOccupancy}%</div>
               <p className="text-xs text-muted-foreground">
                 Platform average
               </p>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Verification Rate</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.verificationRate}%</div>
+              <p className="text-xs text-muted-foreground">
+                Owners verified
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Filters */}
+        {/* Enhanced Filters */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col lg:flex-row gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   placeholder="Search owners by name, email, or phone..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={filters.searchTerm}
+                  onChange={(e) => updateFilters({ searchTerm: e.target.value })}
                   className="pl-10"
                 />
               </div>
               
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-[180px]">
+              <Select value={filters.statusFilter} onValueChange={(value) => updateFilters({ statusFilter: value })}>
+                <SelectTrigger className="w-full lg:w-[140px]">
                   <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Filter by status" />
+                  <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
@@ -274,10 +264,10 @@ const AdminOwners: React.FC = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={locationFilter} onValueChange={setLocationFilter}>
-                <SelectTrigger className="w-full sm:w-[180px]">
+              <Select value={filters.locationFilter} onValueChange={(value) => updateFilters({ locationFilter: value })}>
+                <SelectTrigger className="w-full lg:w-[140px]">
                   <MapPin className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Filter by location" />
+                  <SelectValue placeholder="Location" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Locations</SelectItem>
@@ -288,141 +278,356 @@ const AdminOwners: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
+
+              <Select value={filters.sortBy} onValueChange={(value) => updateFilters({ sortBy: value })}>
+                <SelectTrigger className="w-full lg:w-[140px]">
+                  <Activity className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="joinDate">Join Date</SelectItem>
+                  <SelectItem value="revenue">Revenue</SelectItem>
+                  <SelectItem value="properties">Properties</SelectItem>
+                  <SelectItem value="rating">Rating</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
 
-        {/* Owners Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredOwners.map((owner) => (
-            <Card key={owner.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={owner.avatar || undefined} />
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        {getInitials(owner.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{owner.name}</h3>
-                        {owner.verified && (
-                          <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                            Verified
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                        <span className="flex items-center gap-1">
-                          <Mail className="w-3 h-3" />
-                          {owner.email}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Phone className="w-3 h-3" />
-                          {owner.phone}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    {getStatusBadge(owner.status)}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="w-4 h-4 mr-2" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit Owner
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Suspend Owner
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              </CardHeader>
+        {/* Loading State */}
+        {loading && (
+          <Card>
+            <CardContent className="py-16 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading owners...</p>
+            </CardContent>
+          </Card>
+        )}
 
-              <CardContent className="space-y-4">
-                {/* Location and Stats */}
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <MapPin className="w-3 h-3" />
-                    {owner.location}
-                  </div>
-                  <div className="text-muted-foreground">
-                    Joined {new Date(owner.joinDate).toLocaleDateString()}
-                  </div>
-                </div>
+        {/* Error State */}
+        {error && (
+          <Card>
+            <CardContent className="py-8 text-center">
+              <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-4" />
+              <p className="text-red-600 mb-4">{error}</p>
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                Retry
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
-                {/* Portfolio Stats */}
-                <div className="grid grid-cols-3 gap-4 p-3 bg-muted/50 rounded-lg">
-                  <div className="text-center">
-                    <div className="text-lg font-semibold">{owner.propertiesCount}</div>
-                    <div className="text-xs text-muted-foreground">Properties</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-semibold">{owner.totalRooms}</div>
-                    <div className="text-xs text-muted-foreground">Total Rooms</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-semibold">
-                      {getOccupancyRate(owner.occupiedRooms, owner.totalRooms)}%
-                    </div>
-                    <div className="text-xs text-muted-foreground">Occupancy</div>
-                  </div>
-                </div>
-
-                {/* Revenue and Rating */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm text-muted-foreground">Monthly Revenue</div>
-                    <div className="text-lg font-semibold text-green-600">
-                      ₹{(owner.monthlyRevenue / 1000).toFixed(0)}K
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-muted-foreground">Rating</div>
-                    <div className="text-lg font-semibold">{owner.rating}/5.0</div>
-                  </div>
-                </div>
-
-                {/* Properties List */}
-                <div>
-                  <div className="text-sm font-medium mb-2">Properties</div>
-                  <div className="space-y-1">
-                    {owner.properties.map((property, idx) => (
-                      <div key={idx} className="flex items-center justify-between text-xs p-2 bg-background rounded border">
-                        <div>
-                          <span className="font-medium">{property.name}</span>
-                          <span className="text-muted-foreground ml-2">{property.location}</span>
+        {/* Content based on view mode */}
+        {!loading && !error && (
+          <>
+            {viewMode === 'table' ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Owner Directory</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="cursor-pointer" onClick={() => handleSort('name')}>
+                          Owner
+                          {filters.sortBy === 'name' && (
+                            <span className="ml-1">{filters.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </TableHead>
+                        <TableHead>Contact</TableHead>
+                        <TableHead>Properties</TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => handleSort('revenue')}>
+                          Revenue
+                          {filters.sortBy === 'revenue' && (
+                            <span className="ml-1">{filters.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </TableHead>
+                        <TableHead>Occupancy</TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => handleSort('rating')}>
+                          Rating
+                          {filters.sortBy === 'rating' && (
+                            <span className="ml-1">{filters.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {owners.map((owner) => (
+                        <TableRow key={owner.id}>
+                          <TableCell>
+                            <div className="flex items-center space-x-3">
+                              <Avatar className="h-10 w-10">
+                                <AvatarImage src={undefined} />
+                                <AvatarFallback className="bg-primary text-primary-foreground">
+                                  {getInitials(owner.firstName, owner.lastName)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-medium">{owner.firstName} {owner.lastName}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {owner.verified && (
+                                    <CheckCircle className="inline w-3 h-3 mr-1 text-green-500" />
+                                  )}
+                                  Joined {new Date(owner.joinDate).toLocaleDateString()}
+                                </div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <div className="flex items-center gap-1">
+                                <Mail className="w-3 h-3" />
+                                {owner.email}
+                              </div>
+                              <div className="flex items-center gap-1 mt-1">
+                                <Phone className="w-3 h-3" />
+                                {owner.mobileNo}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <div className="font-medium">{owner.totalProperties} Properties</div>
+                              <div className="text-muted-foreground">{owner.totalRooms} total rooms</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <div className="font-medium text-green-600">₹{(owner.monthlyRevenue / 1000).toFixed(0)}K</div>
+                              <div className="text-muted-foreground">per month</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <div className="font-medium">{getOccupancyRate(owner.occupiedRooms, owner.totalRooms)}%</div>
+                              <div className="text-muted-foreground">
+                                {owner.occupiedRooms}/{owner.totalRooms} occupied
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                              <span className="text-sm font-medium">{owner.rating}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {getStatusBadge(owner.status)}
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem>
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Edit Owner
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                {owner.status === 'active' ? (
+                                  <DropdownMenuItem 
+                                    className="text-red-600"
+                                    onClick={() => handleOwnerAction('suspend', owner.id)}
+                                  >
+                                    <XCircle className="w-4 h-4 mr-2" />
+                                    Suspend Owner
+                                  </DropdownMenuItem>
+                                ) : (
+                                  <DropdownMenuItem 
+                                    className="text-green-600"
+                                    onClick={() => handleOwnerAction('activate', owner.id)}
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Activate Owner
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            ) : (
+              // Grid View
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {owners.map((owner) => {
+                  const verificationStatus = getVerificationStatus(owner.documents);
+                  return (
+                    <Card key={owner.id} className="hover:shadow-lg transition-shadow">
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="h-12 w-12">
+                              <AvatarImage src={undefined} />
+                              <AvatarFallback className="bg-primary text-primary-foreground">
+                                {getInitials(owner.firstName, owner.lastName)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-semibold">{owner.firstName} {owner.lastName}</h3>
+                                {owner.verified && (
+                                  <CheckCircle className="w-4 h-4 text-green-500" />
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                                <span>{owner.rating}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            {getStatusBadge(owner.status)}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem>
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Edit Owner
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                {owner.status === 'active' ? (
+                                  <DropdownMenuItem 
+                                    className="text-red-600"
+                                    onClick={() => handleOwnerAction('suspend', owner.id)}
+                                  >
+                                    <XCircle className="w-4 h-4 mr-2" />
+                                    Suspend Owner
+                                  </DropdownMenuItem>
+                                ) : (
+                                  <DropdownMenuItem 
+                                    className="text-green-600"
+                                    onClick={() => handleOwnerAction('activate', owner.id)}
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Activate Owner
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </div>
-                        <span className="text-muted-foreground">{property.rooms} rooms</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                      </CardHeader>
+
+                      <CardContent className="space-y-4">
+                        {/* Contact Info */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Mail className="w-3 h-3" />
+                            {owner.email}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Phone className="w-3 h-3" />
+                            {owner.mobileNo}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <MapPin className="w-3 h-3" />
+                            {owner.address}
+                          </div>
+                        </div>
+
+                        {/* Portfolio Stats */}
+                        <div className="grid grid-cols-3 gap-4 p-3 bg-muted/30 rounded-lg">
+                          <div className="text-center">
+                            <div className="text-lg font-semibold text-primary">{owner.totalProperties}</div>
+                            <div className="text-xs text-muted-foreground">Properties</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-lg font-semibold text-primary">{owner.totalRooms}</div>
+                            <div className="text-xs text-muted-foreground">Total Rooms</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-lg font-semibold text-primary">
+                              {getOccupancyRate(owner.occupiedRooms, owner.totalRooms)}%
+                            </div>
+                            <div className="text-xs text-muted-foreground">Occupancy</div>
+                          </div>
+                        </div>
+
+                        {/* Revenue and Verification */}
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="text-sm text-muted-foreground">Monthly Revenue</div>
+                            <div className="text-xl font-semibold text-green-600">
+                              ₹{(owner.monthlyRevenue / 1000).toFixed(0)}K
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm text-muted-foreground">Documents</div>
+                            <div className="flex items-center gap-1">
+                              <div className="text-sm font-semibold">
+                                {verificationStatus.verified}/{verificationStatus.total}
+                              </div>
+                              {verificationStatus.percentage === 100 ? (
+                                <CheckCircle className="w-4 h-4 text-green-500" />
+                              ) : (
+                                <AlertCircle className="w-4 h-4 text-yellow-500" />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Recent Activity */}
+                        <div className="pt-2 border-t">
+                          <div className="text-xs text-muted-foreground">Recent Activity</div>
+                          <div className="text-sm mt-1">{owner.recentActivity}</div>
+                        </div>
+
+                        {/* Properties List */}
+                        <div>
+                          <div className="text-sm font-medium mb-2">Properties ({owner.totalProperties})</div>
+                          <div className="space-y-1 max-h-24 overflow-y-auto">
+                            {owner.properties.map((property) => (
+                              <div key={property.id} className="flex items-center justify-between text-xs p-2 bg-background rounded border">
+                                <div>
+                                  <span className="font-medium">{property.propertyName}</span>
+                                  <div className="text-muted-foreground">{property.propertyAddress}</div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="font-medium">{property.totalRooms} rooms</div>
+                                  <div className="text-muted-foreground">
+                                    {Math.round((property.occupiedRooms / property.totalRooms) * 100)}% occupied
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
 
         {/* Empty State */}
-        {filteredOwners.length === 0 && (
+        {!loading && !error && owners.length === 0 && (
           <Card>
             <CardContent className="py-16 text-center">
               <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -430,11 +635,7 @@ const AdminOwners: React.FC = () => {
               <p className="text-muted-foreground mb-4">
                 No owners match your current filters. Try adjusting your search criteria.
               </p>
-              <Button variant="outline" onClick={() => {
-                setSearchTerm('');
-                setStatusFilter('all');
-                setLocationFilter('all');
-              }}>
+              <Button variant="outline" onClick={clearFilters}>
                 Clear Filters
               </Button>
             </CardContent>
