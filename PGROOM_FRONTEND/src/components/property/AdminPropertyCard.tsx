@@ -10,8 +10,6 @@ import {
   Building, 
   User, 
   Users, 
-  IndianRupee, 
-  Calendar,
   Mail,
   Edit,
   Trash2
@@ -36,8 +34,6 @@ interface AdminPropertyCardProps {
   onImageError: () => void;
   isImageLoading: boolean;
   getStatusBadgeColor: (status: string) => string;
-  formatCurrency: (amount: number) => string;
-  formatDate: (date: string) => string;
   className?: string;
 }
 
@@ -45,7 +41,7 @@ interface AdminPropertyCardProps {
  * AdminPropertyCard - A card component for displaying property information in admin panel
  *
  * This component displays comprehensive property information for admin management
- * including owner details, occupancy statistics, and revenue information.
+ * including owner details and occupancy statistics.
  */
 const AdminPropertyCard: React.FC<AdminPropertyCardProps> = ({
   property,
@@ -53,8 +49,6 @@ const AdminPropertyCard: React.FC<AdminPropertyCardProps> = ({
   onImageError,
   isImageLoading,
   getStatusBadgeColor,
-  formatCurrency,
-  formatDate,
   className
 }) => {
   const navigate = useNavigate();
@@ -202,32 +196,6 @@ const AdminPropertyCard: React.FC<AdminPropertyCardProps> = ({
                 <p className="text-xs text-muted-foreground">{property.ownerEmail}</p>
               </TooltipContent>
             </Tooltip>
-
-
-
-            {/* Revenue */}
-            <div className="flex items-center justify-between text-sm group/item hover:bg-muted/40 p-1.5 rounded-md transition-colors duration-300">
-              <div className="text-muted-foreground flex items-center gap-2">
-                <div className="bg-primary/10 p-1.5 rounded-md group-hover/item:bg-primary/20 transition-colors duration-300">
-                  <IndianRupee className="w-3.5 h-3.5 text-primary" />
-                </div>
-                <span>Revenue</span>
-              </div>
-              <div className="font-medium text-green-600 dark:text-green-400">
-                {formatCurrency(property.monthlyRevenue)}
-              </div>
-            </div>
-
-            {/* Last Updated */}
-            <div className="flex items-center justify-between text-sm group/item hover:bg-muted/40 p-1.5 rounded-md transition-colors duration-300">
-              <div className="text-muted-foreground flex items-center gap-2">
-                <div className="bg-primary/10 p-1.5 rounded-md group-hover/item:bg-primary/20 transition-colors duration-300">
-                  <Calendar className="w-3.5 h-3.5 text-primary" />
-                </div>
-                <span>Updated</span>
-              </div>
-              <div className="font-medium text-xs">{formatDate(property.lastUpdated)}</div>
-            </div>
           </div>
         </CardContent>
 

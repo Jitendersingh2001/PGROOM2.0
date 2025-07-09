@@ -542,8 +542,6 @@ const AdminProperties = () => {
                   onImageError={() => handleImageError(property.id)}
                   isImageLoading={imageLoadingStates[property.id] !== false}
                   getStatusBadgeColor={getStatusBadgeColor}
-                  formatCurrency={formatCurrency}
-                  formatDate={formatDate}
                 />
               ))}
             </div>
