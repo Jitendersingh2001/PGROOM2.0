@@ -136,24 +136,7 @@ const AdminPropertyCard: React.FC<AdminPropertyCardProps> = ({
             </Badge>
           </div>
 
-          {/* Hover Overlay for Details */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center backdrop-blur-[2px]">
-            <div className="text-center p-4 transform translate-y-4 group-hover/image:translate-y-0 transition-transform duration-300 scale-90 group-hover/image:scale-100">
-              <p className="text-white text-sm mb-3 font-medium">Property Details</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-primary/80 backdrop-blur-sm border-primary/30 text-white hover:bg-primary hover:text-white shadow-lg hover:shadow-primary/25 transition-all duration-300"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleViewDetails();
-                }}
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                View Details
-              </Button>
-            </div>
-          </div>
+
         </div>
 
         {/* Property Title and Address */}
