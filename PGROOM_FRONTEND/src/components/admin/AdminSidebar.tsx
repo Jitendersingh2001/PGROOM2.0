@@ -3,12 +3,10 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   Home,
-  Settings,
   CreditCard,
   Shield,
   User,
   HelpCircle,
-  Database,
   UserCheck,
   Building2
 } from 'lucide-react';
@@ -62,16 +60,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed = false }) => {
 
   // System navigation items
   const systemNavItems: NavItemProps[] = [
-    {
-      name: 'System Settings',
-      path: '/admin/settings',
-      icon: <Settings className="w-5 h-5" />,
-    },
-    {
-      name: 'Database',
-      path: '/admin/database',
-      icon: <Database className="w-5 h-5" />,
-    },
     {
       name: 'Support',
       path: '/admin/support',
