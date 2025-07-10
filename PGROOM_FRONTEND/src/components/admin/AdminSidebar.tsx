@@ -6,7 +6,6 @@ import {
   CreditCard,
   Shield,
   User,
-  HelpCircle,
   UserCheck,
   Building2
 } from 'lucide-react';
@@ -61,9 +60,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed = false }) => {
   // System navigation items
   const systemNavItems: NavItemProps[] = [
     {
-      name: 'Support',
-      path: '/admin/support',
-      icon: <HelpCircle className="w-5 h-5" />,
+      name: 'Profile Settings',
+      path: '/admin/profile',
+      icon: <User className="w-5 h-5" />,
     }
   ];
 

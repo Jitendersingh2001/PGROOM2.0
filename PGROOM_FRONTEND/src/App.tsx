@@ -17,6 +17,7 @@ import AdminProperties from "./pages/admin/Properties";
 import AdminOwners from "./pages/admin/Owners";
 import AdminTenants from "./pages/admin/Tenants";
 import AdminPayments from "./pages/admin/Payments";
+import AdminProfile from "./pages/admin/Profile";
 import AdminSettings from "./pages/admin/Settings";
 import AdminDatabase from "./pages/admin/Database";
 import AdminSupport from "./pages/admin/Support";
@@ -82,6 +83,11 @@ const App = () => (
                 <Route path="/admin/payments" element={
                   <ProtectedRoute allowedRoles={[1]}>
                     <AdminPayments />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/profile" element={
+                  <ProtectedRoute allowedRoles={[1]}>
+                    <AdminProfile />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/settings" element={
