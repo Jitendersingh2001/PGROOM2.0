@@ -247,20 +247,6 @@ const AdminOwners: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
-
-              <Select value={filters.sortBy} onValueChange={(value) => updateFilters({ sortBy: value })}>
-                <SelectTrigger className="w-full lg:w-[140px]">
-                  <Activity className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="joinDate">Join Date</SelectItem>
-                  <SelectItem value="revenue">Revenue</SelectItem>
-                  <SelectItem value="properties">Properties</SelectItem>
-                  <SelectItem value="rating">Rating</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>

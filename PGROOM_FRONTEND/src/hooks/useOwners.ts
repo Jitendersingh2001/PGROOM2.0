@@ -154,7 +154,7 @@ export const useOwners = () => {
     searchTerm: '',
     statusFilter: 'all',
     locationFilter: 'all',
-    sortBy: 'name',
+    sortBy: 'joinDate',
     sortOrder: 'asc'
   });
 
@@ -257,7 +257,7 @@ export const useOwners = () => {
       searchTerm: '',
       statusFilter: 'all',
       locationFilter: 'all',
-      sortBy: 'name',
+      sortBy: 'joinDate',
       sortOrder: 'asc'
     });
   };
