@@ -46,6 +46,19 @@ router.post("/admin/properties", controller.PropertyController.getAllPropertiesF
 router.get("/admin/property-statistics", controller.PropertyController.getPropertyStatistics);
 
 /**
+ * Admin Owner Routes
+ */
+router.post("/admin/owners", 
+  validateRequest(validators.OwnerValidator.getOwnersValidator),
+  controller.UserController.getOwners
+);
+router.get("/admin/owner-statistics", controller.UserController.getOwnerStatistics);
+router.put("/admin/owner/status", 
+  validateRequest(validators.OwnerValidator.updateOwnerStatusValidator),
+  controller.UserController.updateOwnerStatus
+);
+
+/**
  * ROOM ROUTES
  */
 

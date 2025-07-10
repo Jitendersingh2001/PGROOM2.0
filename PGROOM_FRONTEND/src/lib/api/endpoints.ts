@@ -36,6 +36,13 @@ export const PROPERTY = {
   ADMIN_STATISTICS: '/pgrooms/v1/admin/property-statistics',
 };
 
+// Owner endpoints
+export const OWNER = {
+  ADMIN_LIST: '/pgrooms/v1/admin/owners',
+  ADMIN_STATISTICS: '/pgrooms/v1/admin/owner-statistics',
+  UPDATE_STATUS: '/pgrooms/v1/admin/owner/status',
+};
+
 // Location endpoints
 export const LOCATION = {
   STATES: '/pgrooms/states',
@@ -84,4 +91,15 @@ export const PAYMENT = {
   WEBHOOK: '/pgrooms/payment/webhook',
 };
 
-// Other endpoints can be added here as needed
+// Export all endpoints
+export const endpoints = {
+  AUTH,
+  USER,
+  PROPERTY,
+  OWNER,
+  LOCATION,
+  ROOM,
+  TENANT,
+  DASHBOARD,
+  PAYMENT,
+};

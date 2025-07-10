@@ -1,25 +1,18 @@
 // filepath: /src/pages/admin/Owners.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Search, 
-  Filter, 
   Plus, 
   Building2, 
   DollarSign, 
   Users, 
-  Eye, 
   Edit, 
   Trash2, 
   MoreHorizontal, 
   Phone, 
   Mail, 
-  MapPin,
   TrendingUp,
   Calendar,
-  Star,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
   Activity
 } from 'lucide-react';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
@@ -29,7 +22,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +44,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { useOwners } from '@/hooks/useOwners';
 import { Owner } from '@/types/admin';
 
@@ -61,6 +61,10 @@ import { Owner } from '@/types/admin';
  */
 const AdminOwners: React.FC = () => {
   
+  // Modal states
+  const [selectedOwner, setSelectedOwner] = useState<Owner | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
   const {
     owners,
     stats,
@@ -68,11 +72,11 @@ const AdminOwners: React.FC = () => {
     filters,
     loading,
     error,
+    pagination,
     updateFilters,
     clearFilters,
-    suspendOwner,
-    activateOwner,
-    deleteOwner
+    deleteOwner,
+    setPagination
   } = useOwners();
 
   // Status badge styling
@@ -95,11 +99,6 @@ const AdminOwners: React.FC = () => {
     return total > 0 ? Math.round((occupied / total) * 100) : 0;
   };
 
-  // Generate initials for avatar
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName[0]}${lastName[0]}`.toUpperCase();
-  };
-
   // Get verification status
   const getVerificationStatus = (documents: { aadhar: boolean; pan: boolean; agreement: boolean }) => {
     const total = Object.keys(documents).length;
@@ -112,22 +111,9 @@ const AdminOwners: React.FC = () => {
     updateFilters({ sortBy: column, sortOrder: newSortOrder });
   };
 
-  const handleOwnerAction = async (action: 'suspend' | 'activate' | 'delete', ownerId: number) => {
-    try {
-      switch (action) {
-        case 'suspend':
-          await suspendOwner(ownerId);
-          break;
-        case 'activate':
-          await activateOwner(ownerId);
-          break;
-        case 'delete':
-          await deleteOwner(ownerId);
-          break;
-      }
-    } catch (error) {
-      console.error(`Failed to ${action} owner:`, error);
-    }
+  const handleEditOwner = (owner: Owner) => {
+    setSelectedOwner(owner);
+    setIsEditModalOpen(true);
   };
 
   return (
@@ -219,34 +205,6 @@ const AdminOwners: React.FC = () => {
                   className="pl-10"
                 />
               </div>
-              
-              <Select value={filters.statusFilter} onValueChange={(value) => updateFilters({ statusFilter: value })}>
-                <SelectTrigger className="w-full lg:w-[140px]">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={filters.locationFilter} onValueChange={(value) => updateFilters({ locationFilter: value })}>
-                <SelectTrigger className="w-full lg:w-[140px]">
-                  <MapPin className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Locations</SelectItem>
-                  {uniqueLocations.map(location => (
-                    <SelectItem key={location} value={location.toLowerCase()}>
-                      {location}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>
@@ -282,13 +240,16 @@ const AdminOwners: React.FC = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="cursor-pointer" onClick={() => handleSort('name')}>
-                      Owner
+                      Owner Name
                       {filters.sortBy === 'name' && (
                         <span className="ml-1">{filters.sortOrder === 'asc' ? '↑' : '↓'}</span>
                       )}
                     </TableHead>
-                    <TableHead>Contact</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Mobile Number</TableHead>
                     <TableHead>Properties</TableHead>
+                    <TableHead>Total Rooms</TableHead>
+                    <TableHead>Occupied Rooms</TableHead>
                     <TableHead className="cursor-pointer" onClick={() => handleSort('revenue')}>
                       Revenue
                       {filters.sortBy === 'revenue' && (
@@ -296,12 +257,6 @@ const AdminOwners: React.FC = () => {
                       )}
                     </TableHead>
                     <TableHead>Occupancy</TableHead>
-                    <TableHead className="cursor-pointer" onClick={() => handleSort('rating')}>
-                      Rating
-                      {filters.sortBy === 'rating' && (
-                        <span className="ml-1">{filters.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                      )}
-                    </TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -310,61 +265,28 @@ const AdminOwners: React.FC = () => {
                   {owners.map((owner) => (
                     <TableRow key={owner.id}>
                       <TableCell>
-                        <div className="flex items-center space-x-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={undefined} />
-                            <AvatarFallback className="bg-primary text-primary-foreground">
-                              {getInitials(owner.firstName, owner.lastName)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">{owner.firstName} {owner.lastName}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {owner.verified && (
-                                <CheckCircle className="inline w-3 h-3 mr-1 text-green-500" />
-                              )}
-                              Joined {new Date(owner.joinDate).toLocaleDateString()}
-                            </div>
-                          </div>
-                        </div>
+                        <div className="font-medium">{owner.firstName} {owner.lastName}</div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm">
-                          <div className="flex items-center gap-1">
-                            <Mail className="w-3 h-3" />
-                            {owner.email}
-                          </div>
-                          <div className="flex items-center gap-1 mt-1">
-                            <Phone className="w-3 h-3" />
-                            {owner.mobileNo}
-                          </div>
-                        </div>
+                        <div>{owner.email}</div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm">
-                          <div className="font-medium">{owner.totalProperties} Properties</div>
-                          <div className="text-muted-foreground">{owner.totalRooms} total rooms</div>
-                        </div>
+                        <div>{owner.mobileNo}</div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm">
-                          <div className="font-medium text-green-600">₹{(owner.monthlyRevenue / 1000).toFixed(0)}K</div>
-                          <div className="text-muted-foreground">per month</div>
-                        </div>
+                        <div className="font-medium">{owner.totalProperties}</div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm">
-                          <div className="font-medium">{getOccupancyRate(owner.occupiedRooms, owner.totalRooms)}%</div>
-                          <div className="text-muted-foreground">
-                            {owner.occupiedRooms}/{owner.totalRooms} occupied
-                          </div>
-                        </div>
+                        <div className="font-medium">{owner.totalRooms}</div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                          <span className="text-sm font-medium">{owner.rating}</span>
-                        </div>
+                        <div className="font-medium">{owner.occupiedRooms}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium text-green-600">₹{(owner.monthlyRevenue / 1000).toFixed(0)}K</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">{getOccupancyRate(owner.occupiedRooms, owner.totalRooms)}%</div>
                       </TableCell>
                       <TableCell>
                         {getStatusBadge(owner.status)}
@@ -377,32 +299,10 @@ const AdminOwners: React.FC = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Eye className="w-4 h-4 mr-2" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEditOwner(owner)}>
                               <Edit className="w-4 h-4 mr-2" />
                               Edit Owner
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            {owner.status === 'active' ? (
-                              <DropdownMenuItem 
-                                className="text-red-600"
-                                onClick={() => handleOwnerAction('suspend', owner.id)}
-                              >
-                                <XCircle className="w-4 h-4 mr-2" />
-                                Suspend Owner
-                              </DropdownMenuItem>
-                            ) : (
-                              <DropdownMenuItem 
-                                className="text-green-600"
-                                onClick={() => handleOwnerAction('activate', owner.id)}
-                              >
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                Activate Owner
-                              </DropdownMenuItem>
-                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -429,7 +329,97 @@ const AdminOwners: React.FC = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Pagination */}
+        {!loading && !error && owners.length > 0 && pagination.totalPages > 1 && (
+          <Card>
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} owners
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                    disabled={pagination.page <= 1}
+                  >
+                    Previous
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                      const page = i + 1;
+                      return (
+                        <Button
+                          key={page}
+                          variant={pagination.page === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setPagination(prev => ({ ...prev, page }))}
+                          className="w-8 h-8 p-0"
+                        >
+                          {page}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                    disabled={pagination.page >= pagination.totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
+
+      {/* Edit Owner Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Owner</DialogTitle>
+            <DialogDescription>
+              Update owner information
+            </DialogDescription>
+          </DialogHeader>
+          {selectedOwner && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">First Name</label>
+                  <Input defaultValue={selectedOwner.firstName} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Last Name</label>
+                  <Input defaultValue={selectedOwner.lastName} />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Email</label>
+                <Input type="email" defaultValue={selectedOwner.email} />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Mobile Number</label>
+                <Input defaultValue={selectedOwner.mobileNo} />
+              </div>
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button>
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
     </DashboardLayout>
   );
 };

@@ -151,21 +151,17 @@ class roomRepository {
   
   async getExpectedMonthlyIncome(propertyIds) {
     try {
-      const rooms = await this.baseRepository.getDBClient().rooms.findMany({
+      const prisma = this.baseRepository.getDBClient();
+      const rooms = await prisma.rooms.findMany({
         where: {
           propertyId: {
             in: propertyIds.map((property) => property.id),
           },
-          status: {
-            not: constant.DELETED,
-          },
+          status: { not: constant.DELETED },
         },
-        select: {
-          rent: true,
-          totalBed: true,
-        },
+        select: { rent: true, totalBed: true },
       });
-  
+
       return rooms.reduce((sum, room) => {
         const rent = parseFloat(room.rent);
         const totalBed = room.totalBed || 0;
@@ -176,7 +172,30 @@ class roomRepository {
       throw new Error(`Error fetching expected income: ${error.message}`);
     }
   }
-  
+
+  /**
+   * Function to get rooms by property ID
+   */
+  async getRoomsByPropertyId(propertyId) {
+    try {
+      const prisma = this.baseRepository.getDBClient();
+      return await prisma.rooms.findMany({
+        where: {
+          propertyId: propertyId,
+          status: { not: constant.DELETED },
+        },
+        select: {
+          id: true,
+          roomNo: true,
+          rent: true,
+          status: true,
+          totalBed: true,
+        },
+      });
+    } catch (error) {
+      throw new Error(`Error fetching rooms: ${error.message}`);
+    }
+  }
 }
 
 module.exports = new roomRepository();

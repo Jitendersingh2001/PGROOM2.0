@@ -151,6 +151,20 @@ class userRepository {
     }
   }
 
+  /**
+   * function to update user status
+   */
+  async updateUserStatus(userId, status) {
+    try {
+      const prisma = this.baseRepository.getDBClient();
+      return await prisma.user.update({
+        where: { id: userId },
+        data: { status },
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = new userRepository();
