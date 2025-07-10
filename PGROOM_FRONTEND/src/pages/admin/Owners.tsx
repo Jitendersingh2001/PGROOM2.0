@@ -13,6 +13,7 @@ import {
   Mail, 
   TrendingUp,
   Calendar,
+  AlertCircle,
   Activity
 } from 'lucide-react';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
@@ -54,6 +55,7 @@ import {
 } from '@/components/ui/dialog';
 import { useOwners } from '@/hooks/useOwners';
 import { Owner } from '@/types/admin';
+import OwnerFormDialog from '@/components/owner/OwnerFormDialog';
 
 /**
  * AdminOwners - Enhanced owners management page for administrators
@@ -64,6 +66,7 @@ const AdminOwners: React.FC = () => {
   // Modal states
   const [selectedOwner, setSelectedOwner] = useState<Owner | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAddOwnerModalOpen, setIsAddOwnerModalOpen] = useState(false);
   
   const {
     owners,
@@ -76,6 +79,7 @@ const AdminOwners: React.FC = () => {
     updateFilters,
     clearFilters,
     deleteOwner,
+    fetchOwners,
     setPagination
   } = useOwners();
 
@@ -130,7 +134,10 @@ const AdminOwners: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button className="flex items-center gap-2">
+            <Button 
+              className="flex items-center gap-2"
+              onClick={() => setIsAddOwnerModalOpen(true)}
+            >
               <Plus className="w-4 h-4" />
               Add Owner
             </Button>
@@ -419,6 +426,16 @@ const AdminOwners: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Add Owner Modal */}
+      <OwnerFormDialog
+        isOpen={isAddOwnerModalOpen}
+        onClose={() => setIsAddOwnerModalOpen(false)}
+        onSuccess={() => {
+          // Refresh the owners list and stats after successful creation
+          fetchOwners();
+        }}
+      />
 
     </DashboardLayout>
   );
