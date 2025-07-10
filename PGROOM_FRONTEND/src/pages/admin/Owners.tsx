@@ -1,5 +1,5 @@
 // filepath: /src/pages/admin/Owners.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Search, 
   Filter, 
@@ -55,15 +55,11 @@ import {
 import { useOwners } from '@/hooks/useOwners';
 import { Owner } from '@/types/admin';
 
-// View toggle options
-type ViewMode = 'grid' | 'table';
-
 /**
  * AdminOwners - Enhanced owners management page for administrators
- * Features: Owner listing, table/grid view toggle, advanced filtering, status management
+ * Features: Owner listing, advanced filtering, status management
  */
 const AdminOwners: React.FC = () => {
-  const [viewMode, setViewMode] = useState<ViewMode>('table');
   
   const {
     owners,
@@ -148,20 +144,6 @@ const AdminOwners: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant={viewMode === 'table' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('table')}
-            >
-              Table View
-            </Button>
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-            >
-              Grid View
-            </Button>
             <Button className="flex items-center gap-2">
               <Plus className="w-4 h-4" />
               Add Owner
@@ -170,7 +152,7 @@ const AdminOwners: React.FC = () => {
         </div>
 
         {/* Enhanced Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Owners</CardTitle>
@@ -219,19 +201,6 @@ const AdminOwners: React.FC = () => {
               <div className="text-2xl font-bold">{stats.averageOccupancy}%</div>
               <p className="text-xs text-muted-foreground">
                 Platform average
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Verification Rate</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.verificationRate}%</div>
-              <p className="text-xs text-muted-foreground">
-                Owners verified
               </p>
             </CardContent>
           </Card>
@@ -319,311 +288,144 @@ const AdminOwners: React.FC = () => {
           </Card>
         )}
 
-        {/* Content based on view mode */}
+        {/* Owner Directory Table */}
         {!loading && !error && (
-          <>
-            {viewMode === 'table' ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Owner Directory</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="cursor-pointer" onClick={() => handleSort('name')}>
-                          Owner
-                          {filters.sortBy === 'name' && (
-                            <span className="ml-1">{filters.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </TableHead>
-                        <TableHead>Contact</TableHead>
-                        <TableHead>Properties</TableHead>
-                        <TableHead className="cursor-pointer" onClick={() => handleSort('revenue')}>
-                          Revenue
-                          {filters.sortBy === 'revenue' && (
-                            <span className="ml-1">{filters.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </TableHead>
-                        <TableHead>Occupancy</TableHead>
-                        <TableHead className="cursor-pointer" onClick={() => handleSort('rating')}>
-                          Rating
-                          {filters.sortBy === 'rating' && (
-                            <span className="ml-1">{filters.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {owners.map((owner) => (
-                        <TableRow key={owner.id}>
-                          <TableCell>
-                            <div className="flex items-center space-x-3">
-                              <Avatar className="h-10 w-10">
-                                <AvatarImage src={undefined} />
-                                <AvatarFallback className="bg-primary text-primary-foreground">
-                                  {getInitials(owner.firstName, owner.lastName)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium">{owner.firstName} {owner.lastName}</div>
-                                <div className="text-sm text-muted-foreground">
-                                  {owner.verified && (
-                                    <CheckCircle className="inline w-3 h-3 mr-1 text-green-500" />
-                                  )}
-                                  Joined {new Date(owner.joinDate).toLocaleDateString()}
-                                </div>
-                              </div>
+          <Card>
+            <CardContent className="pt-6">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="cursor-pointer" onClick={() => handleSort('name')}>
+                      Owner
+                      {filters.sortBy === 'name' && (
+                        <span className="ml-1">{filters.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Properties</TableHead>
+                    <TableHead className="cursor-pointer" onClick={() => handleSort('revenue')}>
+                      Revenue
+                      {filters.sortBy === 'revenue' && (
+                        <span className="ml-1">{filters.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </TableHead>
+                    <TableHead>Occupancy</TableHead>
+                    <TableHead className="cursor-pointer" onClick={() => handleSort('rating')}>
+                      Rating
+                      {filters.sortBy === 'rating' && (
+                        <span className="ml-1">{filters.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {owners.map((owner) => (
+                    <TableRow key={owner.id}>
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={undefined} />
+                            <AvatarFallback className="bg-primary text-primary-foreground">
+                              {getInitials(owner.firstName, owner.lastName)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{owner.firstName} {owner.lastName}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {owner.verified && (
+                                <CheckCircle className="inline w-3 h-3 mr-1 text-green-500" />
+                              )}
+                              Joined {new Date(owner.joinDate).toLocaleDateString()}
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              <div className="flex items-center gap-1">
-                                <Mail className="w-3 h-3" />
-                                {owner.email}
-                              </div>
-                              <div className="flex items-center gap-1 mt-1">
-                                <Phone className="w-3 h-3" />
-                                {owner.mobileNo}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              <div className="font-medium">{owner.totalProperties} Properties</div>
-                              <div className="text-muted-foreground">{owner.totalRooms} total rooms</div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              <div className="font-medium text-green-600">₹{(owner.monthlyRevenue / 1000).toFixed(0)}K</div>
-                              <div className="text-muted-foreground">per month</div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              <div className="font-medium">{getOccupancyRate(owner.occupiedRooms, owner.totalRooms)}%</div>
-                              <div className="text-muted-foreground">
-                                {owner.occupiedRooms}/{owner.totalRooms} occupied
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                              <span className="text-sm font-medium">{owner.rating}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {getStatusBadge(owner.status)}
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreHorizontal className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
-                                  <Eye className="w-4 h-4 mr-2" />
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Edit Owner
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                {owner.status === 'active' ? (
-                                  <DropdownMenuItem 
-                                    className="text-red-600"
-                                    onClick={() => handleOwnerAction('suspend', owner.id)}
-                                  >
-                                    <XCircle className="w-4 h-4 mr-2" />
-                                    Suspend Owner
-                                  </DropdownMenuItem>
-                                ) : (
-                                  <DropdownMenuItem 
-                                    className="text-green-600"
-                                    onClick={() => handleOwnerAction('activate', owner.id)}
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-2" />
-                                    Activate Owner
-                                  </DropdownMenuItem>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            ) : (
-              // Grid View
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                {owners.map((owner) => {
-                  const verificationStatus = getVerificationStatus(owner.documents);
-                  return (
-                    <Card key={owner.id} className="hover:shadow-lg transition-shadow">
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center space-x-3">
-                            <Avatar className="h-12 w-12">
-                              <AvatarImage src={undefined} />
-                              <AvatarFallback className="bg-primary text-primary-foreground">
-                                {getInitials(owner.firstName, owner.lastName)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-semibold">{owner.firstName} {owner.lastName}</h3>
-                                {owner.verified && (
-                                  <CheckCircle className="w-4 h-4 text-green-500" />
-                                )}
-                              </div>
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                                <span>{owner.rating}</span>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            {getStatusBadge(owner.status)}
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreHorizontal className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
-                                  <Eye className="w-4 h-4 mr-2" />
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Edit Owner
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                {owner.status === 'active' ? (
-                                  <DropdownMenuItem 
-                                    className="text-red-600"
-                                    onClick={() => handleOwnerAction('suspend', owner.id)}
-                                  >
-                                    <XCircle className="w-4 h-4 mr-2" />
-                                    Suspend Owner
-                                  </DropdownMenuItem>
-                                ) : (
-                                  <DropdownMenuItem 
-                                    className="text-green-600"
-                                    onClick={() => handleOwnerAction('activate', owner.id)}
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-2" />
-                                    Activate Owner
-                                  </DropdownMenuItem>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
                           </div>
                         </div>
-                      </CardHeader>
-
-                      <CardContent className="space-y-4">
-                        {/* Contact Info */}
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div className="flex items-center gap-1">
                             <Mail className="w-3 h-3" />
                             {owner.email}
                           </div>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1 mt-1">
                             <Phone className="w-3 h-3" />
                             {owner.mobileNo}
                           </div>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <MapPin className="w-3 h-3" />
-                            {owner.address}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div className="font-medium">{owner.totalProperties} Properties</div>
+                          <div className="text-muted-foreground">{owner.totalRooms} total rooms</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div className="font-medium text-green-600">₹{(owner.monthlyRevenue / 1000).toFixed(0)}K</div>
+                          <div className="text-muted-foreground">per month</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div className="font-medium">{getOccupancyRate(owner.occupiedRooms, owner.totalRooms)}%</div>
+                          <div className="text-muted-foreground">
+                            {owner.occupiedRooms}/{owner.totalRooms} occupied
                           </div>
                         </div>
-
-                        {/* Portfolio Stats */}
-                        <div className="grid grid-cols-3 gap-4 p-3 bg-muted/30 rounded-lg">
-                          <div className="text-center">
-                            <div className="text-lg font-semibold text-primary">{owner.totalProperties}</div>
-                            <div className="text-xs text-muted-foreground">Properties</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-lg font-semibold text-primary">{owner.totalRooms}</div>
-                            <div className="text-xs text-muted-foreground">Total Rooms</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-lg font-semibold text-primary">
-                              {getOccupancyRate(owner.occupiedRooms, owner.totalRooms)}%
-                            </div>
-                            <div className="text-xs text-muted-foreground">Occupancy</div>
-                          </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                          <span className="text-sm font-medium">{owner.rating}</span>
                         </div>
-
-                        {/* Revenue and Verification */}
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="text-sm text-muted-foreground">Monthly Revenue</div>
-                            <div className="text-xl font-semibold text-green-600">
-                              ₹{(owner.monthlyRevenue / 1000).toFixed(0)}K
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-sm text-muted-foreground">Documents</div>
-                            <div className="flex items-center gap-1">
-                              <div className="text-sm font-semibold">
-                                {verificationStatus.verified}/{verificationStatus.total}
-                              </div>
-                              {verificationStatus.percentage === 100 ? (
-                                <CheckCircle className="w-4 h-4 text-green-500" />
-                              ) : (
-                                <AlertCircle className="w-4 h-4 text-yellow-500" />
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Recent Activity */}
-                        <div className="pt-2 border-t">
-                          <div className="text-xs text-muted-foreground">Recent Activity</div>
-                          <div className="text-sm mt-1">{owner.recentActivity}</div>
-                        </div>
-
-                        {/* Properties List */}
-                        <div>
-                          <div className="text-sm font-medium mb-2">Properties ({owner.totalProperties})</div>
-                          <div className="space-y-1 max-h-24 overflow-y-auto">
-                            {owner.properties.map((property) => (
-                              <div key={property.id} className="flex items-center justify-between text-xs p-2 bg-background rounded border">
-                                <div>
-                                  <span className="font-medium">{property.propertyName}</span>
-                                  <div className="text-muted-foreground">{property.propertyAddress}</div>
-                                </div>
-                                <div className="text-right">
-                                  <div className="font-medium">{property.totalRooms} rooms</div>
-                                  <div className="text-muted-foreground">
-                                    {Math.round((property.occupiedRooms / property.totalRooms) * 100)}% occupied
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </>
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(owner.status)}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Eye className="w-4 h-4 mr-2" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit Owner
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            {owner.status === 'active' ? (
+                              <DropdownMenuItem 
+                                className="text-red-600"
+                                onClick={() => handleOwnerAction('suspend', owner.id)}
+                              >
+                                <XCircle className="w-4 h-4 mr-2" />
+                                Suspend Owner
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem 
+                                className="text-green-600"
+                                onClick={() => handleOwnerAction('activate', owner.id)}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Activate Owner
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         )}
 
         {/* Empty State */}

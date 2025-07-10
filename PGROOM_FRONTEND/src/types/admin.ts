@@ -73,7 +73,6 @@ export interface AdminStats {
   totalProperties: number;
   totalRevenue: number;
   averageOccupancy: number;
-  verificationRate: number;
 }
 
 export interface FilterOptions {

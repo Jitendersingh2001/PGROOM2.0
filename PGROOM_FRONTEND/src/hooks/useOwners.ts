@@ -229,15 +229,13 @@ export const useOwners = () => {
         return sum + rate;
       }, 0) / mockOwners.length
     );
-    const verificationRate = Math.round((mockOwners.filter(o => o.verified).length / totalOwners) * 100);
 
     return {
       totalOwners,
       activeOwners,
       totalProperties,
       totalRevenue,
-      averageOccupancy,
-      verificationRate
+      averageOccupancy
     };
   }, []);
 
