@@ -8,13 +8,11 @@ import {
   CreditCard, 
   Calendar,
   Edit, 
-  Trash2, 
   MoreHorizontal, 
   Phone, 
   Mail, 
   TrendingUp,
-  AlertCircle,
-  Activity
+  AlertCircle
 } from 'lucide-react';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import AdminNavbar from '@/components/admin/AdminNavbar';
@@ -78,8 +76,6 @@ const AdminTenants: React.FC = () => {
     pagination,
     updateFilters,
     clearFilters,
-    deleteTenant,
-    updateTenantStatus,
     fetchTenants,
     setPagination
   } = useTenants();
@@ -128,11 +124,6 @@ const AdminTenants: React.FC = () => {
   const handleEditTenant = (tenant: Tenant) => {
     setSelectedTenant(tenant);
     setIsEditModalOpen(true);
-  };
-
-  const handleToggleTenantStatus = (tenant: Tenant) => {
-    const newStatus = tenant.status === 'active' ? 'suspended' : 'active';
-    updateTenantStatus(tenant.id, newStatus);
   };
 
   return (
@@ -322,17 +313,6 @@ const AdminTenants: React.FC = () => {
                             <DropdownMenuItem onClick={() => handleEditTenant(tenant)}>
                               <Edit className="w-4 h-4 mr-2" />
                               Edit Tenant
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleToggleTenantStatus(tenant)}>
-                              <Activity className="w-4 h-4 mr-2" />
-                              {tenant.status === 'active' ? 'Suspend' : 'Activate'} Tenant
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => deleteTenant(tenant.id)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Delete Tenant
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
