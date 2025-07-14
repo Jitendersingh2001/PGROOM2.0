@@ -122,6 +122,23 @@ class TenantController extends Controller {
       return this.sendErrorResponse(res, error);
     }
   };
+
+  /**
+   * Function to get all tenants with details for admin panel
+   */
+  getAllTenantsWithDetails = async (req, res) => {
+    try {
+      const result = await this.tenantService.getAllTenantsWithDetails(req.body);
+      this.sendResponse(
+        res,
+        result,
+        constMessage.FETCH_SUCCESSFUL.replace(":name", "Tenants"),
+        http.OK
+      );
+    } catch (error) {
+      return this.sendErrorResponse(res, error);
+    }
+  };
 }
 
 module.exports = new TenantController(tenantService);

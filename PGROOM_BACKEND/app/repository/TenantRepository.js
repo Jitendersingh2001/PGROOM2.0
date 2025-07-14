@@ -179,6 +179,175 @@ class TenantRepository {
       throw new Error(`Error fetching tenant room details: ${error.message}`);
     }
   }
+
+  /**
+   * Function to get all tenants with property and room details for admin panel
+   */
+  async getAllTenantsWithDetails(filters = {}) {
+    try {
+      const {
+        search = "",
+        status = constant.ACTIVE,
+        page = 1,
+        limit = 10,
+        sortBy = "user.firstName",
+        sortOrder = "asc",
+      } = filters;
+
+      // Build where clause with proper status mapping
+      let mappedStatus = status;
+      if (status === "active") {
+        mappedStatus = constant.ACTIVE; // "Active"
+      } else if (status === "suspended" || status === "inactive") {
+        mappedStatus = constant.DELETED; // "Deleted" - closest to suspended/inactive
+      } else if (status === "all") {
+        mappedStatus = "all";
+      } else if (status !== constant.ACTIVE && status !== constant.DELETED) {
+        // If status is not a valid enum value, default to Active
+        mappedStatus = constant.ACTIVE;
+      }
+
+      const whereClause = {
+        status:
+          mappedStatus === "all"
+            ? { in: [constant.ACTIVE, constant.DELETED] }
+            : mappedStatus,
+      };
+
+      // Add search filter if provided
+      if (search) {
+        whereClause.OR = [
+          {
+            user: {
+              firstName: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+          },
+          {
+            user: {
+              lastName: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+          },
+          {
+            user: {
+              email: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+          },
+          {
+            user: {
+              mobileNo: {
+                contains: search,
+              },
+            },
+          },
+          {
+            Rooms: {
+              roomNo: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+          },
+        ];
+      }
+
+      // Calculate offset for pagination
+      const offset = (page - 1) * limit;
+
+      // Get total count for pagination
+      const totalCount = await this.dbClient.tenant.count({
+        where: whereClause,
+      });
+
+      // Build order by clause
+      const orderBy = {};
+      if (sortBy === "name") {
+        orderBy.user = { firstName: sortOrder };
+      } else if (sortBy === "email") {
+        orderBy.user = { email: sortOrder };
+      } else if (sortBy === "property") {
+        orderBy.Rooms = { userProperties: { propertyName: sortOrder } };
+      } else if (sortBy === "rentAmount") {
+        orderBy.Rooms = { rent: sortOrder };
+      } else {
+        orderBy.createdAt = sortOrder;
+      }
+
+      // Fetch tenants with full details
+      const tenants = await this.dbClient.tenant.findMany({
+        where: whereClause,
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              mobileNo: true,
+              address: true,
+              stateId: true,
+              cityId: true,
+              status: true,
+              state: {
+                select: {
+                  id: true,
+                  stateName: true,
+                },
+              },
+              city: {
+                select: {
+                  id: true,
+                  cityName: true,
+                },
+              },
+            },
+          },
+          Rooms: {
+            select: {
+              id: true,
+              roomNo: true,
+              rent: true,
+              description: true,
+              status: true,
+              totalBed: true,
+              roomImage: true,
+              userProperties: {
+                select: {
+                  id: true,
+                  propertyName: true,
+                  propertyAddress: true,
+                  status: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy,
+        skip: offset,
+        take: limit,
+      });
+
+      return {
+        data: tenants,
+        meta: {
+          total: totalCount,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(totalCount / limit),
+        },
+      };
+    } catch (error) {
+      throw new Error(`Error fetching all tenants with details: ${error.message}`);
+    }
+  }
 }
 
 module.exports = new TenantRepository();

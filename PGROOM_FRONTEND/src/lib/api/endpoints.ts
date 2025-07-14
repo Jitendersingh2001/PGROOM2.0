@@ -67,6 +67,9 @@ export const TENANT = {
   GET: '/pgrooms/v1/tenant',
   ID: '/pgrooms/v1/tenant/id',
   ROOM_DETAILS: '/pgrooms/v1/tenant/room-details',
+  
+  // Admin endpoints
+  ADMIN_LIST: '/pgrooms/v1/admin/tenants',
 };
 
 // Dashboard endpoints

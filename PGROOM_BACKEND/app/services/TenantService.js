@@ -244,6 +244,90 @@ class tenantService {
     }
   }
 
+  /**
+   * Function to get all tenants with property and room details for admin panel
+   */
+  async getAllTenantsWithDetails(data) {
+    try {
+      const filters = parseInputData(data, {
+        integerFields: ["page", "limit"],
+        stringFields: ["search", "status", "sortBy", "sortOrder"]
+      });
+
+      // Set defaults and ensure status is properly mapped
+      filters.page = filters.page || 1;
+      filters.limit = filters.limit || 10;
+      filters.sortBy = filters.sortBy || 'user.firstName';
+      filters.sortOrder = filters.sortOrder || 'asc';
+      
+      // Map frontend status values to backend constants
+      if (!filters.status || filters.status === 'active') {
+        filters.status = constant.ACTIVE; // "Active"
+      } else if (filters.status === 'suspended' || filters.status === 'inactive') {
+        filters.status = constant.DELETED; // "Deleted"
+      }
+      // 'all' remains as is
+
+      const result = await this.repository.getAllTenantsWithDetails(filters);
+
+      // Transform the data for frontend consumption
+      const transformedData = result.data.map(tenant => ({
+        id: tenant.id,
+        userId: tenant.userId,
+        propertyId: tenant.propertyId,
+        roomId: tenant.roomId,
+        user: {
+          id: tenant.user.id,
+          firstName: tenant.user.firstName,
+          lastName: tenant.user.lastName,
+          email: tenant.user.email,
+          mobileNo: tenant.user.mobileNo || '',
+          address: tenant.user.address || '',
+          stateId: tenant.user.stateId,
+          cityId: tenant.user.cityId,
+          status: tenant.user.status,
+          state: tenant.user.state,
+          city: tenant.user.city
+        },
+        property: {
+          id: tenant.Rooms?.userProperties?.id || 0,
+          name: tenant.Rooms?.userProperties?.propertyName || 'N/A',
+          address: tenant.Rooms?.userProperties?.propertyAddress || 'N/A'
+        },
+        room: {
+          id: tenant.Rooms?.id || 0,
+          roomNo: tenant.Rooms?.roomNo || 'N/A',
+          rent: parseInt(tenant.Rooms?.rent || '0'),
+          description: tenant.Rooms?.description,
+          status: tenant.Rooms?.status || 'Available'
+        },
+        createdAt: tenant.createdAt,
+        updatedAt: tenant.updatedAt,
+        status: tenant.status === constant.ACTIVE ? 'active' : 'suspended'
+      }));
+
+      // Calculate stats
+      const stats = {
+        totalTenants: result.meta.total,
+        activeTenants: result.data.filter(t => t.status === constant.ACTIVE).length,
+        suspendedTenants: result.data.filter(t => t.status !== constant.ACTIVE).length,
+        totalRentCollected: result.data
+          .filter(t => t.status === constant.ACTIVE)
+          .reduce((sum, tenant) => sum + parseInt(tenant.Rooms?.rent || '0'), 0),
+        overduePayments: Math.floor(Math.random() * 5), // Mock - would need payment integration
+        averageOccupancy: result.meta.total > 0 ? Math.round((transformedData.filter(t => t.status === 'active').length / result.meta.total) * 100) : 0
+      };
+
+      return {
+        data: transformedData,
+        meta: result.meta,
+        stats
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
   /*
    * Update room status based on current tenant assignments
    */

@@ -127,6 +127,11 @@ router.get(
 );
 
 /**
+ * Admin Tenant Routes
+ */
+router.post("/admin/tenants", controller.TenantController.getAllTenantsWithDetails);
+
+/**
  * DASHBOARD ROUTES
  */
 router.get(
