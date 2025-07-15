@@ -354,7 +354,7 @@ const AdminPayments: React.FC = () => {
               <RefreshCw className={cn("w-4 h-4 mr-2", isLoading && "animate-spin")} />
               Refresh
             </Button>
-            <Button>
+            <Button onClick={handleExportPayments} disabled={!filteredPayments || filteredPayments.length === 0}>
               <Download className="w-4 h-4 mr-2" />
               Export
             </Button>
