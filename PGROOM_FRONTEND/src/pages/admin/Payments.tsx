@@ -446,57 +446,6 @@ const AdminPayments: React.FC = () => {
             )}
           </CardContent>
         </Card>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-red-100 dark:bg-red-900 rounded-lg">
-                  <AlertCircle className="w-6 h-6 text-red-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Send Overdue Reminders</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Send payment reminders to {overduePayments.length} tenants
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                  <Download className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Generate Report</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Download monthly payment report
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
-                  <TrendingUp className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Payment Analytics</h3>
-                  <p className="text-sm text-muted-foreground">
-                    View detailed payment insights
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </DashboardLayout>
   );
