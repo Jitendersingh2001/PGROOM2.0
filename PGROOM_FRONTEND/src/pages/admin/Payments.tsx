@@ -1,6 +1,6 @@
 // filepath: /src/pages/admin/Payments.tsx
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, Download, TrendingUp, DollarSign, CreditCard, AlertCircle, Calendar, Eye, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Filter, DollarSign, CreditCard, AlertCircle, Calendar, Eye, CheckCircle, XCircle } from 'lucide-react';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import AdminNavbar from '@/components/admin/AdminNavbar';
 import AdminSidebar from '@/components/admin/AdminSidebar';
@@ -208,16 +208,6 @@ const AdminPayments: React.FC = () => {
             <p className="text-muted-foreground mt-1">
               Track payments, manage transactions, and monitor financial performance
             </p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              Export
-            </Button>
-            <Button className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              Analytics
-            </Button>
           </div>
         </div>
 
