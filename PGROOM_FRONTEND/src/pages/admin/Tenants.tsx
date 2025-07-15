@@ -12,7 +12,8 @@ import {
   Phone, 
   Mail, 
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  Download
 } from 'lucide-react';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import AdminNavbar from '@/components/admin/AdminNavbar';
@@ -51,6 +52,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 import { useTenants } from '@/hooks/useTenants';
 import { Tenant } from '@/types/admin';
 import TenantFormDialog from '@/components/tenant/TenantFormDialog';
@@ -116,6 +118,64 @@ const AdminTenants: React.FC = () => {
     return { verified, total, percentage: Math.round((verified / total) * 100) };
   };
 
+  // Export tenants to CSV
+  const handleExportTenants = async () => {
+    try {
+      if (!tenants || tenants.length === 0) {
+        toast.warning('No tenants to export');
+        return;
+      }
+
+      // Create CSV content
+      const headers = [
+        'Tenant ID',
+        'Name',
+        'Email',
+        'Phone',
+        'Property',
+        'Room',
+        'Rent Amount',
+        'Status',
+        'Payment Status',
+        'Join Date',
+        'Documents Verified'
+      ];
+
+      const csvContent = [
+        headers.join(','),
+        ...tenants.map(tenant => [
+          tenant.id,
+          `"${tenant.firstName} ${tenant.lastName}"`,
+          tenant.email,
+          tenant.mobileNo,
+          `"${tenant.property}"`,
+          tenant.roomNumber,
+          tenant.rentAmount,
+          tenant.status,
+          tenant.paymentStatus,
+          new Date(tenant.joinDate).toLocaleDateString(),
+          `${Object.values(tenant.documents).filter(Boolean).length}/${Object.keys(tenant.documents).length}`
+        ].join(','))
+      ].join('\n');
+
+      // Create and download CSV file
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `tenants-export-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success(`Exported ${tenants.length} tenants successfully`);
+    } catch (error) {
+      toast.error('Failed to export tenants');
+      console.error('Export error:', error);
+    }
+  };
+
   const handleSort = (column: string) => {
     const newSortOrder = filters.sortBy === column && filters.sortOrder === 'asc' ? 'desc' : 'asc';
     updateFilters({ sortBy: column, sortOrder: newSortOrder });
@@ -140,6 +200,15 @@ const AdminTenants: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="outline"
+              className="flex items-center gap-2"
+              onClick={handleExportTenants}
+              disabled={!tenants || tenants.length === 0}
+            >
+              <Download className="w-4 h-4" />
+              Export
+            </Button>
             <Button 
               className="flex items-center gap-2"
               onClick={() => setIsAddTenantModalOpen(true)}

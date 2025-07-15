@@ -14,7 +14,8 @@ import {
   TrendingUp,
   Calendar,
   AlertCircle,
-  Activity
+  Activity,
+  Download
 } from 'lucide-react';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import AdminNavbar from '@/components/admin/AdminNavbar';
@@ -53,6 +54,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 import { useOwners } from '@/hooks/useOwners';
 import { Owner } from '@/types/admin';
 import OwnerFormDialog from '@/components/owner/OwnerFormDialog';
@@ -110,6 +112,64 @@ const AdminOwners: React.FC = () => {
     return { verified, total, percentage: Math.round((verified / total) * 100) };
   };
 
+  // Export owners to CSV
+  const handleExportOwners = async () => {
+    try {
+      if (!owners || owners.length === 0) {
+        toast.warning('No owners to export');
+        return;
+      }
+
+      // Create CSV content
+      const headers = [
+        'Owner ID',
+        'Name',
+        'Email',
+        'Phone',
+        'Total Properties',
+        'Total Rooms',
+        'Occupied Rooms',
+        'Monthly Revenue',
+        'Occupancy Rate',
+        'Status',
+        'Join Date'
+      ];
+
+      const csvContent = [
+        headers.join(','),
+        ...owners.map(owner => [
+          owner.id,
+          `"${owner.firstName} ${owner.lastName}"`,
+          owner.email,
+          owner.mobileNo,
+          owner.totalProperties,
+          owner.totalRooms,
+          owner.occupiedRooms,
+          owner.monthlyRevenue,
+          `${getOccupancyRate(owner.occupiedRooms, owner.totalRooms)}%`,
+          owner.status,
+          new Date().toLocaleDateString() // Using current date as we don't have join date in the owner object
+        ].join(','))
+      ].join('\n');
+
+      // Create and download CSV file
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `owners-export-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success(`Exported ${owners.length} owners successfully`);
+    } catch (error) {
+      toast.error('Failed to export owners');
+      console.error('Export error:', error);
+    }
+  };
+
   const handleSort = (column: string) => {
     const newSortOrder = filters.sortBy === column && filters.sortOrder === 'asc' ? 'desc' : 'asc';
     updateFilters({ sortBy: column, sortOrder: newSortOrder });
@@ -134,6 +194,15 @@ const AdminOwners: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Button 
+              onClick={handleExportOwners}
+              disabled={!owners || owners.length === 0}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Export
+            </Button>
             <Button 
               className="flex items-center gap-2"
               onClick={() => setIsAddOwnerModalOpen(true)}
