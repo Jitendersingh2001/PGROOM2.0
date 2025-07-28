@@ -3,6 +3,7 @@ const router = express.Router();
 const controller = require("../controllers/index");
 const validators = require("../validators/index");
 const validateRequest = require("../middleware/ValidationMiddleware");
+const AuthMiddleware = require("../middleware/AuthMiddelware");
 const {
   uploadImages,
   validateFileUpload,
@@ -205,5 +206,12 @@ router.get(
 
 // Parameterized payment routes (must come after specific routes)
 router.route("/payment/:id").get(controller.PaymentController.getPaymentById);
+
+/**
+ * Admin Dashboard Routes
+ */
+router.get("/admin/dashboard/overview", AuthMiddleware, controller.AdminDashboardController.getAdminOverview);
+router.get("/admin/dashboard/recent-activity", AuthMiddleware, controller.AdminDashboardController.getRecentActivity);
+router.get("/admin/dashboard/system-health", AuthMiddleware, controller.AdminDashboardController.getSystemHealthMetrics);
 
 module.exports = router;

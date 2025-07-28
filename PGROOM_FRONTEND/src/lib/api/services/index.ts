@@ -7,6 +7,7 @@ import { paymentService } from './paymentService';
 import { userService } from './userService';
 import { locationService } from './locationService';
 import { ownerService } from './ownerService';
+import { adminDashboardService } from './adminDashboardService';
 
 export {
   authService,
@@ -17,5 +18,6 @@ export {
   paymentService,
   userService,
   locationService,
-  ownerService
+  ownerService,
+  adminDashboardService
 };

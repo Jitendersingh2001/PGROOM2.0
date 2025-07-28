@@ -94,13 +94,19 @@ class PropertyRepository {
   }
 async getPropertyCount(userId) {
   try {
-    return await this.baseRepository.getDBClient().userProperties.count({
-      where: {
-        userId,
-        status: {
-          not: constant.DELETED,
-        },
+    const whereClause = {
+      status: {
+        not: constant.DELETED,
       },
+    };
+    
+    // Add userId filter only if userId is provided (not null/undefined)
+    if (userId !== null && userId !== undefined) {
+      whereClause.userId = userId;
+    }
+    
+    return await this.baseRepository.getDBClient().userProperties.count({
+      where: whereClause,
     });
   } catch (error) {
     throw new Error(`Error fetching property count: ${error.message}`);
@@ -245,14 +251,47 @@ async getPropertyCount(userId) {
         return total + (parseFloat(room.rent) || 0);
       }, 0);
 
+      // Calculate occupancy rate
+      const occupancyRate = totalRooms > 0 ? Math.round((roomsWithActiveTenants.length / totalRooms) * 100) : 0;
+
       return {
         totalProperties,
         activeProperties,
         totalRooms,
         monthlyRevenue,
+        occupancyRate,
       };
     } catch (error) {
       throw new Error(`Error fetching property statistics: ${error.message}`);
+    }
+  }
+
+  /**
+   * Function to get recent properties for admin dashboard
+   */
+  async getRecentProperties(limit = 5) {
+    try {
+      const dbClient = this.baseRepository.getDBClient();
+
+      const recentProperties = await dbClient.userProperties.findMany({
+        where: {
+          status: { not: constant.DELETED },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: limit,
+        select: {
+          id: true,
+          propertyName: true,
+          createdAt: true,
+          status: true,
+        },
+      });
+
+      return recentProperties;
+    } catch (error) {
+      throw new Error(`Error fetching recent properties: ${error.message}`);
     }
   }
 }

@@ -43,6 +43,13 @@ export const OWNER = {
   UPDATE_STATUS: '/pgrooms/v1/admin/owner/status',
 };
 
+// Admin Dashboard endpoints
+export const ADMIN_DASHBOARD = {
+  OVERVIEW: '/pgrooms/v1/admin/dashboard/overview',
+  RECENT_ACTIVITY: '/pgrooms/v1/admin/dashboard/recent-activity',
+  SYSTEM_HEALTH: '/pgrooms/v1/admin/dashboard/system-health',
+};
+
 // Location endpoints
 export const LOCATION = {
   STATES: '/pgrooms/states',
@@ -100,6 +107,7 @@ export const endpoints = {
   USER,
   PROPERTY,
   OWNER,
+  ADMIN_DASHBOARD,
   LOCATION,
   ROOM,
   TENANT,

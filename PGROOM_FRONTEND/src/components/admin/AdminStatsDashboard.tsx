@@ -43,9 +43,11 @@ import { propertyService } from '@/lib/api/services/propertyService';
 import { ownerService } from '@/lib/api/services/ownerService';
 import { paymentService } from '@/lib/api/services/paymentService';
 import { adminTenantService } from '@/lib/api/services/adminTenantService';
+import { adminDashboardService } from '@/lib/api/services/adminDashboardService';
 import { PropertyStatistics } from '@/lib/types/property';
 import { OwnerStatistics } from '@/lib/api/services/ownerService';
 import { PaymentStats, MonthlyAnalyticsData } from '@/lib/types/payment';
+import { AdminOverviewData, RecentActivityData } from '@/lib/api/services/adminDashboardService';
 
 interface AdminStatsDashboardProps {
   className?: string;
@@ -70,12 +72,6 @@ interface RecentActivity {
   status: 'success' | 'pending' | 'warning' | 'error';
 }
 
-interface TenantStats {
-  totalTenants: number;
-  activeTenants: number;
-  suspendedTenants: number;
-}
-
 /**
  * AdminStatsDashboard - Comprehensive admin dashboard with system overview and analytics
  */
@@ -90,46 +86,6 @@ const AdminStatsDashboard: React.FC<AdminStatsDashboardProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Mock tenant stats function
-  const getTenantStats = async (): Promise<TenantStats> => {
-    try {
-      // Get tenant list to calculate stats
-      const tenantResponse = await adminTenantService.getAllTenants({
-        search: undefined,
-        status: undefined,
-        paymentStatus: undefined,
-        property: undefined
-      });
-
-      if (tenantResponse.statusCode === 200 && tenantResponse.data) {
-        const tenants = tenantResponse.data.data;
-        const totalTenants = tenants.length;
-        const activeTenants = tenants.filter(t => t.status === 'active').length;
-        const suspendedTenants = tenants.filter(t => t.status === 'suspended').length;
-
-        return {
-          totalTenants,
-          activeTenants,
-          suspendedTenants
-        };
-      }
-
-      // Fallback to mock data
-      return {
-        totalTenants: 45,
-        activeTenants: 42,
-        suspendedTenants: 3
-      };
-    } catch (error) {
-      console.warn('Failed to fetch tenant stats, using mock data:', error);
-      return {
-        totalTenants: 45,
-        activeTenants: 42,
-        suspendedTenants: 3
-      };
-    }
-  };
-
   // Fetch all dashboard data
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -139,27 +95,20 @@ const AdminStatsDashboard: React.FC<AdminStatsDashboardProps> = ({
 
         // Fetch data from multiple sources in parallel
         const [
-          propertyStatsResponse,
-          ownerStatsResponse,
+          adminOverviewResponse,
           paymentStatsData,
           monthlyAnalyticsData,
-          tenantStatsData
+          recentActivityResponse
         ] = await Promise.allSettled([
-          propertyService.getPropertyStatistics(),
-          ownerService.getOwnerStatistics(),
+          adminDashboardService.getAdminOverview(),
           paymentService.getPaymentStats(),
           paymentService.getMonthlyAnalytics(),
-          getTenantStats()
+          adminDashboardService.getRecentActivity()
         ]);
 
-        // Process property statistics
-        const propertyStats = propertyStatsResponse.status === 'fulfilled' 
-          ? propertyStatsResponse.value.data 
-          : null;
-
-        // Process owner statistics
-        const ownerStats = ownerStatsResponse.status === 'fulfilled' 
-          ? ownerStatsResponse.value.data 
+        // Process admin overview
+        const adminOverview = adminOverviewResponse.status === 'fulfilled' 
+          ? adminOverviewResponse.value.data 
           : null;
 
         // Process payment statistics
@@ -172,20 +121,36 @@ const AdminStatsDashboard: React.FC<AdminStatsDashboardProps> = ({
           ? monthlyAnalyticsData.value 
           : [];
 
-        // Process tenant statistics
-        const tenantStats = tenantStatsData.status === 'fulfilled' 
-          ? tenantStatsData.value 
-          : null;
+        // Process recent activity
+        const recentActivityData = recentActivityResponse.status === 'fulfilled' 
+          ? recentActivityResponse.value.data 
+          : [];
 
-        // Combine data for system overview with fallbacks
-        const overview: SystemOverview = {
-          totalUsers: (ownerStats?.totalOwners || 25) + (tenantStats?.totalTenants || 45),
-          totalProperties: propertyStats?.totalProperties || 12,
-          totalRooms: propertyStats?.totalRooms || 48,
-          monthlyRevenue: propertyStats?.monthlyRevenue || 125000,
-          activeOwners: ownerStats?.activeOwners || 22,
-          activeTenants: tenantStats?.activeTenants || 42,
-          occupancyRate: ownerStats?.averageOccupancy || 87.5
+        console.log('Admin Dashboard API Responses:', {
+          adminOverview: adminOverview,
+          paymentStats: paymentStatsResult,
+          monthlyData: monthlyData.length,
+          recentActivity: recentActivityData.length
+        });
+
+        // Use admin overview data directly or fallback to combined data
+        const overview: SystemOverview = adminOverview ? {
+          totalUsers: adminOverview.totalUsers,
+          totalProperties: adminOverview.totalProperties,
+          totalRooms: adminOverview.totalRooms,
+          monthlyRevenue: adminOverview.monthlyRevenue,
+          activeOwners: adminOverview.activeOwners,
+          activeTenants: adminOverview.activeTenants,
+          occupancyRate: adminOverview.occupancyRate
+        } : {
+          // Fallback values if admin overview API fails
+          totalUsers: 70,
+          totalProperties: 12,
+          totalRooms: 48,
+          monthlyRevenue: 125000,
+          activeOwners: 22,
+          activeTenants: 42,
+          occupancyRate: 87.5
         };
 
         setSystemOverview(overview);
@@ -207,8 +172,14 @@ const AdminStatsDashboard: React.FC<AdminStatsDashboardProps> = ({
           { month: 'Jun', totalAmount: 71000, totalPayments: 23, successfulPayments: 22 }
         ]);
 
-        // Generate mock recent activity (in a real app, this would come from an API)
-        generateRecentActivity();
+        // Set recent activity from API - prioritize real data
+        if (recentActivityData && recentActivityData.length > 0) {
+          setRecentActivity(recentActivityData);
+        } else {
+          // Set empty array if no API data available instead of mock data
+          console.warn('No recent activity data available from API');
+          setRecentActivity([]);
+        }
 
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -220,53 +191,6 @@ const AdminStatsDashboard: React.FC<AdminStatsDashboardProps> = ({
 
     fetchDashboardData();
   }, []);
-
-  // Generate recent activity data
-  const generateRecentActivity = () => {
-    const activities: RecentActivity[] = [
-      {
-        id: '1',
-        type: 'payment',
-        title: 'Rent Payment Received',
-        description: 'Payment of ₹15,000 from Tenant #1234',
-        time: '2 minutes ago',
-        status: 'success'
-      },
-      {
-        id: '2',
-        type: 'registration',
-        title: 'New Owner Registered',
-        description: 'John Doe registered as property owner',
-        time: '15 minutes ago',
-        status: 'success'
-      },
-      {
-        id: '3',
-        type: 'property',
-        title: 'Property Added',
-        description: 'New property "Green Valley PG" added',
-        time: '1 hour ago',
-        status: 'success'
-      },
-      {
-        id: '4',
-        type: 'payment',
-        title: 'Payment Pending',
-        description: 'Rent payment of ₹12,000 is pending',
-        time: '2 hours ago',
-        status: 'warning'
-      },
-      {
-        id: '5',
-        type: 'tenant',
-        title: 'Tenant Verification',
-        description: 'Tenant profile requires verification',
-        time: '3 hours ago',
-        status: 'pending'
-      }
-    ];
-    setRecentActivity(activities);
-  };
 
   // Format currency
   const formatCurrency = (value: number) => {
@@ -536,27 +460,35 @@ const AdminStatsDashboard: React.FC<AdminStatsDashboardProps> = ({
           </CardHeader>
           <CardContent>
             <div className="space-y-3 max-h-72 overflow-y-auto">
-              {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3">
-                  <div className={cn(
-                    "p-2 rounded-full border",
-                    getActivityColor(activity.status)
-                  )}>
-                    {getActivityIcon(activity.type)}
+              {recentActivity.length > 0 ? (
+                recentActivity.map((activity) => (
+                  <div key={activity.id} className="flex items-start gap-3">
+                    <div className={cn(
+                      "p-2 rounded-full border",
+                      getActivityColor(activity.status)
+                    )}>
+                      {getActivityIcon(activity.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground">
+                        {activity.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {activity.description}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {activity.time}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">
-                      {activity.title}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {activity.description}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {activity.time}
-                    </p>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-sm">No recent activity available</p>
+                  <p className="text-xs mt-1">Recent activities will appear here when they occur</p>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
